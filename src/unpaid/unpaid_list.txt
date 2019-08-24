@@ -1,0 +1,16 @@
+# 미납내역을 구분하는 텍스트 파일
+# '#'을 붙이면 주석처리가 된다.
+# 순서는 항목 예약어 url 순이다.
+# 예)
+# 항목 : 동별미납내역
+# 예약어 : 동별
+# url : http:// ...
+# 빈공간은 - 로 채워주어야한다.
+
+동별미납내역 동별 http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3220.aspx&pSid=385&pPid=396
+고지항목별미납내역 항목별 http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3230.aspx&pSid=385&pPid=398
+장기미납및독촉장 - http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3310.aspx&pSid=385&pPid=400
+시점별미납내역 - http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3410.aspx&pSid=385&pPid=405
+시점별미납및입금내역 - http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3420.aspx&pSid=385&pPid=406
+월분미납내역 월별 http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3610.aspx&pSid=385&pPid=408
+세대별미납내역 미납 http://joy.bankdata.co.kr/SSO.aspx?pPage=/REC/REC3210.aspx&pSid=385&pPid=393

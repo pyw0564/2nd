@@ -1,0 +1,119 @@
+doctype html
+html
+    head
+        style
+            include ../css/chat.css
+        script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+        script(type="text/javascript").
+            var ret_list_unpaid = !{JSON.stringify(list.list_unpaid)};
+            var ret_list_inspect = !{JSON.stringify(list.list_inspect)};
+            var ret_list_clear = !{JSON.stringify(list.list_clear)};
+        script(type="text/javascript" src="/inspect/inspect.js")
+        script(type="text/javascript" src="/inspect/inspect_method.js")
+        script(type="text/javascript" src="/unpaid/unpaid.js")
+        script(type="text/javascript" src="/unpaid/unpaid_method.js")
+        script(type="text/javascript" src="common_method.js")
+    body
+        #chat
+            #chat_header
+                include chat_header.pug
+            #chat_body
+                include chat_body.pug
+            #chat_submit
+                include chat_submit.pug
+
+script.
+    function getTime() {
+        var currentTime = new Date()
+        return (currentTime.getHours() < 10 ? '0'+currentTime.getHours() : currentTime.getHours()) + ":" +
+            (currentTime.getMinutes() < 10 ? '0'+currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
+            (currentTime.getSeconds() < 10 ? '0'+currentTime.getSeconds() : currentTime.getSeconds());
+    }
+    $("#chat_submit_btn").on("click", function () {
+        var text = $("#chat_data").text();
+        $("#chat_data").text("");
+        var name = $("#userId").text();
+
+        var msg = ""
+        msg = "<div class='msg'>";
+        msg += "<div class='user' style='text-align:right;'>"+name+"</div>";
+        msg += "<div class='content' style='justify-content:flex-end;'>";
+        msg += "<div class='time'>"+getTime()+"</div>";
+        msg += "<div class='data me'>"+text+"</div>";
+        msg += "</div>";
+        msg += "</div>";
+
+        $("#chat_content").append(msg);
+        $("#chat_body").scrollTop($("#chat_content").height());
+
+        $.ajax({
+            success: function() {
+                var ret = init(text);
+                var str = ""
+                for (var i in ret)
+                    if (ret[i]) {
+                        if(i == "주소URL")
+                            str += i + "->" + "<a href='" + ret[i] + "' target='_blank'>" + ret[i] + "</a><br>";
+                        else
+                            str += i + "->" + ret[i] + "<br>";
+                    }
+                msg = "<div class='msg'>";
+                msg += "<div class='user'>System</div>";
+                msg += "<div class='content'>";
+                msg += "<div class='data notme'>"+str+"</div>";
+                msg += "<div class='time'>"+getTime()+"</div>";
+                msg += "</div>";
+                msg += "</div>";
+
+                $("#chat_content").append(msg);
+                $("#chat_body").scrollTop($("#chat_content").height());
+            }
+        })
+    });
+
+    $("#chat_data").keydown(function(e) {
+        if(e.which == 13) {
+            var text = $("#chat_data").text();
+            if(text == '') {
+                return;
+            }
+            $("#chat_data").text("");
+            var name = $("#userId").text();
+            var msg = ""
+            msg = "<div class='msg'>";
+            msg += "<div class='user' style='text-align:right;'>"+name+"</div>";
+            msg += "<div class='content' style='justify-content:flex-end;'>";
+            msg += "<div class='time'>"+getTime()+"</div>";
+            msg += "<div class='data me'>"+text+"</div>";
+            msg += "</div>";
+            msg += "</div>";
+
+            $("#chat_content").append(msg);
+            $("#chat_body").scrollTop($("#chat_content").height());
+
+            $.ajax({
+            success: function() {
+                var ret = init(text);
+                var str = ""
+                console.log(ret['사이트항목'],ret);
+                for (var i in ret)
+                    if (ret[i]) {
+                        if(i == "주소URL")
+                            str += i + "->" + "<a href='" + ret[i] + "' target='_blank'>" + ret[i] + "</a><br>";
+                        else
+                            str += i + "->" + ret[i] + "<br>";
+                    }
+                msg = "<div class='msg'>";
+                msg += "<div class='user'>System</div>";
+                msg += "<div class='content'>";
+                msg += "<div class='data notme'>"+str+"</div>";
+                msg += "<div class='time'>"+getTime()+"</div>";
+                msg += "</div>";
+                msg += "</div>";
+
+                $("#chat_content").append(msg);
+                $("#chat_body").scrollTop($("#chat_content").height());
+            }
+        })
+        }
+    })

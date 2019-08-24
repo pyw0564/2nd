@@ -1,0 +1,21 @@
+#dan_info
+    |[
+    span#dancode 1261
+    |]
+    span#danname 해운대경동윈츠타워
+    //- |채팅
+#user_info
+    div(style="display:flex;")
+        |사용자: 
+        //- #userId(contenteditable style="background-color:white;width:150px;color:black;")
+        span#userId extest0001
+    div
+        |시간: 
+        span#login_time
+            -var time = new Date();
+            = time.getHours() < 10 ? '0'+time.getHours() : time.getHours()
+            |:
+            = time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes()
+            |:
+            = time.getSeconds() < 10 ? '0'+time.getSeconds() : time.getSeconds()
+
