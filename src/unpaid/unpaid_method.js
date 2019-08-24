@@ -19,10 +19,6 @@ var inquire_unpaid_functions = {
 function unpaid_base_year_month() {
   // case 1 : YY년 MM월
   // case 2 : YY-MM
-  // case 3 : YY년 MM월부터 YY년 MM월 예) 2010년04월부터 2020년 3월까지
-  // case 4 : YY년 MM월 ~ YY년 MM월 예) 2011년3월~7월
-  // case 5 : YY-MM 부터 YY-MM 예) 2005-03 부터 2005-07
-  // case 6 : YY-MM ~ YY-MM 예) 2005-03~2005-07
   let information_keys = ['기준년', '기준월'];
   let object_keys = ['baseYear', 'baseMonth'];
   let object = {};

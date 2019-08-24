@@ -10,7 +10,12 @@ const DONG_MIN = 1;
 const DONG_MAX = 9999;
 const ROOM_MIN = 1;
 const ROOM_MAX = 9999;
-
+const USE_MIN = 1;
+const USE_MAX = 9999;
+const SEDAE_MIN = 1;
+const SEDAE_MAX = 9999;
+const MIN = 1;
+const MAX = 9999;
 
 var information = {}; // 파싱한 정보 객체
 var query; // 입력 문자열
@@ -42,7 +47,6 @@ function init(q) {
   query = "          " + q + "          "; // underflow, overflow protected
   // CLEAR
   let listIndexes = find_string_with_list(list_clear);
-  console.log(listIndexes);
   if (listIndexes) {
     console.log("CLEAR EXECUTE");
     information = {
@@ -76,8 +80,9 @@ function init(q) {
         not_enter();
         return information;
       }
+
   // 미납
-  if (find_string_one_index('미납') != -1) {
+  if (find_string_one_index('미납') != -1)
     for (let i = 0; i < query.length; i++)
       for (let j = 0; j < list_unpaid_key.length; j++)
         if (list_unpaid_key[j] != '-' && q.substr(i, list_content_size_unpaid[j]) === list_unpaid_key[j]) {
@@ -88,11 +93,19 @@ function init(q) {
           not_enter();
           return information;
         }
-  }
+
   information.message = "입력 값을 제대로 확인하여 주십시오";
   return information;
 }
 
+function not_enter() {
+  information['미입력'] = [];
+  for (let i in information)
+    if (information[i] == null)
+      information['미입력'].push(i);
+}
+
+// 숫자인가?
 function isdigit(c) {
   return ('0' <= c && c <= '9');
 }
@@ -180,6 +193,7 @@ function find_string_with_NEED_BLANK(s) {
   return -1;
 }
 
+// 어떤 문자열 기준으로 앞의 숫자 추출
 function front_number(index, reg) {
   let ret = '';
   for (let i = index - 1; i >= 0; i--) {
@@ -191,6 +205,7 @@ function front_number(index, reg) {
   return ret;
 }
 
+// 어떤 문자열 기준으로 뒤의 숫자 추출
 function back_number(index, reg) {
   let ret = '';
   for (let i = index + 1; i < query.length; i++) {
@@ -202,22 +217,18 @@ function back_number(index, reg) {
   return ret;
 }
 
+// 정규식과 일치하면 continue 한다.
 function continue_string(index, reg) {
   return reg.exec(query.substr(index, 1));
 }
 
+// 숫자를 정규화 한다.
 function nomalize(s) {
   for (let i = 0; i < s.length; i++)
     if (s[i] != '0') return s.substr(i, s.length - i);
 }
 
-function not_enter() {
-  information['미입력'] = [];
-  for (let i in information)
-    if (information[i] == null)
-      information['미입력'].push(i);
-}
-
+// 추출한 정보를 정규화 한다.
 function information_nomalize(key, value, object) {
   if (typeof(key) == 'object') {
     for (let i = 0; i < key.length; i++) {
@@ -230,6 +241,7 @@ function information_nomalize(key, value, object) {
   }
 }
 
+// Object를 초기화 한다.
 function object_initialize(_object, _keys) {
   for (let key in _keys) {
     _object[key] = null;
