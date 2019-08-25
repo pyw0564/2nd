@@ -1,5 +1,5 @@
 /* jshint esversion: 8 */
-var inquire_notify_functions = {
+var inquire_unpaid_functions = {
   '고지년월': unpaid_goji_year_month,
   '구분': unpaid_gubun,
   '납기구분': unpaid_delivery_gubun,
@@ -282,7 +282,7 @@ function unpaid_inquire_dong_one() {
         return information_nomalize('동', ret);
       }
     }
-  return information_nomalize('동', ret);
+  return information_nomalize('동', null);
 }
 
 // 동_호

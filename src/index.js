@@ -6,18 +6,15 @@ const sscanf = require('scanf').sscanf;
 
 var app = express();
 // 인증 토큰 발급 받기
-app.use('/inspect', express.static('src/joynoly/inspect'));
-app.use('/unpaid', express.static('src/joynoly/unpaid'));
 app.use('/', express.static(__dirname));
 app.set('view engine', 'pug');
 app.set('views', './views');
 
 app.locals.pretty = true;
-
 app.get('/', function(req, res) {
   let data = {};
   // 검침
-  let s = fs.readFileSync('joynoly/inspect/inspect_list.txt', {
+  let s = fs.readFileSync('./joynoly/inspect/inspect_list.txt', {
     encoding: 'utf8'
   }, function(err, s) {});
 
@@ -42,7 +39,7 @@ app.get('/', function(req, res) {
   }
 
   // 미납
-  s = fs.readFileSync('joynoly/unpaid/unpaid_list.txt', {
+  s = fs.readFileSync('./joynoly/unpaid/unpaid_list.txt', {
     encoding: 'utf8'
   }, function(err, s) {});
 
@@ -67,7 +64,7 @@ app.get('/', function(req, res) {
   }
 
   // 고지
-  s = fs.readFileSync('joynoly/notify/notify_list.txt', {
+  s = fs.readFileSync('./joynoly/notify/notify_list.txt', {
     encoding: 'utf8'
   }, function(err, s) {});
 

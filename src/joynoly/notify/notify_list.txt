@@ -7,11 +7,11 @@
 # url : http:// ...
 # 빈공간은 - 로 채워주어야한다.
 
-고지서 고지서 http://joy.bankdata.co.kr/INSP/net/INSSEA010.ASPX?pSid=286&pPid=238
-세대조정집계표 세대조정 http://joy.bankdata.co.kr/INSP/net/INSSEA020.ASPX?pSid=286&pPid=239
-동별전체조정집계표 동별전체 http://joy.bankdata.co.kr/INSP/net/INSSEA030.ASPX?pSid=286&pPid=240
-부과내역서 부과내역 http://joy.bankdata.co.kr/INSP/net/INSSEA050.ASPX?pSid=286&pPid=242
-고지항목별예외세대 고지항목별 http://joy.bankdata.co.kr/INSP/net/INSSEA060.ASPX?pSid=286&pPid=243
-주차요금현황 주차요금 http://joy.bankdata.co.kr/INSP/net/INSSEA070.ASPX?pSid=286&pPid=244
-년간고지현황 년간고지 http://joy.bankdata.co.kr/INSP/net/INSSEA080.ASPX?pSid=286&pPid=245
-가수금현황 가수금 http://joy.bankdata.co.kr/INSP/net/INSSEA090.ASPX?pSid=286&pPid=246
+고지서 고지서 -
+세대조정집계표 세대조정 -
+동별전체조정집계표 동별전체 -
+부과내역서 부과내역 -
+고지항목별예외세대 고지항목별 -
+주차요금현황 주차요금 -
+년간고지현황 년간고지 -
+가수금현황 가수금 -
