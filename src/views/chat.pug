@@ -7,12 +7,15 @@ html
         script(type="text/javascript").
             var ret_list_unpaid = !{JSON.stringify(list.list_unpaid)};
             var ret_list_inspect = !{JSON.stringify(list.list_inspect)};
+            var ret_list_notify = !{JSON.stringify(list.list_notify)};
             var ret_list_clear = !{JSON.stringify(list.list_clear)};
-        script(type="text/javascript" src="/inspect/inspect.js")
-        script(type="text/javascript" src="/inspect/inspect_method.js")
-        script(type="text/javascript" src="/unpaid/unpaid.js")
-        script(type="text/javascript" src="/unpaid/unpaid_method.js")
-        script(type="text/javascript" src="common_method.js")
+        script(type="text/javascript" src="/joynoly/inspect/inspect.js")
+        script(type="text/javascript" src="/joynoly/inspect/inspect_method.js")
+        script(type="text/javascript" src="/joynoly/unpaid/unpaid.js")
+        script(type="text/javascript" src="/joynoly/unpaid/unpaid_method.js")
+        script(type="text/javascript" src="/joynoly/notify/notify.js")
+        script(type="text/javascript" src="/joynoly/notify/notify_method.js")
+        script(type="text/javascript" src="/joynoly/common_method.js")
     body
         #chat
             #chat_header
