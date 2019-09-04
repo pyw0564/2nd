@@ -5,17 +5,18 @@ html
             include ../css/chat.css
         script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
         script(type="text/javascript").
-            var ret_list_unpaid = !{JSON.stringify(list.list_unpaid)};
-            var ret_list_inspect = !{JSON.stringify(list.list_inspect)};
-            var ret_list_notify = !{JSON.stringify(list.list_notify)};
-            var ret_list_clear = !{JSON.stringify(list.list_clear)};
-        script(type="text/javascript" src="./joynoly/inspect/inspect.js")
-        script(type="text/javascript" src="./joynoly/inspect/inspect_method.js")
-        script(type="text/javascript" src="./joynoly/unpaid/unpaid.js")
-        script(type="text/javascript" src="./joynoly/unpaid/unpaid_method.js")
-        script(type="text/javascript" src="./joynoly/notify/notify.js")
-        script(type="text/javascript" src="./joynoly/notify/notify_method.js")
-        script(type="text/javascript" src="./joynoly/common_method.js")
+          var tableList = !{JSON.stringify(tableList)};
+          var tables = !{JSON.stringify(tables)};
+          var reg = !{JSON.stringify(reg)};
+          console.log(reg)
+        //- var ret_list_clear = !{JSON.stringify(list.list_clear)};
+        //- script(type="text/javascript" src="./joynoly/inspect/inspect_method.js")
+        //- script(type="text/javascript" src="./joynoly/inspect/inspect.js")
+        //- script(type="text/javascript" src="./joynoly/unpaid/unpaid.js")
+        //- script(type="text/javascript" src="./joynoly/unpaid/unpaid_method.js")
+        //- script(type="text/javascript" src="./joynoly/notify/notify.js")
+        //- script(type="text/javascript" src="./joynoly/notify/notify_method.js")
+        script(type="text/javascript" src="./api/common_method.js")
     body
         #chat
             #chat_header
@@ -98,7 +99,6 @@ script.
             success: function() {
                 var ret = init(text);
                 var str = ""
-                console.log(ret['사이트항목'],ret);
                 for (var i in ret)
                     if (ret[i]) {
                         if(i == "주소URL")
