@@ -12,7 +12,7 @@ function init(q) {
     flag = null;
     return information;
   }
-
+  information = {};
   information = find_table(q);
   console.log(information);
   return information;
@@ -27,6 +27,7 @@ function find_table(query) {
     let key = tableList[i].key;
     let tableName = tableList[i].tableName;
     if (query.indexOf(key) !== -1) {
+      flag = { table: tables[tableName], tableName: tableName };
       return parameters(tables[tableName], query);
     }
   }
@@ -35,17 +36,16 @@ function find_table(query) {
 
 // 2step
 function parameters(table, query) {
-  let ret = information;
-  if (flag){
-    ret['message'] = "FLAG가 실행되어 고정중입니다."
+  let ret = {};
+  if (flag) {
+    ret.message = flag.tableName + "이 실행중";
   }
-  flag = { table: table };
   for (let i = 0; i < table.length; i++) {
     let parameter = table[i].parameter;
     let display_name = table[i].display_name;
     let parameter_type = table[i].parameter_type;
     let parsing_ret = parsing(reg[parameter_type], query);
-    if (parsing_ret == null && ret[parameter] != null) continue;
+    if (parsing_ret == null && information[parameter] != null) continue;
     ret[parameter] = parsing_ret;
   }
   return ret;

@@ -33,7 +33,7 @@ app.get('/', async function(req, res) {
     tableList: tableList,
     tables: tables,
     reg: reg
-  }
+  };
   res.render('chat', info);
 });
 
