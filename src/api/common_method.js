@@ -61,7 +61,7 @@ function parsing(regs, query) {
     let parsing_array = query.match(regexp);
     if (parsing_array == null) continue;
     if (parsing_array.length == 1) {
-      let ret = (reg.return_value === null || reg.return_value === "") ? query.substr(reg.start, reg._length) : reg.return_value;
+      let ret = (reg.return_value === null || reg.return_value === "") ? parsing_array[0].substr(reg.start, reg._length) : reg.return_value;
       query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length);
       return ret;
     } else if (parsing_array.length > 1) {
