@@ -54,7 +54,12 @@ app.get('/', async function(req, res) {
 });
 
 app.get('/adm', function(req, res) {
-  res.render("adm")
+  res.render("adm", {
+    type: "default",
+    tableList: tableList,
+    tables: tables,
+    reg: reg
+  })
 })
 app.get('/adm/tables', async function(req, res) {
   var tables = []
@@ -74,7 +79,10 @@ app.get('/adm/tables', async function(req, res) {
   })()
   res.render("adm", {
     tables: tables,
-    type: "tables"
+    type: "tables",
+    tableList: tableList,
+    tables: tables,
+    reg: reg
   })
 })
 app.get('/adm/regexps', async function(req, res) {
@@ -95,7 +103,10 @@ app.get('/adm/regexps', async function(req, res) {
   })()
   res.render("adm", {
     regexps: regexps,
-    type: "regexps"
+    type: "regexps",
+    tableList: tableList,
+    tables: tables,
+    reg: reg
   })
 })
 app.get('/adm/:tableName/columns', async function(req, res) {
@@ -118,7 +129,10 @@ app.get('/adm/:tableName/columns', async function(req, res) {
   res.render("adm", {
     columns: columns,
     tableName: tableName,
-    type: "columns"
+    type: "columns",
+    tableList: tableList,
+    tables: tables,
+    reg: reg
   })
 })
 app.post('/adm/createTable', async function(req, res) {
@@ -140,6 +154,10 @@ app.post('/adm/createTable', async function(req, res) {
       return pool.request().query(query)
     }).then(async result => {
       await sql.close()
+      tableList = []
+      tables = {}
+      reg = {}
+      await read_DB()
       return
     }).catch(err => {
       console.error(err)
@@ -171,6 +189,10 @@ app.post('/adm/addRegexp', async function(req, res) {
       return pool.request().query(query)
     }).then(async result => {
       await sql.close()
+      tableList = []
+      tables = {}
+      reg = {}
+      await read_DB()
       return
     }).catch(err => {
       console.error(err)
@@ -200,6 +222,10 @@ app.post('/adm/:tableName/addRows', async function(req, res) {
       return pool.request().query(query)
     }).then(async result => {
       await sql.close()
+      tableList = []
+      tables = {}
+      reg = {}
+      await read_DB()
       return
     }).catch(err => {
       console.error(err)

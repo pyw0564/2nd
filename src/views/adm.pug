@@ -4,19 +4,25 @@ html
     style
         include ../css/adm.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
-    script.
+    script(type='text/javascript').
       $(document).ready(function() {
+        //- console.log(window.parent.tableList)
+        //- console.log(window.parent.tables)
+        //- console.log(window.parent.reg)
+        window.parent.tableList = !{JSON.stringify(tableList)}
+        window.parent.tables = !{JSON.stringify(tables)}
+        window.parent.reg = !{JSON.stringify(reg)}
         var type = !{JSON.stringify(type)}
         switch (type) {
-        case 'tables':
-          $("#tables").addClass("active")
-          break
-        case 'regexps':
-          $("#regexps").addClass("active")
-          break
-        case 'columns':
-          $("#tables").addClass("active")
-          break    
+          case 'tables':
+            $("#tables").addClass("active")
+            break
+          case 'regexps':
+            $("#regexps").addClass("active")
+            break
+          case 'columns':
+            $("#tables").addClass("active")
+            break
         }
         $("#selectAll").click(function () {
           $(".select").prop("checked", $(this).prop("checked"))
