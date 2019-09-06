@@ -1,0 +1,31 @@
+doctype html
+html
+  head
+    style
+        include ../css/adm.css
+    script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  body
+    form(method="post", action="/adm/createTable")
+      label
+        | tableKey:
+        input(type="text" name="tableKey")
+      br
+      label
+        | tableName:
+        input(type="text" name="tableName")
+      br
+      label
+        input(type="submit" value="등록")
+    table(border="1")
+      tr
+        th tableKey
+        th tableName
+      -for(let i = 0 ; i < tables.length ; i++) {
+        tr
+          td
+            =tables[i].tableKey
+          td
+            a(href="/adm/"+tables[i].tableName+"/columns")
+              =tables[i].tableName
+      -}
+      

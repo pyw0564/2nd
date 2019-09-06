@@ -1,0 +1,61 @@
+doctype html
+html
+  head
+    style
+        include ../css/adm.css
+    script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  body
+    form(method="post", action="/adm/addRegexp")
+      label
+        | parameter_type:
+        input(type="text" name="parameter_type")
+      br
+      label
+        | regexp:
+        input(type="text" name="regexp")
+      br
+      label
+        | _option:
+        input(type="text" name="_option")
+      br  
+      label
+        | return_value:
+        input(type="text" name="return_value")
+      br
+      label
+        | start:
+        input(type="text" name="start")
+      br
+      label
+        | _length:
+        input(type="text" name="_length")
+      br
+      label
+        input(type="submit" value="등록")
+    table(border="1")
+      tr
+        th idx
+        th parameter_type
+        th regexp
+        th _option
+        th return_value
+        th start
+        th _length
+      -for(let i = 0 ; i < regexps.length ; i++) {
+        tr
+          td
+            =regexps[i].idx
+          td
+            =regexps[i].parameter_type
+          td
+            =regexps[i].regexp
+          td
+            =regexps[i]._option
+          td
+            =regexps[i].return_value
+          td
+            =regexps[i].start
+          td
+            =regexps[i]._length
+      -}
+      

@@ -1,0 +1,37 @@
+doctype html
+html
+  head
+    style
+        include ../css/adm.css
+    script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+  body
+    form(method="post", action="/adm/"+tableName+"/addRows")
+      label
+        | parameter:
+        input(type="text" name="parameter")
+      br
+      label
+        | display_name:
+        input(type="text" name="display_name")
+      br
+      label
+        | parameter_type:
+        input(type="text" name="parameter_type")
+      br
+      label
+        input(type="submit" value="등록")
+    table(border="1")
+      tr
+        th parameter
+        th display_name
+        th parameter_type
+      -for(let i = 0 ; i < columns.length ; i++) {
+        tr
+          td
+            =columns[i].parameter
+          td
+            =columns[i].display_name
+          td
+            =columns[i].parameter_type
+      -}
+      

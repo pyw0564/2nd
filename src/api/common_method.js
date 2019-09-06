@@ -56,12 +56,12 @@ function parsing(regs, query) {
   if (regs == null) return null;
   for (let i = 0; i < regs.length; i++) {
     let reg = regs[i];
-    let regexp = new RegExp(reg.regexp, reg.reg_option);
+    let regexp = new RegExp(reg.regexp, reg._option);
     console.log('정규표현식 ->', regexp);
     let parsing_array = query.match(regexp);
     if (parsing_array == null) continue;
     if (parsing_array.length == 1) {
-      let ret = reg.return_value === null ? query.substr(reg.start, reg._length) : reg.return_value;
+      let ret = (reg.return_value === null || reg.return_value === "") ? query.substr(reg.start, reg._length) : reg.return_value;
       query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length);
       return ret;
     } else if (parsing_array.length > 1) {
