@@ -83,5 +83,6 @@ script.
             =regexps[i]._length
           td.buttonList
             button.edit 수정
-            button.delete 삭제
+            form(method="post" action="/adm/deleteRegexp")
+              button.delete(name="idx" value=regexps[i].idx) 삭제
       -}

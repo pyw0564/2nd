@@ -18,6 +18,7 @@
           input#selectAll(type="checkbox")
         th tableKey
         th tableName
+        th
     tbody
       -for(let i = 0 ; i < tables.length ; i++) {
         tr
@@ -28,5 +29,9 @@
           td
             a(href="/adm/"+tables[i].tableName+"/columns")
               =tables[i].tableName
+          td.buttonList
+            button.edit 수정
+            form(method="post" action="/adm/deleteTable")
+              button.delete(name="tableName" value=tables[i].tableName) 삭제
       -}
   

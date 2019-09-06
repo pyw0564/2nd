@@ -23,6 +23,7 @@
         th parameter
         th display_name
         th parameter_type
+        th
     tbody
       -for(let i = 0 ; i < columns.length ; i++) {
         tr
@@ -34,5 +35,9 @@
             =columns[i].display_name
           td
             =columns[i].parameter_type
+          td.buttonList
+            button.edit 수정
+            form(method="post" action="/adm/"+tableName+"/deleteRows")
+              button.delete(name="parameter" value=columns[i].parameter) 삭제
       -}
   

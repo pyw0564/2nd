@@ -240,6 +240,112 @@ app.post('/adm/:tableName/addRows', async function(req, res) {
       </script>
     `)
 })
+app.post('/adm/deleteTable', async function(req, res) {
+  const tableName = req.body.tableName
+  if (tableName) {
+    await (async () => {
+      return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+        return pool.request().query(`
+          DELETE FROM TABLES WHERE tableName = '${tableName}';
+          DROP TABLE ${tableName};
+          `)
+      }).then(async result => {
+        await sql.close()
+        tableList = []
+        tables = {}
+        reg = {}
+        await read_DB()
+        return
+      }).catch(err => {
+        console.error(err)
+        sql.close()
+        throw err
+      });
+    })()
+    res.send(`
+        <script>
+          alert('good')
+          location.href="/adm/tables"
+        </script>
+      `)
+  } else {
+    res.send(`
+        <script>
+          alert('bad')
+          location.href="/adm/tables"
+        </script>
+      `)
+  }
+})
+app.post('/adm/deleteRegexp', async function(req, res) {
+  const idx = parseInt(req.body.idx) ? parseInt(req.body.idx) : -1
+  if (idx != -1) {
+    await (async () => {
+      return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+        return pool.request().query(`DELETE FROM REGEXPS WHERE idx = ${idx}`)
+      }).then(async result => {
+        await sql.close()
+        tableList = []
+        tables = {}
+        reg = {}
+        await read_DB()
+        return
+      }).catch(err => {
+        console.error(err)
+        sql.close()
+        throw err
+      });
+    })()
+    res.send(`
+        <script>
+          alert('good')
+          location.href="/adm/regexps"
+        </script>
+      `)
+  } else {
+    res.send(`
+        <script>
+          alert('bad')
+          location.href="/adm/regexps"
+        </script>
+      `)
+  }
+})
+app.post('/adm/:tableName/deleteRows', async function(req, res) {
+  const tableName = req.params.tableName
+  const parameter = req.body.parameter
+  if (tableName) {
+    await (async () => {
+      return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+        return pool.request().query(`DELETE FROM ${tableName} WHERE parameter = '${parameter}'`)
+      }).then(async result => {
+        await sql.close()
+        tableList = []
+        tables = {}
+        reg = {}
+        await read_DB()
+        return
+      }).catch(err => {
+        console.error(err)
+        sql.close()
+        throw err
+      });
+    })()
+    res.send(`
+        <script>
+          alert('good')
+          location.href="/adm/${tableName}/columns"
+        </script>
+      `)
+  } else {
+    res.send(`
+        <script>
+          alert('bad')
+          location.href="/adm/${tableName}/columns"
+        </script>
+      `)
+  }
+})
 async function read_DB() {
   try {
     await console.log("sql connecting......");
