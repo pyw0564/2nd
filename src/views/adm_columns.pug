@@ -1,11 +1,6 @@
-doctype html
-html
-  head
-    style
-        include ../css/adm.css
-    script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
-  body
-    form(method="post", action="/adm/"+tableName+"/addRows")
+#adm_sub_page
+  form#addRows(method="post", action="/adm/"+tableName+"/addRows")
+    #variables
       label
         | parameter:
         input(type="text" name="parameter")
@@ -20,13 +15,19 @@ html
       br
       label
         input(type="submit" value="등록")
-    table(border="1")
+  table(border="1")
+    thead
       tr
+        th
+          input#selectAll(type="checkbox")
         th parameter
         th display_name
         th parameter_type
+    tbody
       -for(let i = 0 ; i < columns.length ; i++) {
         tr
+          td
+            input.select(type="checkbox" value=columns[i].parameter)
           td
             =columns[i].parameter
           td
@@ -34,4 +35,4 @@ html
           td
             =columns[i].parameter_type
       -}
-      
+  

@@ -1,50 +1,74 @@
-doctype html
-html
-  head
-    style
-        include ../css/adm.css
-    script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
-  body
-    form(method="post", action="/adm/addRegexp")
+script.
+  $(document).ready(function() {
+    $("#textarea").on("input", function() {
+      let regexp = new RegExp($("#regexp").val(), $("#_option").val());
+      let parsing_array = $(this).val().match(regexp);
+      if(parsing_array != null) {
+        let return_value = $("#return_value").val()
+        if(return_value === null || return_value === ""){
+          let start = $("#start").val() ? parseInt($("#start").val()) : -1
+          let _length = $("#_length").val() ? parseInt($("#_length").val()) : -1
+          $("#result").text(parsing_array[0].substr(start, _length))
+        } else {
+          $("#result").text(return_value)
+        }
+      } else {
+        $("#result").text("")
+      }
+    })
+  })
+
+#adm_sub_page
+  form#addRegexp(method="post", action="/adm/addRegexp")
+    #variables
       label
         | parameter_type:
-        input(type="text" name="parameter_type")
+        input#parameter_type(type="text" name="parameter_type")
       br
       label
         | regexp:
-        input(type="text" name="regexp")
+        input#regexp(type="text" name="regexp")
       br
       label
         | _option:
-        input(type="text" name="_option")
+        input#_option(type="text" name="_option")
       br  
       label
         | return_value:
-        input(type="text" name="return_value")
+        input#return_value(type="text" name="return_value")
       br
       label
         | start:
-        input(type="text" name="start")
+        input#start(type="text" name="start")
       br
       label
         | _length:
-        input(type="text" name="_length")
+        input#_length(type="text" name="_length")
       br
       label
         input(type="submit" value="등록")
-    table(border="1")
+    #testing
+      #text_field
+        textarea#textarea
+      #result_field
+        #result
+  table(border="1")
+    thead
       tr
-        th idx
+        th
+          input#selectAll(type="checkbox")
         th parameter_type
         th regexp
         th _option
         th return_value
         th start
         th _length
+        th
+    tbody
       -for(let i = 0 ; i < regexps.length ; i++) {
         tr
           td
-            =regexps[i].idx
+            input.select(type="checkbox" value=regexps[i].idx)
           td
             =regexps[i].parameter_type
           td
@@ -57,5 +81,7 @@ html
             =regexps[i].start
           td
             =regexps[i]._length
+          td.buttonList
+            button.edit 수정
+            button.delete 삭제
       -}
-      

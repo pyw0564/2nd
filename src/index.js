@@ -16,7 +16,7 @@ const sqlConfig = {
   server: process.env.DB_SERVER?process.env.DB_SERVER:'211.239.22.183', // 서버 주소
   database: process.env.DB_DATABASE?process.env.DB_DATABASE:'DAU_CRAWLER', // 사용할 database 이름
   stream: 'true', // ???
-  port: process.env.DB_PORT?process.env.DB_PORT:1433, // 서버 port 설정
+  port: process.env.DB_PORT?parseInt(process.env.DB_PORT):1433, // 서버 port 설정
   autoSchemaSync: true, // ???
   option: {
 		encrypt: 'false'					// ???
@@ -72,8 +72,9 @@ app.get('/adm/tables', async function(req, res) {
       throw err
     });
   })()
-  res.render("adm_tables", {
-    tables: tables
+  res.render("adm", {
+    tables: tables,
+    type: "tables"
   })
 })
 app.get('/adm/regexps', async function(req, res) {
@@ -92,8 +93,9 @@ app.get('/adm/regexps', async function(req, res) {
       throw err
     });
   })()
-  res.render("adm_regexps", {
-    regexps: regexps
+  res.render("adm", {
+    regexps: regexps,
+    type: "regexps"
   })
 })
 app.get('/adm/:tableName/columns', async function(req, res) {
@@ -113,9 +115,10 @@ app.get('/adm/:tableName/columns', async function(req, res) {
       throw err
     });
   })()
-  res.render("adm_columns", {
+  res.render("adm", {
     columns: columns,
-    tableName: tableName
+    tableName: tableName,
+    type: "columns"
   })
 })
 app.post('/adm/createTable', async function(req, res) {
@@ -186,8 +189,9 @@ app.post('/adm/:tableName/addRows', async function(req, res) {
   const parameter = req.body.parameter
   const display_name = req.body.display_name
   const parameter_type = req.body.parameter_type
+  const tableName = req.params.tableName
   const query = `
-    INSERT INTO ${req.params.tableName}(parameter, display_name, parameter_type)
+    INSERT INTO ${tableName}(parameter, display_name, parameter_type)
     VALUES ('${parameter}', '${display_name}', '${parameter_type}')
   `
   console.log(query)
@@ -206,7 +210,7 @@ app.post('/adm/:tableName/addRows', async function(req, res) {
   res.send(`
       <script>
         alert('good')
-        location.href="/adm/tables"
+        location.href="/adm/${tableName}/columns"
       </script>
     `)
 })

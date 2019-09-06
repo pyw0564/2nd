@@ -4,7 +4,35 @@ html
     style
         include ../css/adm.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+    script.
+      $(document).ready(function() {
+        var type = !{JSON.stringify(type)}
+        switch (type) {
+        case 'tables':
+          $("#tables").addClass("active")
+          break
+        case 'regexps':
+          $("#regexps").addClass("active")
+          break
+        case 'columns':
+          $("#tables").addClass("active")
+          break    
+        }
+        $("#selectAll").click(function () {
+          $(".select").prop("checked", $(this).prop("checked"))
+        })
+      })
   body
-    a(href="/adm/tables") Parameter Table list
-    a(href="/adm/regexps") Regular Expression list
-    
+    #adm_page
+      #adm_main_page
+        a#tables(href="/adm/tables") Parameter Table list
+        a#regexps(href="/adm/regexps") Regular Expression list
+        a#chatbot(href="/") ChatBot
+        #extra
+      case type
+          when 'tables'
+            include adm_tables.pug
+          when 'regexps'
+            include adm_regexps.pug
+          when 'columns'
+            include adm_columns.pug
