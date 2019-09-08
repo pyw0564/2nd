@@ -1,0 +1,44 @@
+doctype html
+html
+  head
+    style
+        include ../css/adm.css
+    script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+    script(type='text/javascript').
+      $(document).ready(function() {
+        //- console.log(window.parent.tableList)
+        //- console.log(window.parent.tables)
+        //- console.log(window.parent.reg)
+        window.parent.tableList = !{JSON.stringify(tableList)}
+        window.parent.tables = !{JSON.stringify(tables)}
+        window.parent.reg = !{JSON.stringify(reg)}
+        var type = !{JSON.stringify(type)}
+        switch (type) {
+          case 'tables':
+            $("#tables").addClass("active")
+            break
+          case 'regexps':
+            $("#regexps").addClass("active")
+            break
+          case 'columns':
+            $("#tables").addClass("active")
+            break
+        }
+        $("#selectAll").click(function () {
+          $(".select").prop("checked", $(this).prop("checked"))
+        })
+      })
+  body
+    #adm_page
+      #adm_main_page
+        a#tables(href="/adm/tables") Parameter Table list
+        a#regexps(href="/adm/regexps") Regular Expression list
+        a#chatbot(href="/") ChatBot
+        #extra
+      case type
+          when 'tables'
+            include adm_tables.pug
+          when 'regexps'
+            include adm_regexps.pug
+          when 'columns'
+            include adm_columns.pug

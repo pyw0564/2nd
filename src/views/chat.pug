@@ -18,6 +18,7 @@ html
         //- script(type="text/javascript" src="./joynoly/notify/notify_method.js")
         script(type="text/javascript" src="./api/common_method.js")
     body
+        //- iframe(src="/adm" style="width:800px; height:100%;")
         #chat
             #chat_header
                 include chat_header.pug
@@ -26,7 +27,7 @@ html
             #chat_submit
                 include chat_submit.pug
 
-script.
+script(type="text/javascript").
     function getTime() {
         var currentTime = new Date()
         return (currentTime.getHours() < 10 ? '0'+currentTime.getHours() : currentTime.getHours()) + ":" +

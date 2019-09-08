@@ -1,0 +1,43 @@
+#adm_sub_page
+  form#addRows(method="post", action="/adm/"+tableName+"/addRows")
+    #variables
+      label
+        | parameter:
+        input(type="text" name="parameter")
+      br
+      label
+        | display_name:
+        input(type="text" name="display_name")
+      br
+      label
+        | parameter_type:
+        input(type="text" name="parameter_type")
+      br
+      label
+        input(type="submit" value="등록")
+  table(border="1")
+    thead
+      tr
+        th
+          input#selectAll(type="checkbox")
+        th parameter
+        th display_name
+        th parameter_type
+        th
+    tbody
+      -for(let i = 0 ; i < columns.length ; i++) {
+        tr
+          td
+            input.select(type="checkbox" value=columns[i].parameter)
+          td
+            =columns[i].parameter
+          td
+            =columns[i].display_name
+          td
+            =columns[i].parameter_type
+          td.buttonList
+            button.edit 수정
+            form(method="post" action="/adm/"+tableName+"/deleteRows")
+              button.delete(name="parameter" value=columns[i].parameter) 삭제
+      -}
+  
