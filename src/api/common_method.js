@@ -45,6 +45,7 @@ function parameters(table, query) {
     let display_name = table[i].display_name;
     let parameter_type = table[i].parameter_type;
     let parsing_ret = parsing(reg[parameter_type], query);
+    console.log(reg[parameter_type], parsing_ret);
     if (parsing_ret == null && information[parameter] != null) continue;
     ret[parameter] = parsing_ret;
   }
@@ -59,9 +60,10 @@ function parsing(regs, query) {
     let regexp = new RegExp(reg.regexp, reg.reg_option);
     console.log('정규표현식 ->', regexp);
     let parsing_array = query.match(regexp);
+    console.log('배열', parsing_array);
     if (parsing_array == null) continue;
     if (parsing_array.length == 1) {
-      let ret = reg.return_value === null ? query.substr(reg.start, reg._length) : reg.return_value;
+      let ret = reg.return_value === null ? parsing_array[0].substr(reg.start, reg._length) : reg.return_value;
       query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length);
       return ret;
     } else if (parsing_array.length > 1) {
