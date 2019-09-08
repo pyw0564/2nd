@@ -12,6 +12,10 @@ function init(q) {
     flag = null;
     return information;
   }
+  if (flag) {
+    console.log("FLAG EXECUTE");
+    return parameters(flag.table, q);
+  }
   information = {};
   information = find_table(q);
   console.log(information);
@@ -19,10 +23,6 @@ function init(q) {
 }
 // 1step
 function find_table(query) {
-  if (flag) {
-    console.log("FLAG EXECUTE");
-    return parameters(flag.table, query);
-  }
   for (let i = 0; i < tableList.length; i++) {
     let key = tableList[i].key;
     let tableName = tableList[i].tableName;
@@ -38,6 +38,7 @@ function find_table(query) {
 function parameters(table, query) {
   let ret = {};
   if (flag) {
+    ret = information;
     ret.message = flag.tableName + "이 실행중";
   }
   for (let i = 0; i < table.length; i++) {
@@ -45,7 +46,6 @@ function parameters(table, query) {
     let display_name = table[i].display_name;
     let parameter_type = table[i].parameter_type;
     let parsing_ret = parsing(reg[parameter_type], query);
-    console.log(reg[parameter_type], parsing_ret);
     if (parsing_ret == null && information[parameter] != null) continue;
     ret[parameter] = parsing_ret;
   }

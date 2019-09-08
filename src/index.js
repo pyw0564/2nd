@@ -1,32 +1,42 @@
 /* jshint esversion: 8 */
-require('dotenv').config({path: __dirname + '/../' + '.env'})
+require('dotenv').config({
+  path: __dirname + '/../' + '.env'
+})
 const express = require('express');
-const fs = require('fs');
-const scanf = require('scanf');
-const sscanf = require('scanf').sscanf;
 var app = express();
 var sql = require('mssql');
 const bodyParser = require('body-parser')
 app.use(bodyParser.urlencoded({
   extended: false
 }))
-const sqlConfig = {
-  user: process.env.DB_USER?process.env.DB_USER:'njuser', // mssql username
-  password: process.env.DB_PASSWORD?process.env.DB_PASSWORD:'imc0029', // mssql password
-  server: process.env.DB_SERVER?process.env.DB_SERVER:'211.239.22.183', // 서버 주소
-  database: process.env.DB_DATABASE?process.env.DB_DATABASE:'DAU_CRAWLER', // 사용할 database 이름
-  stream: 'true', // ???
-  port: process.env.DB_PORT?parseInt(process.env.DB_PORT):1433, // 서버 port 설정
-  autoSchemaSync: true, // ???
-  option: {
-		encrypt: 'false'					// ???
-	},
-  pool: {
-    max:100,
-    min:0,
-    idleTimeoutMillis: 30000
+var debug = 1;
+var sqlConfig;
+if (debug) {
+  sqlConfig = {
+    user: 'sa',
+    password: '1111',
+    server: 'DESKTOP-T86S6M5\\SQLEXPRESS',
+    database: 'test', // 사용할 database 이름
   }
-};
+} else {
+  sqlConfig = {
+    user: process.env.DB_USER ? process.env.DB_USER : 'njuser', // mssql username
+    password: process.env.DB_PASSWORD ? process.env.DB_PASSWORD : 'imc0029', // mssql password
+    server: process.env.DB_SERVER ? process.env.DB_SERVER : '211.239.22.183', // 서버 주소
+    database: process.env.DB_DATABASE ? process.env.DB_DATABASE : 'DAU_CRAWLER', // 사용할 database 이름
+    stream: 'true', // ???
+    port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 1433, // 서버 port 설정
+    autoSchemaSync: true, // ???
+    option: {
+      encrypt: 'false' // ???
+    },
+    pool: {
+      max: 100,
+      min: 0,
+      idleTimeoutMillis: 30000
+    }
+  };
+}
 // [{ Key : TableName }]
 var tableList = [];
 // {sedeinfo : [ {dancode:dan}, {dongcode:dong}, {roomno:room}, {relation:rel}, {name:name} ]};
@@ -53,7 +63,8 @@ app.get('/', async function(req, res) {
   res.render('chat', info);
 });
 
-app.get('/adm', function(req, res) {
+app.get('/adm', async function(req, res) {
+  await read_DB();
   res.render("adm", {
     type: "default",
     tableList: tableList,
@@ -81,7 +92,6 @@ app.get('/adm/tables', async function(req, res) {
     tables: tables,
     type: "tables",
     tableList: tableList,
-    tables: tables,
     reg: reg
   })
 })
@@ -346,11 +356,17 @@ app.post('/adm/:tableName/deleteRows', async function(req, res) {
       `)
   }
 })
+app.listen(3000, function(err) {
+  console.log("connected 3000 port");
+});
+
+
 async function read_DB() {
   try {
     await console.log("sql connecting......");
     let pool = await sql.connect(sqlConfig);
     let result = await pool.request().query('select * from tables'); // subject is my database table name
+
     for (let i = 0; i < result.recordset.length; i++) {
       let record = result.recordset[i];
       tableList.push({
@@ -389,7 +405,3 @@ async function read_DB() {
   console.log('테이블', tables);
   console.log('정규식', reg);
 }
-
-app.listen(3000, function(err) {
-  console.log("connected 3000 port");
-});

@@ -56,12 +56,10 @@ script(type="text/javascript").
                 var ret = init(text);
                 var str = ""
                 for (var i in ret)
-                    if (ret[i]) {
-                        if(i == "주소URL")
-                            str += i + "->" + "<a href='" + ret[i] + "' target='_blank'>" + ret[i] + "</a><br>";
-                        else
-                            str += i + "->" + ret[i] + "<br>";
-                    }
+                  if(i == "주소URL")
+                      str += i + "->" + "<a href='" + ret[i] + "' target='_blank'>" + ret[i] + "</a><br>";
+                  else
+                    str += i + "-> " + (ret[i] ? ret[i] : " ") + "<br>";
                 msg = "<div class='msg'>";
                 msg += "<div class='user'>System</div>";
                 msg += "<div class='content'>";
@@ -101,12 +99,10 @@ script(type="text/javascript").
                 var ret = init(text);
                 var str = ""
                 for (var i in ret)
-                    if (ret[i]) {
-                        if(i == "주소URL")
-                            str += i + "->" + "<a href='" + ret[i] + "' target='_blank'>" + ret[i] + "</a><br>";
-                        else
-                            str += i + "->" + ret[i] + "<br>";
-                    }
+                  if(i == "주소URL")
+                      str += i + "->" + "<a href='" + ret[i] + "' target='_blank'>" + ret[i] + "</a><br>";
+                  else
+                      str += i + "-> " + (ret[i] ? ret[i] : " ") + "<br>";
                 msg = "<div class='msg'>";
                 msg += "<div class='user'>System</div>";
                 msg += "<div class='content'>";
