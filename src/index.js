@@ -2,14 +2,23 @@
 require('dotenv').config({
   path: __dirname + '/../' + '.env'
 })
+const imc = require('./imc');
+const session = require('express-session');
 const express = require('express');
 var app = express();
 var sql = require('mssql');
+
 const bodyParser = require('body-parser')
 app.use(bodyParser.urlencoded({
   extended: false
 }))
-var debug = 1;
+app.use(session({
+  secret: '1a3sdfg3#$#@13%#45asfsd',
+  resave: false,
+  saveUninitialized: true
+}))
+
+var debug = 0;
 var sqlConfig;
 if (debug) {
   sqlConfig = {
@@ -50,18 +59,47 @@ app.set('view engine', 'pug');
 app.set('views', './views');
 
 app.locals.pretty = true;
-app.get('/', async function(req, res) {
-  if (init == null) {
-    await read_DB();
-    init = 'complete';
+app.get('/', function(req, res) {
+  res.render("login")
+})
+app.post('/login', async function(req, res) {
+  const id = req.body.userid
+  const pw = req.body.userpw
+  const dancode = req.body.dancode
+  const auth = await imc.authorize(id, pw)
+  if (auth.message != "success") {
+    res.send(`
+        <script>
+          alert("아이디 또는 비밀번호가 틀립니다.")
+          location.href = "/"
+        </script>
+      `)
+  } else {
+    req.session.dancode = auth.result[0].dancode
+    req.session.username = auth.result[0].username
+    req.session.usergubun = auth.result[0].usergubun
+    res.redirect("/chat")
   }
-  let info = {
-    tableList: tableList,
-    tables: tables,
-    reg: reg
-  };
-  res.render('chat', info);
-});
+})
+app.get('/chat', async function(req, res) {
+  if(req.session.dancode) {
+    if (init == null) {
+      await read_DB()
+      init = 'complete'
+    }
+    let info = {
+      tableList: tableList,
+      tables: tables,
+      reg: reg,
+      dancode: req.session.dancode,
+      username: req.session.username,
+      usergubun: req.session.usergubun
+    };
+    res.render('chat', info)
+  } else {
+    res.redirect('/')
+  }
+})
 
 app.get('/adm', async function(req, res) {
   await read_DB();
@@ -145,7 +183,7 @@ app.get('/adm/:tableName/columns', async function(req, res) {
     reg: reg
   })
 })
-app.post('/adm/createTable', async function(req, res) {
+app.post('/adm/insert/table', async function(req, res) {
   const tableKey = req.body.tableKey
   const tableName = req.body.tableName
   const query = `
@@ -182,7 +220,7 @@ app.post('/adm/createTable', async function(req, res) {
       </script>
     `)
 })
-app.post('/adm/addRegexp', async function(req, res) {
+app.post('/adm/insert/regexp', async function(req, res) {
   const parameter_type = req.body.parameter_type
   const regexp = req.body.regexp
   const _option = req.body._option
@@ -217,7 +255,7 @@ app.post('/adm/addRegexp', async function(req, res) {
       </script>
     `)
 })
-app.post('/adm/:tableName/addRows', async function(req, res) {
+app.post('/adm/insert/:tableName/row', async function(req, res) {
   const parameter = req.body.parameter
   const display_name = req.body.display_name
   const parameter_type = req.body.parameter_type
@@ -250,7 +288,110 @@ app.post('/adm/:tableName/addRows', async function(req, res) {
       </script>
     `)
 })
-app.post('/adm/deleteTable', async function(req, res) {
+app.post('/adm/update/table', async function(req, res) {
+  const prev = req.body.prev
+  const tableKey = req.body.tableKey
+  const tableName = req.body.tableName
+  const query = `
+    UPDATE TABLES SET tableKey='${tableKey}', tableName='${tableName}'
+    WHERE tableName='${prev}';
+    EXEC SP_RENAME '${prev}', '${tableName}';
+  `
+  console.log(query)
+  await (async () => {
+    return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+      return pool.request().query(query)
+    }).then(async result => {
+      await sql.close()
+      tableList = []
+      tables = {}
+      reg = {}
+      await read_DB()
+      return
+    }).catch(err => {
+      console.error(err)
+      sql.close()
+      throw err
+    });
+  })()
+  res.send(`
+      <script>
+        alert('good')
+        location.href="/adm/tables"
+      </script>
+    `)
+})
+app.post('/adm/update/regexp', async function(req, res) {
+  const idx = req.body.idx
+  const parameter_type = req.body.parameter_type
+  const regexp = req.body.regexp
+  const _option = req.body._option
+  const return_value = req.body.return_value ? req.body.return_value : ""
+  const start = req.body.start ? parseInt(req.body.start) : -1
+  const _length = req.body._length ? parseInt(req.body._length) : -1
+  const query = `
+    UPDATE REGEXPS SET parameter_type='${parameter_type}', regexp='${regexp}', _option='${_option}', return_value='${return_value}', start=${start}, _length=${_length}
+    WHERE idx=${idx};
+  `
+  console.log(query)
+  await (async () => {
+    return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+      return pool.request().query(query)
+    }).then(async result => {
+      await sql.close()
+      tableList = []
+      tables = {}
+      reg = {}
+      await read_DB()
+      return
+    }).catch(err => {
+      console.error(err)
+      sql.close()
+      throw err
+    });
+  })()
+  res.send(`
+      <script>
+        alert('good')
+        location.href="/adm/regexps"
+      </script>
+    `)
+})
+app.post('/adm/update/:tableName/row', async function(req, res) {
+  const prev = req.body.prev
+  const parameter = req.body.parameter
+  const display_name = req.body.display_name
+  const parameter_type = req.body.parameter_type
+  const tableName = req.params.tableName
+  const query = `
+    UPDATE ${tableName} SET parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}'
+    WHERE parameter='${prev}';
+  `
+  console.log(query)
+  await (async () => {
+    return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+      return pool.request().query(query)
+    }).then(async result => {
+      await sql.close()
+      tableList = []
+      tables = {}
+      reg = {}
+      await read_DB()
+      return
+    }).catch(err => {
+      console.error(err)
+      sql.close()
+      throw err
+    });
+  })()
+  res.send(`
+      <script>
+        alert('good')
+        location.href="/adm/${tableName}/columns"
+      </script>
+    `)
+})
+app.post('/adm/delete/table', async function(req, res) {
   const tableName = req.body.tableName
   if (tableName) {
     await (async () => {
@@ -287,7 +428,7 @@ app.post('/adm/deleteTable', async function(req, res) {
       `)
   }
 })
-app.post('/adm/deleteRegexp', async function(req, res) {
+app.post('/adm/delete/regexp', async function(req, res) {
   const idx = parseInt(req.body.idx) ? parseInt(req.body.idx) : -1
   if (idx != -1) {
     await (async () => {
@@ -321,7 +462,7 @@ app.post('/adm/deleteRegexp', async function(req, res) {
       `)
   }
 })
-app.post('/adm/:tableName/deleteRows', async function(req, res) {
+app.post('/adm/delete/:tableName/row', async function(req, res) {
   const tableName = req.params.tableName
   const parameter = req.body.parameter
   if (tableName) {

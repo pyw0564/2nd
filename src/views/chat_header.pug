@@ -1,14 +1,16 @@
 #dan_info
     |[
-    span#dancode 1261
+    span#dancode
+      =dancode
     |]
-    span#danname 해운대경동윈츠타워
+    span#danname
     //- |채팅
 #user_info
     div(style="display:flex;")
         |사용자: 
         //- #userId(contenteditable style="background-color:white;width:150px;color:black;")
-        span#userId extest0001
+        span#userId
+          =username
     div
         |시간: 
         span#login_time
@@ -18,4 +20,3 @@
             = time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes()
             |:
             = time.getSeconds() < 10 ? '0'+time.getSeconds() : time.getSeconds()
-

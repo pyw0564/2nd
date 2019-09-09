@@ -1,20 +1,44 @@
+script(type="text/javascript").
+  var columns = !{JSON.stringify(columns)}
+  var tableName = !{JSON.stringify(tableName)}
+  $(document).ready(function() {
+    $(".update").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+      var index = $(".selected").attr("value")
+      $("#parameter").val(columns[index].parameter)
+      $("#display_name").val(columns[index].display_name)
+      $("#parameter_type").val(columns[index].parameter_type)
+      
+      $("#prev").val(columns[index].parameter)
+      $("#addRows").attr("action", "/adm/update/"+tableName+"/row")
+      $("#submit").val("수정")
+    })
+    $("#reset").click(function() {
+      $("#idx").val("")
+      $("#addRows").attr("action", "/adm/insert/"+tableName+"/row")
+      $("#submit").val("등록")
+    })
+  })
 #adm_sub_page
-  form#addRows(method="post", action="/adm/"+tableName+"/addRows")
+  form#addRows(method="post", action="/adm/insert/"+tableName+"/row")
     #variables
       label
         | parameter:
-        input(type="text" name="parameter")
+        input#parameter(type="text" name="parameter")
       br
       label
         | display_name:
-        input(type="text" name="display_name")
+        input#display_name(type="text" name="display_name")
       br
       label
         | parameter_type:
-        input(type="text" name="parameter_type")
+        input#parameter_type(type="text" name="parameter_type")
       br
       label
-        input(type="submit" value="등록")
+        input#prev(type="hidden" name="prev" value="")
+        input#submit(type="submit" value="등록")
+        input#reset(type="reset" value="취소")
   table(border="1")
     thead
       tr
@@ -26,7 +50,7 @@
         th
     tbody
       -for(let i = 0 ; i < columns.length ; i++) {
-        tr
+        tr(id=columns[i].parameter value=i)
           td
             input.select(type="checkbox" value=columns[i].parameter)
           td
@@ -36,8 +60,8 @@
           td
             =columns[i].parameter_type
           td.buttonList
-            button.edit 수정
-            form(method="post" action="/adm/"+tableName+"/deleteRows")
+            button.update(value=columns[i].parameter) 수정
+            form(method="post" action="/adm/delete/"+tableName+"/row")
               button.delete(name="parameter" value=columns[i].parameter) 삭제
       -}
   

@@ -1,16 +1,38 @@
+script(type="text/javascript").
+  var tables = !{JSON.stringify(tables)}
+  $(document).ready(function() {
+    $(".update").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+      var index = $(".selected").attr("value")
+      $("#tableKey").val(tables[index].tableKey)
+      $("#tableName").val(tables[index].tableName)
+      
+      $("#prev").val(tables[index].tableName)
+      $("#createTable").attr("action", "/adm/update/table")
+      $("#submit").val("수정")
+    })
+    $("#reset").click(function() {
+      $("#idx").val("")
+      $("#createTable").attr("action", "/adm/insert/table")
+      $("#submit").val("등록")
+    })
+  })
 #adm_sub_page
-  form#createTable(method="post", action="/adm/createTable")
+  form#createTable(method="post", action="/adm/insert/table")
     #variables
       label
         | tableKey:
-        input(type="text" name="tableKey")
+        input#tableKey(type="text" name="tableKey")
       br
       label
         | tableName:
-        input(type="text" name="tableName")
+        input#tableName(type="text" name="tableName")
       br
       label
-        input(type="submit" value="등록")
+        input#prev(type="hidden" name="prev" value="")
+        input#submit(type="submit" value="등록")
+        input#reset(type="reset" value="취소")
   table(border="1")
     thead
       tr
@@ -21,7 +43,7 @@
         th
     tbody
       -for(let i = 0 ; i < tables.length ; i++) {
-        tr
+        tr(id=tables[i].tableName value=i)
           td
             input.select(type="checkbox" value=tables[i].tableName)
           td
@@ -30,8 +52,8 @@
             a(href="/adm/"+tables[i].tableName+"/columns")
               =tables[i].tableName
           td.buttonList
-            button.edit 수정
-            form(method="post" action="/adm/deleteTable")
+            button.update(value=tables[i].tableName) 수정
+            form(method="post" action="/adm/delete/table")
               button.delete(name="tableName" value=tables[i].tableName) 삭제
       -}
   
