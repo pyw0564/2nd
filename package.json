@@ -11,6 +11,7 @@
   "dependencies": {
     "axios": "^0.19.0",
     "base64-url": "^2.3.2",
+    "connect-redis": "^4.0.2",
     "crypto": "^1.0.1",
     "dotenv": "^8.1.0",
     "express": "^4.17.1",
@@ -20,6 +21,7 @@
     "moment-timezone": "^0.5.26",
     "mssql": "^5.1.0",
     "pug": "^2.0.4",
+    "redis": "^2.8.0",
     "scanf": "^1.0.2"
   }
 }

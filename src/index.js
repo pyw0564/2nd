@@ -3,8 +3,11 @@ require('dotenv').config({
   path: __dirname + '/../' + '.env'
 })
 const imc = require('./imc');
-const session = require('express-session');
-const express = require('express');
+const Redis = require('redis')
+const client = Redis.createClient()
+const session = require('express-session')
+var redisStore = require('connect-redis')(session)
+const express = require('express')
 var app = express();
 var sql = require('mssql');
 
@@ -14,6 +17,9 @@ app.use(bodyParser.urlencoded({
 }))
 app.use(session({
   secret: '1a3sdfg3#$#@13%#45asfsd',
+  store: new redisStore({
+    client:client
+  }),
   resave: false,
   saveUninitialized: true
 }))
@@ -67,7 +73,7 @@ app.post('/login', async function(req, res) {
   const pw = req.body.userpw
   const dancode = req.body.dancode
   const auth = await imc.authorize(id, pw)
-  if (auth.message != "success") {
+  if (auth.response_code != "OK") {
     res.send(`
         <script>
           alert("아이디 또는 비밀번호가 틀립니다.")
