@@ -66,7 +66,9 @@ app.set('views', './views');
 
 app.locals.pretty = true;
 app.get('/', function(req, res) {
-  res.render("login")
+  res.render("chat", {
+    login: true
+  })
 })
 app.post('/login', async function(req, res) {
   const id = req.body.userid

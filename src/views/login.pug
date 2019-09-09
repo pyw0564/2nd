@@ -1,15 +1,12 @@
-doctype html
-html
-  head
-  body
-    form(method="post" action="/login")
-      label
-        | ID:
-        input(type="text" name="userid")
-      br
-      label
-        | PW:
-        input(type="password" name="userpw")
-      br
-      label
-        input(type="submit" value="로그인")
+#login_form
+  form(method="post" action="/login")
+    label
+      | ID:
+      input#userid(type="text" name="userid")
+    br
+    label
+      | PW:
+      input#userpw(type="password" name="userpw")
+    br
+    label
+      input(type="submit" value="로그인")
