@@ -17,7 +17,7 @@ app.use(session({
 app.set('view engine', 'pug');
 app.set('views', './views');
 app.use('/', express.static(__dirname));
-app.use('/', require('./adm'));
+app.use('/adm', require('./adm'));
 app.use('/', require('./chatbot'));
 app.locals.pretty = true;
 

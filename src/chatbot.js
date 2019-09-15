@@ -27,8 +27,11 @@ router.post('/login', async function(req, res) {
         </script>
       `)
   } else {
+    // req.session.dancode = 'nono'
     req.session.dancode = auth.result[0].dancode
+    // req.session.username = 'haha'
     req.session.username = auth.result[0].username
+    // req.session.usergubun = '1234'
     req.session.usergubun = auth.result[0].usergubun
     res.redirect("/chat")
   }

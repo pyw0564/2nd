@@ -1,5 +1,5 @@
-script.
-  var regexps = !{JSON.stringify(regexps)}
+script(type="text/javascript").
+  var reg = !{JSON.stringify(reg)}
   $(document).ready(function() {
     function regexp_test() {
       var regexp
@@ -35,14 +35,14 @@ script.
       $(".selected").removeClass("selected")
       $("tr#"+$(this).val()).addClass("selected")
       var index = $(".selected").attr("value")
-      $("#parameter_type").val(regexps[index].parameter_type)
-      $("#regexp").val(regexps[index].regexp)
-      $("#_option").val(regexps[index]._option)
-      $("#return_value").val(regexps[index].return_value)
-      $("#start").val(regexps[index].start)
-      $("#_length").val(regexps[index]._length)
+      $("#parameter_type").val(reg[index].parameter_type)
+      $("#regexp").val(reg[index].regexp)
+      $("#_option").val(reg[index]._option)
+      $("#return_value").val(reg[index].return_value)
+      $("#start").val(reg[index].start)
+      $("#_length").val(reg[index]._length)
       
-      $("#idx").val(regexps[index].idx)
+      $("#idx").val(reg[index].idx)
       $("#addRegexp").attr("action", "/adm/update/regexp")
       $("#submit").val("수정")
     })
@@ -52,7 +52,6 @@ script.
       $("#submit").val("등록")
     })
   })
-
 #adm_sub_page
   form#addRegexp(method="post", action="/adm/insert/regexp")
     #variables
@@ -102,24 +101,24 @@ script.
         th _length
         th
     tbody
-      -for(let i = 0 ; i < regexps.length ; i++) {
-        tr(id=regexps[i].idx value=i)
+      -for(let i = 0 ; i < reg.length ; i++) {
+        tr(id=reg[i].idx value=i)
           td
-            input.select(type="checkbox" value=regexps[i].idx)
+            input.select(type="checkbox" value=reg[i].idx)
           td.parameter_type
-            =regexps[i].parameter_type
+            =reg[i].parameter_type
           td.regexp
-            =regexps[i].regexp
+            =reg[i].regexp
           td._option
-            =regexps[i]._option
+            =reg[i]._option
           td.return_value
-            =regexps[i].return_value
+            =reg[i].return_value
           td.start
-            =regexps[i].start
+            =reg[i].start
           td._length
-            =regexps[i]._length
+            =reg[i]._length
           td.buttonList
-            button.update(value=regexps[i].idx) 수정
+            button.update(value=reg[i].idx) 수정
             form(method="post" action="/adm/delete/regexp")
-              button.delete(name="idx" value=regexps[i].idx) 삭제
+              button.delete(name="idx" value=reg[i].idx) 삭제
       -}

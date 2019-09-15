@@ -1,14 +1,14 @@
 script(type="text/javascript").
-  var tables = !{JSON.stringify(tables)}
+  var tableList = !{JSON.stringify(tableList)};
   $(document).ready(function() {
     $(".update").click(function() {
       $(".selected").removeClass("selected")
       $("tr#"+$(this).val()).addClass("selected")
       var index = $(".selected").attr("value")
-      $("#tableKey").val(tables[index].tableKey)
-      $("#tableName").val(tables[index].tableName)
+      $("#tableKey").val(tableList[index].tableKey)
+      $("#tableName").val(tableList[index].tableName)
       
-      $("#prev").val(tables[index].tableName)
+      $("#prev").val(tableList[index].tableName)
       $("#createTable").attr("action", "/adm/update/table")
       $("#submit").val("수정")
     })
@@ -42,18 +42,18 @@ script(type="text/javascript").
         th tableName
         th
     tbody
-      -for(let i = 0 ; i < tables.length ; i++) {
-        tr(id=tables[i].tableName value=i)
+      -for(let i = 0 ; i < tableList.length ; i++) {
+        tr(id=tableList[i].tableName value=i)
           td
-            input.select(type="checkbox" value=tables[i].tableName)
+            input.select(type="checkbox" value=tableList[i].tableName)
           td
-            =tables[i].tableKey
+            =tableList[i].tableKey
           td
-            a(href="/adm/"+tables[i].tableName+"/columns")
-              =tables[i].tableName
+            a(href="/adm/"+tableList[i].tableName+"/columns")
+              =tableList[i].tableName
           td.buttonList
-            button.update(value=tables[i].tableName) 수정
+            button.update(value=tableList[i].tableName) 수정
             form(method="post" action="/adm/delete/table")
-              button.delete(name="tableName" value=tables[i].tableName) 삭제
+              button.delete(name="tableName" value=tableList[i].tableName) 삭제
       -}
   
