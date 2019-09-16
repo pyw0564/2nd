@@ -56,6 +56,10 @@ script(type="text/javascript").
       $("#return_value").val(reg[index].return_value)
       $("#start").val(reg[index].start)
       $("#_length").val(reg[index]._length)
+      
+      $("#idx").val("")
+      $("#addRegexp").attr("action", "/adm/insert/regexp")
+      $("#submit").val("등록")
     })
     $("#reset").click(function() {
       $(".selected").removeClass("selected")
