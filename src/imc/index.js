@@ -28,20 +28,20 @@ module.exports = function(){
 		let data = {
 			ssotoken:token
 		}
-		
+
 		return await post("/auth/authorize",data,head);
 	}
-	
+
 	async function roombasic(data){
 		if(data == undefined){
 			console.log("imc roombasic: data undefined");
 			return;
 		}
 		let XAuth = cryptor.getXAuth(data);
-		let head = getHeaders(XAuth);	
+		let head = getHeaders(XAuth);
 		return await post("/rec/roombasic/get",data,head);
 	}
-	return{
+	return {
 		authorize,
 		roombasic
 	}

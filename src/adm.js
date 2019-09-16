@@ -62,7 +62,13 @@ router.post('/insert/table', async function(req, res) {
                     display_name nvarchar(255) NOT NULL,
                     parameter_type varchar(255) NOT NULL,
                     PRIMARY KEY (parameter))`
-  await sqlQuery(query)
+  console.log(query);
+  try {
+    await sqlQuery(query)
+  } catch (e) {
+    console.log('테이블 등록실패')
+    res.send(alertAndRedirect('테이블 등록 실패', '/adm/tables'))
+  }
   console.log('테이블 등록완료')
   res.send(alertAndRedirect('테이블 등록이 완료되었습니다', '/adm/tables'))
 })
@@ -183,14 +189,14 @@ router.post('/delete/:tableName/row', async function(req, res) {
   }
 })
 
-function alertAndRedirect(aler, href){
+function alertAndRedirect(aler, href) {
   let ret = `
   <script>
     alert("${aler}")
     location.href="${href}"
   </script>`;
-  console.log(ret);
-  return ret;
+  console.log(ret)
+  return ret
 }
 
 async function sqlQuery(query) {
@@ -198,7 +204,6 @@ async function sqlQuery(query) {
   return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
     return pool.request().query(query)
   }).then(async result => {
-    console.log(result.recordset)
     await sql.close()
     await read_DB()
     return result.recordset
