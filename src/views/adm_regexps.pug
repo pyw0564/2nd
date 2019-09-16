@@ -46,7 +46,19 @@ script(type="text/javascript").
       $("#addRegexp").attr("action", "/adm/update/regexp")
       $("#submit").val("수정")
     })
+    $(".clone").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+      var index = $(".selected").attr("value")
+      $("#parameter_type").val(reg[index].parameter_type)
+      $("#regexp").val(reg[index].regexp)
+      $("#_option").val(reg[index]._option)
+      $("#return_value").val(reg[index].return_value)
+      $("#start").val(reg[index].start)
+      $("#_length").val(reg[index]._length)
+    })
     $("#reset").click(function() {
+      $(".selected").removeClass("selected")
       $("#idx").val("")
       $("#addRegexp").attr("action", "/adm/insert/regexp")
       $("#submit").val("등록")
@@ -119,6 +131,7 @@ script(type="text/javascript").
             =reg[i]._length
           td.buttonList
             button.update(value=reg[i].idx) 수정
+            button.clone(value=reg[i].idx) 복사
             form(method="post" action="/adm/delete/regexp")
               button.delete(name="idx" value=reg[i].idx) 삭제
       -}
