@@ -11,12 +11,7 @@ var reg = config.reg
 
 router.get('/', async function(req, res) {
   await read_DB()
-  res.render("adm", {
-    type: "default",
-    tableList: tableList,
-    tables: tables,
-    reg: reg
-  })
+  res.redirect('/adm/tables')
 })
 
 router.get('/tables', async function(req, res) {
