@@ -6,11 +6,13 @@ a:focus,
 a:link,
 a:visited {color:black;}
 
-#adm_page {width:800px;padding: 15px;background-color: white;display:block;}
+#adm_page {width:850px;min-width:850px;padding: 15px;background-color: white;display:block;}
 #adm_page #adm_main_page {border:1px solid black;position:relative;height:42px;display:flex;}
 #adm_page #adm_main_page a {width:auto; padding:10px; background-color: gray; border-right: 1px solid black;display: inline-block;}
 #adm_page #adm_main_page a.active {background-color: white;border-bottom: white;height:calc(100% + 1px)}
 #adm_page #adm_main_page #extra {width:auto; height:100%; border-bottom: 1px solid black;display:inline-block;}
+
+#adm_page #adm_sub_page {overflow: scroll;}
 
 #adm_page #adm_sub_page {padding:10px; border-left: 1px solid black;border-right: 1px solid black;border-bottom: 1px solid black;height: calc(100% - 42px);}
 #adm_page #adm_sub_page form {border:1px solid black;}
