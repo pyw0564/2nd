@@ -21,14 +21,14 @@ const sqlConfig = {
   }
 }
 async function initialize(){
-  while(tableList.length) tableList.pop()
-  for(let key in tables) delete tables[key]
-  for(let key in reg) delete reg[key]
+  while (tableList.length) tableList.pop()
+  for (let key in tables) delete tables[key]
+  for (let key in reg) delete reg[key]
 }
 async function read_DB() {
   try {
     await initialize()
-    await console.log("SQL connecting......");
+    await console.log("SQL Connecting . . .");
     let pool = await sql.connect(sqlConfig);
     let result = await pool.request().query('SELECT * FROM tables'); // subject is my database table name
 
@@ -64,9 +64,7 @@ async function read_DB() {
       });
     }
     await sql.close()
-    await console.log('테이블리스트', tableList);
-    await console.log('테이블', tables);
-    await console.log('정규식', reg);
+    await console.log("~ SQL CLOSE ~")
   } catch (err) {
     sql.close()
     await console.log(err);
