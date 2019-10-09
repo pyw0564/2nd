@@ -104,3 +104,35 @@ input:focus, button:focus { outline:none; }
 
 #chat_submit > #submit { font-size:16px; }
 #chat_submit > #submit > button { font-size:16px; word-break: keep-all;height:100%; background-color: aqua;}
+
+
+.necessary{
+  background-color: blue;
+  font-family: serif;
+  color:white;
+  font-weight: bold;
+}
+.not_necessary{
+  background-color: red;
+  font-family: serif;
+}
+.choose_button{
+  width:80px;
+  height:80px;
+}
+#choose{
+  padding: 10px;
+  display: flex;
+}
+#yes{
+  cursor:pointer;
+  border: 1px solid black;
+  text-align: center;
+  background-color: white;
+}
+#no {
+  cursor:pointer;
+  border: 1px solid black;
+  text-align: center;
+  background-color: white;
+}

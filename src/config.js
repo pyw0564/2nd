@@ -1,8 +1,10 @@
 const sql = require('mssql');
-require('dotenv').config({ path: __dirname + '/../' + '.env' })
-var tableList = []
-var tables = {}
-var reg = {}
+require('dotenv').config({
+  path: __dirname + '/../' + '.env'
+})
+var Api = {}
+var Parameter = {}
+var Regexpr = {}
 const sqlConfig = {
   user: process.env.DB_USER ? process.env.DB_USER : 'njuser', // mssql username
   password: process.env.DB_PASSWORD ? process.env.DB_PASSWORD : 'imc0029', // mssql password
@@ -20,60 +22,77 @@ const sqlConfig = {
     idleTimeoutMillis: 30000
   }
 }
-async function initialize(){
-  while (tableList.length) tableList.pop()
-  for (let key in tables) delete tables[key]
-  for (let key in reg) delete reg[key]
+// 3개의 테이블 객체 유지하면서 속성 제거
+async function initialize() {
+  while (Api.length) Api.pop()
+  for (let key in Parameter) delete Parameter[key]
+  for (let key in Regexpr) delete Regexpr[key]
 }
-async function read_DB() {
-  try {
-    await initialize()
-    await console.log("SQL Connecting . . .");
-    let pool = await sql.connect(sqlConfig);
-    let result = await pool.request().query('SELECT * FROM tables'); // subject is my database table name
 
-    for (let i = 0; i < result.recordset.length; i++) {
-      let record = result.recordset[i];
-      tableList.push({
-        key: record.tableKey,
-        tableName: record.tableName
-      });
-      let result_table = await pool.request().query(`SELECT * FROM ${record.tableName}`);
-      tables[record.tableName] = [];
-      for (let j = 0; j < result_table.recordset.length; j++) {
-        let table = result_table.recordset[j];
-        let obj = {};
-        for (let item in table) {
-          obj[item] = table[item];
-        }
-        tables[record.tableName].push(obj);
-      }
-    }
-    result = await pool.request().query('SELECT * FROM regexps'); // subject is my database table name
-    for (let i = 0; i < result.recordset.length; i++) {
-      let record = result.recordset[i];
-      if (reg[record.parameter_type] == null) {
-        reg[record.parameter_type] = [];
-      }
-      reg[record.parameter_type].push({
-        regexp: record.regexp,
-        return_value: record.return_value,
-        start: record.start,
-        _length: record._length,
-        _option: record._option
-      });
-    }
+async function sqlQuery(query) {
+  return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
+    return pool.request().query(query)
+  }).then(async result => {
     await sql.close()
-    await console.log("~ SQL CLOSE ~")
-  } catch (err) {
+    return result.recordset
+  }).catch(err => {
+    console.error(err)
     sql.close()
-    await console.log(err);
+    throw err
+  })
+}
+// api 읽기
+async function read_api() {
+  let result = await sqlQuery('SELECT * FROM Api')
+  for (let i = 0; i < result.length; i++) {
+    let row = result[i];
+    let obj = {};
+    for (let item in row) obj[item] = row[item];
+    Api[row.api_name] = obj;
   }
 }
+// parameter 읽기
+async function read_parameter() {
+  let result = await sqlQuery(`SELECT * FROM Parameter`)
+  for (let i = 0; i < result.length; i++) {
+    let row = result[i];
+    if (Parameter[row.api_name] === undefined) {
+      Parameter[row.api_name] = [];
+    }
+    let obj = {};
+    for (let item in row) obj[item] = row[item];
+    Parameter[row.api_name].push(obj);
+  }
+}
+// regexp 읽기
+async function read_regexp() {
+  let result = await sqlQuery(`SELECT * FROM Regexp`)
+  for (let i = 0; i < result.length; i++) {
+    let row = result[i];
+    if (Regexpr[row.parameter_type] === undefined) {
+      Regexpr[row.parameter_type] = [];
+    }
+    let obj = {};
+    for (let item in row) obj[item] = row[item];
+    Regexpr[row.parameter_type].push(obj);
+  }
+}
+// 통합 읽기
+async function read_DB() {
+  await initialize()
+  await console.log("SQL Connect . . .")
+  await read_api()
+  console.log('Api 읽기완료', Api)
+  await read_parameter()
+  console.log('Parameter 읽기완료', Parameter)
+  await read_regexp()
+  console.log('Regexp 읽기완료', Regexpr)
+  await console.log("READ DB 종료 되었습니다.")
+}
 
-exports.tableList = tableList
-exports.tables = tables
-exports.reg = reg
+exports.Api = Api
+exports.Parameter = Parameter
+exports.Regexpr = Regexpr
 exports.sqlConfig = sqlConfig
 exports.read_DB = read_DB
 exports.initialize = initialize

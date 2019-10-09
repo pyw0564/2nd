@@ -1,12 +1,12 @@
 #text
   -if(login) {
-    #chat_data
-  -} else {
     #chat_data(contenteditable)
+  -} else {
+    #chat_data
   -}
 #submit
     -if(login) {
-      button#chat_submit_btn(value="전송" disabled) 전송
-    -} else {
       button#chat_submit_btn(value="전송") 전송
+    -} else {
+      button#chat_submit_btn(value="전송" disabled) 전송
     -}

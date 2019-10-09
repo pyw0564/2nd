@@ -1,74 +1,93 @@
 /* jshint esversion: 8 */
-var information = {}; // 파싱한 정보 객체
-var query; // 입력 문자열
-var flag; // 정보 유지를 위한 플래그
-function init(q) {
+var information = {} // 파싱한 정보 객체
+var flag // 정보 유지를 위한 플래그
+function init(query) {
   // CLEAR
-  if (q == '취소') {
-    console.log("CLEAR EXECUTE");
+  if (query == '취소') {
+    console.log("CLEAR EXECUTE")
     information = {
       message: "정보가 초기화 되었습니다"
-    };
-    flag = null;
-    return information;
+    }
+    flag = null
+    return information
   }
   if (flag) {
-    console.log("FLAG EXECUTE");
-    return parameters(flag.table, q);
+    console.log("FLAG EXECUTE")
+    return find_parameters(flag.api_name, query)
   }
-  information = {};
-  information = find_table(q);
-  console.log(information);
-  return information;
+  information = {}
+  information = find_api(query)
+  console.log(information)
+  return information
 }
-// 1step
-function find_table(query) {
-  for (let i = 0; i < tableList.length; i++) {
-    let key = tableList[i].key;
-    let tableName = tableList[i].tableName;
-    if (query.indexOf(key) !== -1) {
-      flag = { table: tables[tableName], tableName: tableName };
-      return parameters(tables[tableName], query);
+
+// 1step -> api 골라내기
+function find_api(query) {
+  for (let item in Api) {
+    let api_name = Api[item].api_name
+    let parameter_type = Api[item].parameter_type
+    let display_name = Api[item].display_name
+    let response = Api[item].response
+    if (Regexpr[item] === undefined) continue
+    for (let j = 0; j < Regexpr[item].length; j++) {
+      let low = Regexpr[item][j]
+      let regexp = new RegExp(low.regexp, low._option)
+      let result = query.match(regexp)
+      if (result) {
+        flag = {
+          api_name: api_name,
+          display_name: display_name
+        }
+        let ret = find_parameters(api_name, query)
+        ret.response = response
+        return ret
+      }
     }
   }
-  return null;
+  return null
 }
 
-// 2step
-function parameters(table, query) {
-  let ret = {};
+// 2step -> parameter 마다 파싱
+function find_parameters(api_name, query) {
+  let parameters = Parameter[api_name]
+  let ret = {}
   if (flag) {
-    ret = information;
-    ret.message = flag.tableName + "이 실행중";
+    ret = information
+    ret.message = flag.display_name + " 실행중"
   }
-  for (let i = 0; i < table.length; i++) {
-    let parameter = table[i].parameter;
-    let display_name = table[i].display_name;
-    let parameter_type = table[i].parameter_type;
-    let parsing_ret = parsing(reg[parameter_type], query);
-    if (parsing_ret == null && information[parameter] != null) continue;
-    ret[parameter] = parsing_ret;
+  for (let i = 0; i < parameters.length; i++) {
+    let parameter = parameters[i].parameter
+    let display_name = parameters[i].display_name
+    let parameter_type = parameters[i].parameter_type
+    let necessary = parameters[i].necessary
+
+    let parsing_ret = parsing(Regexpr[parameter_type], query)
+    if (parsing_ret == null && information[parameter] != null) continue
+    ret[parameter] = {
+      display_name : display_name,
+      result : parsing_ret,
+      necessary : necessary
+    }
   }
-  return ret;
+  return ret
 }
 
-// 3step
+// 3step -> 파싱 함수
 function parsing(regs, query) {
-  if (regs == null) return null;
+  if (regs == null) return null
   for (let i = 0; i < regs.length; i++) {
-    let reg = regs[i];
+    let reg = regs[i]
     let regexp = new RegExp(reg.regexp, reg._option);
-    console.log('정규표현식 ->', regexp);
-    let parsing_array = query.match(regexp);
-    console.log('배열', parsing_array);
-    if (parsing_array == null) continue;
+    let parsing_array = query.match(regexp)
+
+    if (parsing_array == null) continue
     if (parsing_array.length == 1) {
       let ret = (reg.return_value === null || reg.return_value === "") ? parsing_array[0].substr(reg.start, reg._length) : reg.return_value;
       query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length);
-      return ret;
+      return ret
     } else if (parsing_array.length > 1) {
-      console.log("정규표현식 결과가 2개이상이므로 모호합니다");
+      console.log("정규표현식 결과가 2개이상이므로 모호합니다")
     }
   }
-  return null;
+  return null
 }
