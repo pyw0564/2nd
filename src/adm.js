@@ -15,7 +15,7 @@ router.get('/', async function(req, res) {
 })
 
 router.get('/tables', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM tables")
+  const queryResult = await sqlQuery("SELECT * FROM API")
   res.render("adm", {
     type: "tables",
     tableList: queryResult,
@@ -36,7 +36,7 @@ router.get('/regexps', async function(req, res) {
 
 router.get('/:tableName/columns', async function(req, res) {
   const tableName = req.params.tableName
-  let queryResult = await sqlQuery(`SELECT * FROM ${tableName}`)
+  let queryResult = await sqlQuery(`SELECT * FROM Parameter where api_name = '${tableName}'`)
   res.render("adm", {
     type: "columns",
     columns: queryResult,
@@ -48,15 +48,12 @@ router.get('/:tableName/columns', async function(req, res) {
 })
 
 router.post('/insert/table', async function(req, res) {
-  const tableKey = req.body.tableKey
-  const tableName = req.body.tableName
-  const query = ` INSERT INTO TABLES(tableKey, tableName)
-                  VALUES ('${tableKey}', '${tableName}');
-                  CREATE TABLE ${tableName} (
-                    parameter nvarchar(255) NOT NULL,
-                    display_name nvarchar(255) NOT NULL,
-                    parameter_type varchar(255) NOT NULL,
-                    PRIMARY KEY (parameter))`
+  const display_name = req.body.display_name
+  const api_name = req.body.api_name
+  const response = req.body.response
+  const parameter_type = req.body.parameter_type
+  const query = ` INSERT INTO API(display_name, api_name, response, parameter_type)
+                  VALUES ('${display_name}', '${api_name}', '${response}', '${parameter_type}');`
   console.log(query);
   try {
     await sqlQuery(query)
@@ -85,27 +82,33 @@ router.post('/insert/regexp', async function(req, res) {
 })
 
 router.post('/insert/:tableName/row', async function(req, res) {
+  const api_name = req.body.api_name
   const parameter = req.body.parameter
   const display_name = req.body.display_name
   const parameter_type = req.body.parameter_type
+  const necessary = req.body.necessary
   const tableName = req.params.tableName
   const query = `
-    INSERT INTO ${tableName}(parameter, display_name, parameter_type)
-    VALUES ('${parameter}', '${display_name}', '${parameter_type}')
+    INSERT INTO Parameter(api_name, parameter, display_name, parameter_type, necessary)
+    VALUES ('${api_name}', '${parameter}', '${display_name}', '${parameter_type}', ${necessary})
   `
+  console.log(query)
   await sqlQuery(query)
   console.log('테이블 속성 등록완료')
-  res.send(alertAndRedirect('테이블 속성 등록완료', `/adm/${tableName}/columns`))
+  res.send(alertAndRedirect('테이블 속성 등록완료', `/adm/${api_name}/columns`))
 })
 
 router.post('/update/table', async function(req, res) {
   const prev = req.body.prev
-  const tableKey = req.body.tableKey
-  const tableName = req.body.tableName
+  const display_name = req.body.display_name
+  const api_name = req.body.api_name
+  const response = req.body.response
+  const parameter_type = req.body.parameter_type
   const query = `
-    UPDATE TABLES SET tableKey='${tableKey}', tableName='${tableName}'
-    WHERE tableName='${prev}';
-    EXEC SP_RENAME '${prev}', '${tableName}';
+    UPDATE API SET display_name='${display_name}', api_name='${api_name}', response='${response}', parameter_type='${parameter_type}'
+    WHERE api_name='${prev}';
+    UPDATE Parameter SET api_name = '${api_name}'
+    WHERE api_name='${prev}';
   `
   await sqlQuery(query)
   console.log('테이블 수정완료')
@@ -131,25 +134,27 @@ router.post('/update/regexp', async function(req, res) {
 
 router.post('/update/:tableName/row', async function(req, res) {
   const prev = req.body.prev
+  const api_name = req.body.api_name
   const parameter = req.body.parameter
   const display_name = req.body.display_name
   const parameter_type = req.body.parameter_type
+  const necessary = req.body.necessary
   const tableName = req.params.tableName
   const query = `
-    UPDATE ${tableName} SET parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}'
-    WHERE parameter='${prev}';
+    UPDATE Parameter SET api_name='${api_name}', parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}', necessary='${necessary}'
+    WHERE parameter='${prev}' and api_name='${tableName}';
   `
   await sqlQuery(query)
   console.log('테이블 속성 수정완료')
-  res.send(alertAndRedirect('테이블 속성 수정완료', `/adm/${tableName}/columns`))
+  res.send(alertAndRedirect('테이블 속성 수정완료', `/adm/${api_name}/columns`))
 })
 
 router.post('/delete/table', async function(req, res) {
-  const tableName = req.body.tableName
-  if (tableName) {
+  const api_name = req.body.api_name
+  if (api_name) {
     let query = `
-      DELETE FROM TABLES WHERE tableName = '${tableName}';
-      DROP TABLE ${tableName};
+      DELETE FROM API WHERE api_name = '${api_name}';
+      DELETE FROM Parameter WHERE api_name = '${api_name}';
     `
     await sqlQuery(query)
     console.log('테이블 삭제완료')
@@ -175,7 +180,7 @@ router.post('/delete/:tableName/row', async function(req, res) {
   const tableName = req.params.tableName
   const parameter = req.body.parameter
   if (tableName) {
-    let query = `DELETE FROM ${tableName} WHERE parameter = '${parameter}'`
+    let query = `DELETE FROM Parameter WHERE parameter = '${parameter}' and api_name = '${tableName}'`
     await sqlQuery(query)
     console.log('테이블 속성삭제완료')
     res.send(alertAndRedirect('테이블 속성삭제완료', `/adm/${tableName}/columns`))

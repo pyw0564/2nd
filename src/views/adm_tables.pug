@@ -1,14 +1,16 @@
 script(type="text/javascript").
-  var tableList = !{JSON.stringify(tableList)};
+  var tableList = !{JSON.stringify(tableList)}
   $(document).ready(function() {
     $(".update").click(function() {
       $(".selected").removeClass("selected")
       $("tr#"+$(this).val()).addClass("selected")
       var index = $(".selected").attr("value")
-      $("#tableKey").val(tableList[index].tableKey)
-      $("#tableName").val(tableList[index].tableName)
+      $("#display_name").val(tableList[index].display_name)
+      $("#api_name").val(tableList[index].api_name)
+      $("#response").val(tableList[index].response)
+      $("#parameter_type").val(tableList[index].parameter_type)
       
-      $("#prev").val(tableList[index].tableName)
+      $("#prev").val(tableList[index].api_name)
       $("#createTable").attr("action", "/adm/update/table")
       $("#submit").val("수정")
     })
@@ -22,12 +24,20 @@ script(type="text/javascript").
   form#createTable(method="post", action="/adm/insert/table")
     #variables
       label
-        | tableKey:
-        input#tableKey(type="text" name="tableKey")
+        | display_name:
+        input#display_name(type="text" name="display_name")
       br
       label
-        | tableName:
-        input#tableName(type="text" name="tableName")
+        | api_name:
+        input#api_name(type="text" name="api_name")
+      br
+      label
+        | response:
+        input#response(type="text" name="response")
+      br
+      label
+        | parameter_type:
+        input#parameter_type(type="text" name="parameter_type")
       br
       label
         input#prev(type="hidden" name="prev" value="")
@@ -38,22 +48,28 @@ script(type="text/javascript").
       tr
         th
           input#selectAll(type="checkbox")
-        th tableKey
-        th tableName
+        th display_name
+        th api_name
+        th response
+        th parameter_type
         th
     tbody
       -for(let i = 0 ; i < tableList.length ; i++) {
-        tr(id=tableList[i].tableName value=i)
+        tr(id=tableList[i].api_name value=i)
           td
-            input.select(type="checkbox" value=tableList[i].tableName)
+            input.select(type="checkbox" value=tableList[i].api_name)
           td
-            =tableList[i].tableKey
+            =tableList[i].display_name
           td
-            a(href="/adm/"+tableList[i].tableName+"/columns")
-              =tableList[i].tableName
+            a(href="/adm/"+tableList[i].api_name+"/columns")
+              =tableList[i].api_name
+          td
+            =tableList[i].response
+          td
+            =tableList[i].parameter_type
           td.buttonList
-            button.update(value=tableList[i].tableName) 수정
+            button.update(value=tableList[i].api_name) 수정
             form(method="post" action="/adm/delete/table")
-              button.delete(name="tableName" value=tableList[i].tableName) 삭제
+              button.delete(name="api_name" value=tableList[i].api_name) 삭제
       -}
   

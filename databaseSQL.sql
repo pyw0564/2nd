@@ -1,7 +1,6 @@
 /* initialize */
 GO
-use test;
-
+USE DAU_CRAWLER
 GO
 /* create table */
 create table Api(

@@ -9,6 +9,12 @@ script(type="text/javascript").
       $("#parameter").val(columns[index].parameter)
       $("#display_name").val(columns[index].display_name)
       $("#parameter_type").val(columns[index].parameter_type)
+      console.log(columns[index].necessary == 0)
+      if(columns[index].necessary == 0) {
+        $("#necessary option:eq(1)").prop("selected", "selected");
+      } else {
+        $("#necessary option:eq(0)").prop("selected", "selected");
+      }
       
       $("#prev").val(columns[index].parameter)
       $("#addRows").attr("action", "/adm/update/"+tableName+"/row")
@@ -24,6 +30,10 @@ script(type="text/javascript").
   form#addRows(method="post", action="/adm/insert/"+tableName+"/row")
     #variables
       label
+        | api_name:
+        input#api_name(type="text" name="api_name" value=tableName)
+      br
+      label
         | parameter:
         input#parameter(type="text" name="parameter")
       br
@@ -36,6 +46,12 @@ script(type="text/javascript").
         input#parameter_type(type="text" name="parameter_type")
       br
       label
+        | necessary:
+        select#necessary(name="necessary")
+          option(value=1 selected) 필수
+          option(value=0) 옵션
+      br
+      label
         input#prev(type="hidden" name="prev" value="")
         input#submit(type="submit" value="등록")
         input#reset(type="reset" value="취소")
@@ -44,9 +60,11 @@ script(type="text/javascript").
       tr
         th
           input#selectAll(type="checkbox")
+        th api_name
         th parameter
         th display_name
         th parameter_type
+        th necessary
         th
     tbody
       -for(let i = 0 ; i < columns.length ; i++) {
@@ -54,11 +72,15 @@ script(type="text/javascript").
           td
             input.select(type="checkbox" value=columns[i].parameter)
           td
+            =columns[i].api_name
+          td
             =columns[i].parameter
           td
             =columns[i].display_name
           td
             =columns[i].parameter_type
+          td
+            =columns[i].necessary
           td.buttonList
             button.update(value=columns[i].parameter) 수정
             form(method="post" action="/adm/delete/"+tableName+"/row")

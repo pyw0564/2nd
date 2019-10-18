@@ -31,7 +31,8 @@ router.post('/login', async function(req, res) {
   const dancode = req.body.dancode
   // 로그인 api 사용
   const auth = await imc.authorize(id, pw)
-  if (auth.response_code == "OK") {
+  console.log("로그인", auth, id, pw)
+  if (auth.response_code != "OK") {
     res.send(`
         <script>
           alert("아이디 또는 비밀번호가 틀립니다.")
@@ -39,12 +40,12 @@ router.post('/login', async function(req, res) {
         </script>
       `)
   } else {
-    req.session.dancode = 'nono'
-    req.session.username = 'haha'
-    req.session.usergubun = '1234'
-    // req.session.dancode = auth.result[0].dancode
-    // req.session.username = auth.result[0].username
-    // req.session.usergubun = auth.result[0].usergubun
+    // req.session.dancode = 'nono'
+    // req.session.username = 'haha'
+    // req.session.usergubun = '1234'
+    req.session.dancode = auth.result[0].dancode
+    req.session.username = auth.result[0].username
+    req.session.usergubun = auth.result[0].usergubun
     res.redirect("/chat")
   }
 })
