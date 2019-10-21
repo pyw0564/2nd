@@ -1,8 +1,9 @@
 /* initialize */
 GO
 USE DAU_CRAWLER
+USE TEST
 GO
-SELECT * FROM API
+SELECT * FROM 
 
 /* create table */
 create table Api(
@@ -10,6 +11,8 @@ create table Api(
 	api_name nvarchar(255) NOT NULL,
 	response int NOT NULL,
 	parameter_type nvarchar(255) NOT NULL,
+	url nvarchar(255) NOT NULL,
+	response_text nvarchar(255),
 	PRIMARY KEY (api_name)
 )
 create table Parameter(
@@ -20,6 +23,7 @@ create table Parameter(
 	necessary int NOT NULL,
 	PRIMARY KEY (parameter)
 )
+
 create table Regexp(
 	idx INT NOT NULL identity,
 	parameter_type nvarchar(200) NOT NULL,
@@ -57,22 +61,19 @@ drop table _Log;
 delete  from Parameter where parameter = 'danconde'
 
 */
+DELETE FROM Parameter WHERE display_name='종료년도'
 
 
 /* INSERT test data */
 /* 1. API */
-INSERT INTO Api VALUES('세대정보조회', 'sedaeinfo', 1, 'sedaeinfo')
+INSERT INTO Api VALUES('세대정보조회', 'sedaeinfo', 1, 'sedaeinfo', '/rec/roombasic/get', '안녕하세요')
 INSERT INTO Api VALUES('테스트야', 'test', 1, 'testReg')
 /* 2. parameter */
 INSERT INTO Parameter VALUES('sedaeinfo', 'dancode', '단지코드', 'dancode', 1)
 INSERT INTO Parameter VALUES('sedaeinfo', 'dongcode', '동', 'dongcode', 1)
-INSERT INTO Parameter VALUES('sedaeinfo', 'roomno', '호', 'roomno', 0)
+INSERT INTO Parameter VALUES('sedaeinfo', 'roomno', '호', 'roomno', 1)
 INSERT INTO Parameter VALUES('sedaeinfo', 'relation', '관계', 'relation', 0)
 INSERT INTO Parameter VALUES('sedaeinfo', 'name', '이름', 'name', 0)
-INSERT INTO Parameter VALUES('sedaeinfo', 'end_year', '종료년도', 'end_year', 0)
-INSERT INTO Parameter VALUES('sedaeinfo', 'month', '월', 'month', 0)
-INSERT INTO Parameter VALUES('sedaeinfo', 'start_year', '시작년도', 'start_year', 0)
-INSERT INTO Parameter VALUES('sedaeinfo', 'year', '년', 'year', 0)
 /* 3. Regexp */
 INSERT INTO Regexp VALUES('dongcode', '^[0-9]{3}동', 'g', '', 0,3)
 INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)
