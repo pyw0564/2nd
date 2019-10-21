@@ -24,6 +24,7 @@ function init(query) {
 // 1step -> api 골라내기
 function find_api(query) {
   for (let item in Api) {
+
     let api_name = Api[item].api_name
     let parameter_type = Api[item].parameter_type
     let display_name = Api[item].display_name
@@ -60,7 +61,14 @@ function find_parameters(api_name, query) {
     let display_name = parameters[i].display_name
     let parameter_type = parameters[i].parameter_type
     let necessary = parameters[i].necessary
-
+    if(parameter == 'dancode') {
+      ret.dancode = {
+        display_name : display_name,
+        result : 1413,
+        necessary : necessary
+      }
+      continue;
+    }
     let parsing_ret = parsing(Regexpr[parameter_type], query)
     if (parsing_ret == null && information[parameter] != null) continue
     ret[parameter] = {

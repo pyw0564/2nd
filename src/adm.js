@@ -5,9 +5,9 @@ var sql = require('mssql')
 const sqlConfig = config.sqlConfig
 const read_DB = config.read_DB
 const initialize = config.initialize
-var tableList = config.tableList
-var tables = config.tables
-var reg = config.reg
+var tableList = config.Api
+var tables = config.Parameter
+var reg = config.Regexpr
 
 router.get('/', async function(req, res) {
   await read_DB()
@@ -25,7 +25,7 @@ router.get('/tables', async function(req, res) {
 })
 
 router.get('/regexps', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM regexps")
+  const queryResult = await sqlQuery("SELECT * FROM regexp")
   res.render("adm", {
     type: "regexps",
     tableList: tableList,
@@ -73,7 +73,7 @@ router.post('/insert/regexp', async function(req, res) {
   const start = req.body.start ? parseInt(req.body.start) : -1
   const _length = req.body._length ? parseInt(req.body._length) : -1
   const query = `
-    INSERT INTO REGEXPS(parameter_type, regexp, _option, return_value, start, _length)
+    INSERT INTO REGEXP(parameter_type, regexp, _option, return_value, start, _length)
     VALUES ('${parameter_type}', '${regexp}', '${_option}', '${return_value}', ${start}, ${_length})
   `
   await sqlQuery(query)
@@ -124,7 +124,7 @@ router.post('/update/regexp', async function(req, res) {
   const start = req.body.start ? parseInt(req.body.start) : -1
   const _length = req.body._length ? parseInt(req.body._length) : -1
   const query = `
-    UPDATE REGEXPS SET parameter_type='${parameter_type}', regexp='${regexp}', _option='${_option}', return_value='${return_value}', start=${start}, _length=${_length}
+    UPDATE REGEXP SET parameter_type='${parameter_type}', regexp='${regexp}', _option='${_option}', return_value='${return_value}', start=${start}, _length=${_length}
     WHERE idx=${idx};
   `
   await sqlQuery(query)
@@ -167,7 +167,7 @@ router.post('/delete/table', async function(req, res) {
 router.post('/delete/regexp', async function(req, res) {
   const idx = parseInt(req.body.idx) ? parseInt(req.body.idx) : -1
   if (idx != -1) {
-    let query = `DELETE FROM REGEXPS WHERE idx = ${idx}`
+    let query = `DELETE FROM REGEXP WHERE idx = ${idx}`
     await sqlQuery(query)
     console.log('정규표현식 삭제완료')
     res.send(alertAndRedirect('정규표현식 삭제완료', `/adm/regexps`))

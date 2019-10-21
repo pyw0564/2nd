@@ -29,14 +29,20 @@ function client_message(){
 function run_ajax(text){
     let ret = init(text);
     let str = ""
+    let necessary_count = 0
+    let match_count = 0
     if (ret && ret.message) str = ret.message + '<br>'
     let flag = true
     for (let item in ret) {
       let low = ret[item]
       if (typeof low === 'object') {
         if(low.necessary) {
+          ++necessary_count
           str += "<div class='necessary'>" + low.display_name + "-> "
-          if(low.result) str += low.result
+          if(low.result) {
+            ++match_count
+            str += low.result
+          }
           else {
             flag = false
             str += "[must]"
@@ -48,6 +54,7 @@ function run_ajax(text){
         }
       }
     }
+
     // 테스트용 if삭제
     // if(!flag){
       str += "<div id='choose'>"
@@ -64,21 +71,43 @@ function run_ajax(text){
     msg += "</div>"
     $("#chat_content").append(msg);
     $("#chat_body").scrollTop($("#chat_content").height())
+    if(necessary_count == match_count){
+      full_ajax(ret)
+    }
 }
+function full_ajax(object){
+  var url = '/chat/response'
+  var xhr = new XMLHttpRequest()
+  let d = {
+    str : object
+  }
+  console.log(d)
+  xhr.open('POST', url, true)
+  xhr.setRequestHeader('Content-Type', 'application/json')
+  xhr.send(JSON.stringify(d))
 
+  xhr.addEventListener('load', function(){
+    alert("로드")
+  })
+}
 // 파싱 보여주는 함수
 function parsing_view() {
   let text = client_message()
   // 비동기 통신
   $.ajax({
-    success: run_ajax(text)
+    success: function() {
+      run_ajax(text)
+      var offset = $("#chat_content .msg").last().offset()
+      console.log(offset)
+      $("#chat_body").scrollTop(offset.top*2)
+    }
   })
 }
 
 $(document).ready(function(){
 
   // 확인 처리
-  $('body').on('click', '#yes', function(){
+  $('body').on('click', '#yes', function() {
     alert("API받으면 구현할꺼에요~")
   })
 

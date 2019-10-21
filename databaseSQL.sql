@@ -2,6 +2,8 @@
 GO
 USE DAU_CRAWLER
 GO
+SELECT * FROM API
+
 /* create table */
 create table Api(
 	display_name nvarchar(255) NOT NULL,
@@ -73,4 +75,7 @@ INSERT INTO Parameter VALUES('sedaeinfo', 'start_year', '시작년도', 'start_year'
 INSERT INTO Parameter VALUES('sedaeinfo', 'year', '년', 'year', 0)
 /* 3. Regexp */
 INSERT INTO Regexp VALUES('dongcode', '^[0-9]{3}동', 'g', '', 0,3)
+INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)
+INSERT INTO Regexp VALUES('year', '[0-9]{3,4}년', 'g', '', 0,4)
+INSERT INTO Regexp VALUES('year', '[0-9]{4}년', 'g', '', 0,4)
 INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)

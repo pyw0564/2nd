@@ -2,6 +2,7 @@ const imc = require('./imc')
 const express = require('express')
 const router = express.Router()
 const config = require('./config')
+const bodyParser = require('body-parser') // 바디 파서
 var read_DB = config.read_DB
 var Api = config.Api
 var Parameter = config.Parameter
@@ -9,6 +10,8 @@ var Regexpr = config.Regexpr;
 var initialize = config.initialize;
 var init = "NO"
 
+router.use(bodyParser.urlencoded({ extended: false })) // 바디 파서 init
+router.use(bodyParser.json())
 // 메인 부분
 router.get('/', function(req, res) {
   // 세션 유지 처리
@@ -53,13 +56,12 @@ router.post('/login', async function(req, res) {
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
   // 임시 초기화 모드
-  await initialize()
-  await read_DB()
 
   // 세션 처리
   if (req.session.dancode) {
     // 파싱 테이블 init
     if (init == 'NO') {
+      await initialize()
       await read_DB()
       console.log("INIT")
       init = 'YES'
@@ -79,4 +81,24 @@ router.get('/chat', async function(req, res) {
   }
 })
 
+router.post('/chat/:Api', async function(req, res){
+  console.log("도착!")
+  let api_name = req.params.Api
+  let data = req.body.str
+  for(let i in data){
+    if(typeof data[i] != 'object'){
+      delete data[i]
+    }
+    else{
+      if(data[i].result){
+        data[i] = data[i].result
+      }  else {
+        delete data[i]
+      }
+    }
+  }
+  console.log(data)
+  const result = await imc.roombasic(data)
+  console.log("결과야",result)
+})
 module.exports = router;
