@@ -72,7 +72,7 @@ function server_message_function(ret) {
   msg += "</div>"
   $("#chat_content").append(msg)
 
-  if (necessary_count == match_count) {
+  if (necessary_count > 0 && necessary_count == match_count) {
     rest_api_ajax(ret)
   }
 }

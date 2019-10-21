@@ -89,6 +89,7 @@ router.get('/chat', async function(req, res) {
 // api 통신
 router.post('/chat/response', async function(req, res) {
   let data = req.body.data
+  console.log('url앞에 데이터', data)
   let url = data.information.url
   for (let item in data) {
     if (typeof data[item] != 'object') {
@@ -111,7 +112,7 @@ router.post('/chat/response', async function(req, res) {
 router.post('/parsing', async function(req, res) {
   let text = req.body.text
   let ret = parsing(text, req.session)
-  console.log('파싱결과 -> ', ret)
+  console.log('파싱결과 -> ', text, ret)
   return res.json(ret)
 })
 

@@ -104,8 +104,9 @@ async function read_DB() {
 var information = {} // 파싱한 정보 객체
 var flag // 정보 유지를 위한 플래그
 function init(query, user) {
+  let cancle = new RegExp(/취소/, 'g')
   // CLEAR
-  if (query == '취소') {
+  if (query.match(cancle)) {
     console.log("CLEAR EXECUTE")
     information = {
       message: "정보가 초기화 되었습니다"
