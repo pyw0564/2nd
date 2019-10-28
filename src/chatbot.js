@@ -39,7 +39,7 @@ router.post('/login', async function(req, res) {
   // 로그인 api 사용
   const auth = await imc.authorize(id, pw)
   console.log("로그인", auth, id, pw)
-  if (auth.response_code == "OK") {
+  if (auth.response_code != "OK") {
     res.send(`
         <script>
           alert("아이디 또는 비밀번호가 틀립니다.")
@@ -47,13 +47,13 @@ router.post('/login', async function(req, res) {
         </script>
       `)
   } else {
-    req.session.dancode = 'nono'
-    req.session.username = 'haha'
-    req.session.usergubun = '1234'
+    // req.session.dancode = 'nono'
+    // req.session.username = 'haha'
+    // req.session.usergubun = '1234'
     req.session.database_read = false
-    // req.session.dancode = auth.result[0].dancode
-    // req.session.username = auth.result[0].username
-    // req.session.usergubun = auth.result[0].usergubun
+    req.session.dancode = auth.result[0].dancode
+    req.session.username = auth.result[0].username
+    req.session.usergubun = auth.result[0].usergubun
     res.redirect("/chat")
   }
 })
@@ -91,6 +91,7 @@ router.post('/chat/response', async function(req, res) {
   let data = req.body.data
   console.log('url앞에 데이터', data)
   let url = data.information.url
+  let api_name = data.information.api_name
   for (let item in data) {
     if (typeof data[item] != 'object') {
       delete data[item]
@@ -105,6 +106,7 @@ router.post('/chat/response', async function(req, res) {
   console.log('변환결과 -> ', data)
   const result = await imc.rest_api_function(data, url)
   console.log("REST API 통신 결과", result)
+  // req.session[api_name] = data
   return res.json(result)
 })
 

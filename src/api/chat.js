@@ -88,11 +88,52 @@ function rest_api_ajax(object) {
   xhr.open('POST', url, true)
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.send(JSON.stringify(data))
-
-  xhr.addEventListener('load', function() {
+  xhr.addEventListener('load', function(evt) {
     /*
       rest api 정보 처리하는 곳
     */
+    let response = JSON.parse(evt.currentTarget.response)
+    let str = ""
+    if (response.response_code == "OK" && response.message == "success") {
+      let result = response.result
+      let keys = Object.keys(result[0])
+      str = "<table border='1'>"
+      str += "<thead>"
+      str += "<tr>"
+      for(let tmp in keys) {
+        str += "<th>"
+        str += keys[tmp]
+        str += "</th>"
+      }
+      str += "</tr>"
+      str += "</thead>"
+      str += "<tbody>"
+      for(let tmp in result) {
+        str += "<tr>"
+        for(let values in result[tmp]) {
+          str += "<td>"
+          str += result[tmp][values]
+          str += "</td>"
+        }
+        str += "</tr>"
+      }
+      str += "</tbody>"
+      str += "</table>"
+
+    } else {
+      str = "조회를 할 수 없거나 결과가 없습니다."
+    }
+    msg = "<div class='msg'>"
+    msg += "<div class='user'>System</div>"
+    msg += "<div class='content'>"
+    msg += "<div class='data notme'>" + str + "</div>"
+    msg += "<div class='time'>" + getTime() + "</div>"
+    msg += "</div>"
+    msg += "</div>"
+    $("#chat_content").append(msg)
+
+    var offset = $("#chat_content .msg").last().offset()
+    $("#chat_body").scrollTop(offset.top * 2)
   })
 }
 
