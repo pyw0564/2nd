@@ -119,7 +119,24 @@ function rest_api_ajax(object) {
       }
       str += "</tbody>"
       str += "</table>"
-
+      str = "<a href='"
+      str += "/chat/response/" + object.information.api_name + "?"
+      let api_keys = Object.keys(object)
+      for( let tmp in api_keys) {
+        if(api_keys[tmp] != "message") {
+          if (object[api_keys[tmp]].result != null)
+            str += api_keys[tmp] + "=" + object[api_keys[tmp]].result + "&"
+        }
+      }
+      str += "' target='_blank'>"
+      str += "/chat/response/" + object.information.api_name + "?"
+      for( let tmp in api_keys) {
+        if(api_keys[tmp] != "message") {
+          if (object[api_keys[tmp]].result != null)
+            str += api_keys[tmp] + "=" + object[api_keys[tmp]].result + "&"
+        }
+      }
+      str += "</a>"
     } else {
       str = "조회를 할 수 없거나 결과가 없습니다."
     }
@@ -134,19 +151,69 @@ function rest_api_ajax(object) {
 
     var offset = $("#chat_content .msg").last().offset()
     $("#chat_body").scrollTop(offset.top * 2)
+
+    let text = '취소'
+    let xhr = new XMLHttpRequest()
+    xhr.open('POST', '/parsing', true)
+    xhr.setRequestHeader('Content-Type', 'application/json')
+    xhr.send(JSON.stringify({
+      text: text
+    }))
+
+    xhr.addEventListener('load', function() {
+      let ret = JSON.parse(xhr.responseText)
+      server_message_function(ret)
+      var offset = $("#chat_content .msg").last().offset()
+      $("#chat_body").scrollTop(offset.top * 2)
+    })
   })
 }
 
+function extractDomain(url) {
+    var domain;
+    //find & remove protocol (http, ftp, etc.) and get domain
+    if (url.indexOf("://") > -1) {
+        domain = url.split('/')[2];
+    }
+    else {
+        domain = url.split('/')[0];
+    }
 
+    //find & remove port number
+    domain = domain.split(':')[0];
+
+    return domain;
+}
 $(document).ready(function() {
   // 클릭 이벤트 처리
+  var buffer = [""]
+  var idx = -1
   $("#chat_submit_btn").on("click", function() {
+    idx = -1
+    buffer.splice(1,0,$("#chat_data").text())
     parsing_view()
+  })
+  $("a").click(function(e) {
+    e.preventDefault()
+    console.log(window.open($(this).attr("href")))
   })
   // 엔터 이벤트 처리
   $("#chat_data").keydown(function(e) {
     if (e.which == 13) {
+      idx = -1
+      buffer.splice(1,0,$("#chat_data").text())
       parsing_view()
+    }
+    else if (e.which == 38) {
+      if (idx == buffer.length) return
+      let currMsg = buffer[++idx]
+      $("#chat_data").text(currMsg)
+    }
+    else if (e.which == 40) {
+      if (idx == 0) return
+      let currMsg = buffer[--idx]
+      idx = (idx + buffer.length) % buffer.length
+      $("#chat_data").text(currMsg)
     }
   })
 })

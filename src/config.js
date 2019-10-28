@@ -103,16 +103,19 @@ async function read_DB() {
 
 var information = {} // 파싱한 정보 객체
 var flag // 정보 유지를 위한 플래그
-function init(query, user) {
-  let cancle = new RegExp(/취소/, 'g')
+async function init(query, user) {
   // CLEAR
-  if (query.match(cancle)) {
-    console.log("CLEAR EXECUTE")
-    information = {
-      message: "정보가 초기화 되었습니다"
+  let record = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
+  for(let i in record){
+    let curr = record[i]
+    if(query.match(new RegExp(curr.regexp, curr._option))){
+      console.log("CLEAR EXECUTE")
+      information = {
+        message: "정보가 초기화 되었습니다"
+      }
+      flag = null
+      return information
     }
-    flag = null
-    return information
   }
   if (flag) {
     console.log("FLAG EXECUTE")
