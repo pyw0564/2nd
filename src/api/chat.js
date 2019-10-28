@@ -6,6 +6,11 @@ function getTime() {
     (currentTime.getSeconds() < 10 ? '0' + currentTime.getSeconds() : currentTime.getSeconds())
 }
 
+function scroll_bottom() {
+  var offset = $("#chat_content .msg").last().offset()
+  $("#chat_body").scrollTop(offset.top * 10)
+}
+
 // client_message 함수
 function client_message() {
   var text = $("#chat_data").text()
@@ -19,9 +24,20 @@ function client_message() {
   msg += "<div class='data me'>" + text + "</div>"
   msg += "</div>"
   msg += "</div>"
-
   $("#chat_content").append(msg)
-  $("#chat_body").scrollTop($("#chat_content").height())
+
+  str = "<img src='img/loading.png' width='30' class='loading'>"
+
+  msg = "<div class='msg load'>"
+  msg += "<div class='user'>System</div>"
+  msg += "<div class='content'>"
+  msg += "<div class='data notme'>" + str + "</div>"
+  msg += "<div class='time'>" + getTime() + "</div>"
+  msg += "</div>"
+  msg += "</div>"
+  $("#chat_content").append(msg)
+
+  scroll_bottom()
   return text
 }
 
@@ -38,8 +54,7 @@ function parsing_view() {
   xhr.addEventListener('load', function() {
     let ret = JSON.parse(xhr.responseText)
     server_message_function(ret)
-    var offset = $("#chat_content .msg").last().offset()
-    $("#chat_body").scrollTop(offset.top * 2)
+    scroll_bottom()
   })
 }
 
@@ -70,7 +85,10 @@ function server_message_function(ret) {
   msg += "<div class='time'>" + getTime() + "</div>"
   msg += "</div>"
   msg += "</div>"
+  $(".load").remove()
   $("#chat_content").append(msg)
+
+  scroll_bottom()
 
   if (necessary_count > 0 && necessary_count == match_count) {
     rest_api_ajax(ret)
@@ -149,8 +167,7 @@ function rest_api_ajax(object) {
     msg += "</div>"
     $("#chat_content").append(msg)
 
-    var offset = $("#chat_content .msg").last().offset()
-    $("#chat_body").scrollTop(offset.top * 2)
+    scroll_bottom()
 
     let text = '취소'
     let xhr = new XMLHttpRequest()
@@ -163,8 +180,7 @@ function rest_api_ajax(object) {
     xhr.addEventListener('load', function() {
       let ret = JSON.parse(xhr.responseText)
       server_message_function(ret)
-      var offset = $("#chat_content .msg").last().offset()
-      $("#chat_body").scrollTop(offset.top * 2)
+      scroll_bottom()
     })
   })
 }
@@ -187,16 +203,32 @@ function extractDomain(url) {
 $(document).ready(function() {
   // 클릭 이벤트 처리
   var buffer = [""]
-  var idx = -1
+  var idx = 0
   $("#chat_submit_btn").on("click", function() {
-    idx = -1
+    idx = 0
     buffer.splice(1,0,$("#chat_data").text())
     parsing_view()
   })
   $("a").click(function(e) {
     e.preventDefault()
-    console.log(window.open($(this).attr("href")))
+    window.open($(this).attr("href"), 'aa')
   })
+  setInterval(function(){
+    if($(".loading")) {
+      $(".loading").each(function() {
+        var deg = (($(this).data("rotate") || 0)+30)%360;
+        var rotate = "rotate("+deg+"deg)"
+        $(this).data("rotate", deg);
+        $(this).css({
+          '-webkit-transform': rotate,
+          '-moz-transform': rotate,
+          '-o-transform': rotate,
+          '-ms-transform': rotate,
+          'transform': rotate
+        });
+      })
+    }
+  }, 100)
   // 엔터 이벤트 처리
   $("#chat_data").keydown(function(e) {
     if (e.which == 13) {
