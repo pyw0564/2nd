@@ -3,13 +3,14 @@ const router = express.Router()
 const imc = require('./imc')
 const config = require('./config')
 const bodyParser = require('body-parser')
+const moment = require('moment');
 var read_DB = config.read_DB
 var Api = config.Api
 var Parameter = config.Parameter
 var Regexpr = config.Regexpr
 var initialize = config.initialize
 var init = config.init
-
+var sqlQuery = config.sqlQuery
 // Body parser
 router.use(bodyParser.urlencoded({
   extended: false
@@ -89,7 +90,6 @@ router.get('/chat', async function(req, res) {
 // api 통신
 router.post('/chat/response', async function(req, res) {
   let data = req.body.data
-  console.log('url앞에 데이터', data)
   let url = data.information.url
   let api_name = data.information.api_name
   for (let item in data) {
@@ -158,8 +158,12 @@ router.get('/chat/response/:api_name', async function(req, res) {
 // 파싱
 router.post('/parsing', async function(req, res) {
   let text = req.body.text
-  let ret = await init(text, req.session)
-  console.log('파싱결과 -> ', text, ret)
+  let ret = init(text, req.session)
+
+	let now = moment().format('YYYY-MM-DD-HH-mm-ss');
+  sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
+          VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
+  console.log('파싱결과 -> ', ret)
   return res.json(ret)
 })
 

@@ -35,7 +35,7 @@ create table Regexp(
 	PRIMARY KEY (parameter_type, regexp)
 )
 create table _Log(
-	_time int NOT NULL,
+	_time nvarchar(200) NOT NULL,
 	dancode nvarchar(100) NOT NULL,
 	id nvarchar(100) NOT NULL,
 	query nvarchar(255) NOT NULL
