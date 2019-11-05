@@ -112,12 +112,11 @@ router.post('/chat/response', async function(req, res) {
 
 router.get('/chat/response/:api_name', async function(req, res) {
   let api_name = req.params.api_name
-  await read_DB()
   let url = Api[api_name].url
   let parameters = Parameter[api_name]
   let data = {}
-  for(let tmp in parameters) {
-    if(req.query[parameters[tmp].parameter]) {
+  for (let tmp in parameters) {
+    if (req.query[parameters[tmp].parameter]) {
       data[parameters[tmp].parameter] = req.query[parameters[tmp].parameter]
     }
   }
@@ -131,7 +130,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
     str = "<table border='1'>"
     str += "<thead>"
     str += "<tr>"
-    for(let tmp in keys) {
+    for (let tmp in keys) {
       str += "<th>"
       str += keys[tmp]
       str += "</th>"
@@ -139,9 +138,9 @@ router.get('/chat/response/:api_name', async function(req, res) {
     str += "</tr>"
     str += "</thead>"
     str += "<tbody>"
-    for(let tmp in result) {
+    for (let tmp in result) {
       str += "<tr>"
-      for(let values in result[tmp]) {
+      for (let values in result[tmp]) {
         str += "<td>"
         str += result[tmp][values]
         str += "</td>"
