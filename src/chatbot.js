@@ -9,7 +9,7 @@ var Api = config.Api
 var Parameter = config.Parameter
 var Regexpr = config.Regexpr
 var initialize = config.initialize
-var parsing = config.init
+var init = config.init
 var sqlQuery = config.sqlQuery
 // Body parser
 router.use(bodyParser.urlencoded({
@@ -91,6 +91,7 @@ router.get('/chat', async function(req, res) {
 router.post('/chat/response', async function(req, res) {
   let data = req.body.data
   let url = data.information.url
+  let api_name = data.information.api_name
   for (let item in data) {
     if (typeof data[item] != 'object') {
       delete data[item]
@@ -105,13 +106,60 @@ router.post('/chat/response', async function(req, res) {
   console.log('변환결과 -> ', data)
   const result = await imc.rest_api_function(data, url)
   console.log("REST API 통신 결과", result)
+  // req.session[api_name] = data
   return res.json(result)
+})
+
+router.get('/chat/response/:api_name', async function(req, res) {
+  let api_name = req.params.api_name
+  await read_DB()
+  let url = Api[api_name].url
+  let parameters = Parameter[api_name]
+  let data = {}
+  for(let tmp in parameters) {
+    if(req.query[parameters[tmp].parameter]) {
+      data[parameters[tmp].parameter] = req.query[parameters[tmp].parameter]
+    }
+  }
+  console.log('변환결과 -> ', data)
+  const response = await imc.rest_api_function(data, url)
+  console.log("REST API 통신 결과", response)
+  let str
+  if (response.response_code == "OK" && response.message == "success") {
+    let result = response.result
+    let keys = Object.keys(result[0])
+    str = "<table border='1'>"
+    str += "<thead>"
+    str += "<tr>"
+    for(let tmp in keys) {
+      str += "<th>"
+      str += keys[tmp]
+      str += "</th>"
+    }
+    str += "</tr>"
+    str += "</thead>"
+    str += "<tbody>"
+    for(let tmp in result) {
+      str += "<tr>"
+      for(let values in result[tmp]) {
+        str += "<td>"
+        str += result[tmp][values]
+        str += "</td>"
+      }
+      str += "</tr>"
+    }
+    str += "</tbody>"
+    str += "</table>"
+  } else {
+    str = "조회를 할 수 없거나 결과가 없습니다."
+  }
+  return res.send(str)
 })
 
 // 파싱
 router.post('/parsing', async function(req, res) {
   let text = req.body.text
-  let ret = parsing(text, req.session)
+  let ret = init(text, req.session)
 
 	let now = moment().format('YYYY-MM-DD-HH-mm-ss');
   sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
