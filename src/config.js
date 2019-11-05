@@ -204,5 +204,6 @@ exports.Api = Api
 exports.Parameter = Parameter
 exports.Regexpr = Regexpr
 exports.sqlConfig = sqlConfig
+exports.sqlQuery = sqlQuery
 exports.read_DB = read_DB
 exports.initialize = initialize
