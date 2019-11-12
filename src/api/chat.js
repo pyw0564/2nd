@@ -147,13 +147,7 @@ function rest_api_ajax(object) {
         }
       }
       str += "' target='_blank'>"
-      str += "/chat/response/" + object.information.api_name + "?"
-      for( let tmp in api_keys) {
-        if(api_keys[tmp] != "message") {
-          if (object[api_keys[tmp]].result != null)
-            str += api_keys[tmp] + "=" + object[api_keys[tmp]].result + "&"
-        }
-      }
+      str += "결과보기(새창)"
       str += "</a>"
     } else {
       str = "조회를 할 수 없거나 결과가 없습니다."

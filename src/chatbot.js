@@ -158,7 +158,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
 // 파싱
 router.post('/parsing', async function(req, res) {
   let text = req.body.text
-  let ret = init(text, req.session)
+  let ret = await init(text, req.session)
 
 	let now = moment().format('YYYY-MM-DD-HH-mm-ss');
   sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
