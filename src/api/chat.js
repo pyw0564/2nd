@@ -42,8 +42,13 @@ function client_message() {
 }
 
 // 1. 파싱 보여주는 함수
-function parsing_view() {
-  let text = client_message()
+function parsing_view(esc) {
+  let text
+  if (esc) {
+    text = '취소'
+  } else {
+    text = client_message()
+  }
   let xhr = new XMLHttpRequest()
   xhr.open('POST', '/parsing', true)
   xhr.setRequestHeader('Content-Type', 'application/json')
@@ -225,7 +230,10 @@ $(document).ready(function() {
   }, 100)
   // 엔터 이벤트 처리
   $("#chat_data").keydown(function(e) {
-    if (e.which == 13) {
+    if (e.which == 27) {
+      parsing_view(e.which)
+    }
+    else if (e.which == 13) {
       idx = -1
       buffer.splice(1,0,$("#chat_data").text())
       parsing_view()

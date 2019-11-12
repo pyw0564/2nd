@@ -48,7 +48,7 @@ router.get('/:tableName/columns', async function(req, res) {
 })
 
 router.get('/logs', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM _log")
+  const queryResult = await sqlQuery("SELECT * FROM _log ORDER BY _time DESC")
   res.render("adm", {
     type: "logs",
     logs: queryResult

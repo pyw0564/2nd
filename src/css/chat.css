@@ -107,13 +107,11 @@ input:focus, button:focus { outline:none; }
 
 
 .necessary{
-  background-color: blue;
   font-family: serif;
-  color:white;
   font-weight: bold;
 }
 .not_necessary{
-  background-color: red;
+  background-color: #ffde8a;
   font-family: serif;
 }
 .choose_button{

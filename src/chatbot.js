@@ -150,7 +150,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
     str += "</tbody>"
     str += "</table>"
   } else {
-    str = "조회를 할 수 없거나 결과가 없습니다."
+    str = "조회를 할 수 없거나 결과가 없습니다"
   }
   return res.send(str)
 })
@@ -160,7 +160,7 @@ router.post('/parsing', async function(req, res) {
   let text = req.body.text
   let ret = await init(text, req.session)
 
-	let now = moment().format('YYYY-MM-DD-HH-mm-ss');
+	let now = moment().format('YYYY-MM-DD HH:mm:ss');
   sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
           VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
   console.log('파싱결과 -> ', ret)

@@ -47,6 +47,7 @@ select * from Api;
 select * from Parameter;
 select * from Regexp;
 select * from _Log;
+select * from _Log ORDER BY _time DESC;
 
 select * from Parameter where api_name='sedaeinfo'
 update Parameter Set necessary = 1 where parameter_type = ''
