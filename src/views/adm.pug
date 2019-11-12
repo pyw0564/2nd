@@ -23,6 +23,9 @@ html
           case 'columns':
             $("#tables").addClass("active")
             break
+          case 'logs':
+            $("#logs").addClass("active")
+            break
         }
         $("#selectAll").click(function () {
           $(".select").prop("checked", $(this).prop("checked"))
@@ -33,6 +36,7 @@ html
       #adm_main_page
         a#tables(href="/adm/tables") Parameter Table list
         a#regexps(href="/adm/regexps") Regular Expression list
+        a#logs(href="/adm/logs") Logs
         a#chatbot(href="/chat") ChatBot
         #extra
       case type
@@ -42,3 +46,5 @@ html
             include adm_regexps.pug
           when 'columns'
             include adm_columns.pug
+          when 'logs'
+            include adm_log.pug

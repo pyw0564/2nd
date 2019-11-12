@@ -47,6 +47,14 @@ router.get('/:tableName/columns', async function(req, res) {
   })
 })
 
+router.get('/logs', async function(req, res) {
+  const queryResult = await sqlQuery("SELECT * FROM _log")
+  res.render("adm", {
+    type: "logs",
+    logs: queryResult
+  })
+})
+
 router.post('/insert/table', async function(req, res) {
   const display_name = req.body.display_name
   const api_name = req.body.api_name
