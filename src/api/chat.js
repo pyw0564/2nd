@@ -6,12 +6,13 @@ function getTime() {
     (currentTime.getSeconds() < 10 ? '0' + currentTime.getSeconds() : currentTime.getSeconds())
 }
 
+// 스클로 내리기
 function scroll_bottom() {
   var offset = $("#chat_content .msg").last().offset()
   $("#chat_body").scrollTop(offset.top * 10)
 }
 
-// client_message 함수
+// client_message 보여주는 함수
 function client_message() {
   var text = $("#chat_data").text()
   $("#chat_data").text("")
@@ -38,17 +39,13 @@ function client_message() {
   $("#chat_content").append(msg)
 
   scroll_bottom()
-  return text
 }
 
 // 1. 파싱 보여주는 함수
-function parsing_view(esc) {
-  let text
-  if (esc) {
-    text = '취소'
-  } else {
-    text = client_message()
-  }
+function parsing_view() {
+  let text = $("#chat_data").text()
+  client_message()
+
   let xhr = new XMLHttpRequest()
   xhr.open('POST', '/parsing', true)
   xhr.setRequestHeader('Content-Type', 'application/json')
@@ -57,27 +54,28 @@ function parsing_view(esc) {
   }))
 
   xhr.addEventListener('load', function() {
-    let ret = JSON.parse(xhr.responseText)
-    server_message_function(ret)
+    let res = JSON.parse(xhr.responseText)
+    server_message_function(res)
     scroll_bottom()
   })
 }
 
 // 2. ajax server_message 함수
-function server_message_function(ret) {
+function server_message_function(object) {
   let str = ""
-  let necessary_count = 0, match_count = 0
-  if (ret && ret.message) str = ret.message + '<br>'
-  for (let item in ret) {
-    let low = ret[item]
-    if (typeof low === 'object') {
-      if (low.necessary) {
+  let necessary_count = 0,
+    match_count = 0
+  if (object && object.message) str = object.message + '<br>'
+  for (let item in object) {
+    let record = object[item]
+    if (typeof record === 'object') {
+      if (record.necessary) {
         ++necessary_count
-        if (low.result) {
-          str += "<div class='necessary'>" + low.display_name + "-> " + low.result
-          ++match_count
+        if (record.result) {
+          str += "<div class='necessary'>" + record.display_name + "-> " + record.result
+            ++match_count
         } else {
-          str += "<div class='not_necessary'>" + low.display_name + "-> [must]"
+          str += "<div class='not_necessary'>" + record.display_name + "-> [must]"
         }
         str += "</div>"
       }
@@ -92,11 +90,10 @@ function server_message_function(ret) {
   msg += "</div>"
   $(".load").remove()
   $("#chat_content").append(msg)
-
   scroll_bottom()
 
   if (necessary_count > 0 && necessary_count == match_count) {
-    rest_api_ajax(ret)
+    rest_api_ajax(object)
   }
 }
 
@@ -116,6 +113,7 @@ function rest_api_ajax(object) {
       rest api 정보 처리하는 곳
     */
     let response = JSON.parse(evt.currentTarget.response)
+    console.log(response) // 배열
     let str = ""
     if (response.response_code == "OK" && response.message == "success") {
       let result = response.result
@@ -123,7 +121,7 @@ function rest_api_ajax(object) {
       str = "<table border='1'>"
       str += "<thead>"
       str += "<tr>"
-      for(let tmp in keys) {
+      for (let tmp in keys) {
         str += "<th>"
         str += keys[tmp]
         str += "</th>"
@@ -131,9 +129,9 @@ function rest_api_ajax(object) {
       str += "</tr>"
       str += "</thead>"
       str += "<tbody>"
-      for(let tmp in result) {
+      for (let tmp in result) {
         str += "<tr>"
-        for(let values in result[tmp]) {
+        for (let values in result[tmp]) {
           str += "<td>"
           str += result[tmp][values]
           str += "</td>"
@@ -145,8 +143,8 @@ function rest_api_ajax(object) {
       str = "<a href='"
       str += "/chat/response/" + object.information.api_name + "?"
       let api_keys = Object.keys(object)
-      for( let tmp in api_keys) {
-        if(api_keys[tmp] != "message") {
+      for (let tmp in api_keys) {
+        if (api_keys[tmp] != "message") {
           if (object[api_keys[tmp]].result != null)
             str += api_keys[tmp] + "=" + object[api_keys[tmp]].result + "&"
         }
@@ -167,37 +165,39 @@ function rest_api_ajax(object) {
     $("#chat_content").append(msg)
 
     scroll_bottom()
-
-    let text = '취소'
-    let xhr = new XMLHttpRequest()
-    xhr.open('POST', '/parsing', true)
-    xhr.setRequestHeader('Content-Type', 'application/json')
-    xhr.send(JSON.stringify({
-      text: text
-    }))
-
-    xhr.addEventListener('load', function() {
-      let ret = JSON.parse(xhr.responseText)
-      server_message_function(ret)
-      scroll_bottom()
-    })
+    cancel_ajax('API')
   })
 }
 
 function extractDomain(url) {
-    var domain;
-    //find & remove protocol (http, ftp, etc.) and get domain
-    if (url.indexOf("://") > -1) {
-        domain = url.split('/')[2];
-    }
-    else {
-        domain = url.split('/')[0];
-    }
+  var domain;
+  //find & remove protocol (http, ftp, etc.) and get domain
+  if (url.indexOf("://") > -1) {
+    domain = url.split('/')[2];
+  } else {
+    domain = url.split('/')[0];
+  }
 
-    //find & remove port number
-    domain = domain.split(':')[0];
+  //find & remove port number
+  domain = domain.split(':')[0];
 
-    return domain;
+  return domain;
+}
+
+function cancel_ajax(flag) {
+  let xhr = new XMLHttpRequest()
+  xhr.open('POST', '/cancel', true)
+  xhr.setRequestHeader('Content-Type', 'application/json')
+  xhr.send(JSON.stringify({
+    flag : flag
+  }))
+
+  xhr.addEventListener('load', function() {
+    let ret = JSON.parse(xhr.responseText)
+    server_message_function(ret)
+    scroll_bottom()
+  })
+
 }
 $(document).ready(function() {
   // 클릭 이벤트 처리
@@ -205,18 +205,18 @@ $(document).ready(function() {
   var idx = 0
   $("#chat_submit_btn").on("click", function() {
     idx = 0
-    buffer.splice(1,0,$("#chat_data").text())
+    buffer.splice(1, 0, $("#chat_data").text())
     parsing_view()
   })
   $("a").click(function(e) {
     e.preventDefault()
     window.open($(this).attr("href"), 'aa')
   })
-  setInterval(function(){
-    if($(".loading")) {
+  setInterval(function() {
+    if ($(".loading")) {
       $(".loading").each(function() {
-        var deg = (($(this).data("rotate") || 0)+30)%360;
-        var rotate = "rotate("+deg+"deg)"
+        var deg = (($(this).data("rotate") || 0) + 30) % 360;
+        var rotate = "rotate(" + deg + "deg)"
         $(this).data("rotate", deg);
         $(this).css({
           '-webkit-transform': rotate,
@@ -230,20 +230,17 @@ $(document).ready(function() {
   }, 100)
   // 엔터 이벤트 처리
   $("#chat_data").keydown(function(e) {
-    if (e.which == 27) {
-      parsing_view(e.which)
-    }
-    else if (e.which == 13) {
-      idx = -1
-      buffer.splice(1,0,$("#chat_data").text())
+    if (e.which == 27) { // ESC
+      cancel_ajax('ESC')
+    } else if (e.which == 13) { // ENTER
+      idx = 0
+      buffer.splice(1, 0, $("#chat_data").text())
       parsing_view()
-    }
-    else if (e.which == 38) {
+    } else if (e.which == 38) { // UP
       if (idx == buffer.length) return
       let currMsg = buffer[++idx]
       $("#chat_data").text(currMsg)
-    }
-    else if (e.which == 40) {
+    } else if (e.which == 40) { // DOWN
       if (idx == 0) return
       let currMsg = buffer[--idx]
       idx = (idx + buffer.length) % buffer.length

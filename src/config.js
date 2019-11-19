@@ -34,6 +34,7 @@ async function initialize() {
   for (let key in Regexpr) delete Regexpr[key]
 }
 
+// 동기화 SQL 쿼리
 async function sqlQuery(query) {
   return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
     return pool.request().query(query)
@@ -46,42 +47,46 @@ async function sqlQuery(query) {
     throw err
   })
 }
+
 // api 읽기
 async function read_api() {
-  let result = await sqlQuery('SELECT * FROM Api')
-  for (let i = 0; i < result.length; i++) {
-    let row = result[i];
-    let obj = {};
-    for (let item in row) obj[item] = row[item];
-    Api[row.api_name] = obj;
+  let records = await sqlQuery('SELECT * FROM Api')
+  for (let i = 0; i < records.length; i++) {
+    let record = records[i]
+    let obj = {}
+    for (let item in record) obj[item] = record[item]
+    Api[record.api_name] = obj
   }
 }
+
 // parameter 읽기
 async function read_parameter() {
-  let result = await sqlQuery(`SELECT * FROM Parameter`)
-  for (let i = 0; i < result.length; i++) {
-    let row = result[i];
-    if (Parameter[row.api_name] === undefined) {
-      Parameter[row.api_name] = [];
+  let records = await sqlQuery(`SELECT * FROM Parameter`)
+  for (let i = 0; i < records.length; i++) {
+    let record = records[i]
+    if (Parameter[record.api_name] === undefined) {
+      Parameter[record.api_name] = []
     }
-    let obj = {};
-    for (let item in row) obj[item] = row[item];
-    Parameter[row.api_name].push(obj);
+    let obj = {}
+    for (let item in record) obj[item] = record[item]
+    Parameter[record.api_name].push(obj)
   }
 }
+
 // regexp 읽기
 async function read_regexp() {
-  let result = await sqlQuery(`SELECT * FROM Regexp`)
-  for (let i = 0; i < result.length; i++) {
-    let row = result[i];
-    if (Regexpr[row.parameter_type] === undefined) {
-      Regexpr[row.parameter_type] = [];
+  let records = await sqlQuery(`SELECT * FROM Regexp`)
+  for (let i = 0; i < records.length; i++) {
+    let record = records[i]
+    if (Regexpr[record.parameter_type] === undefined) {
+      Regexpr[record.parameter_type] = []
     }
-    let obj = {};
-    for (let item in row) obj[item] = row[item];
-    Regexpr[row.parameter_type].push(obj);
+    let obj = {}
+    for (let item in record) obj[item] = record[item]
+    Regexpr[record.parameter_type].push(obj)
   }
 }
+
 // 통합 읽기
 async function read_DB() {
   await initialize()
@@ -104,49 +109,65 @@ async function read_DB() {
 var information = {} // 파싱한 정보 객체
 var flag // 정보 유지를 위한 플래그
 async function init(query, user) {
-  // CLEAR
-  let record = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
-  for(let i in record){
-    let curr = record[i]
-    if(query.match(new RegExp(curr.regexp, curr._option))){
-      console.log("CLEAR EXECUTE")
-      information = {
-        message: "정보가 초기화 되었습니다"
-      }
-      flag = null
-      return information
+  query = " " + query + " "
+  // 취소 CLEAR 처리
+  let records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
+  for (let i in records) {
+    let record = records[i]
+    if (query.match(new RegExp(record.regexp, record._option))) {
+      return cancel_function('ESC')
     }
   }
+  // 플래그 처리
   if (flag) {
-    console.log("FLAG EXECUTE")
+    console.log("FLAG가 유지되고 있습니다", flag)
     return find_parameters(flag.api_name, query, user)
   }
-  information = {}
-  information = find_api(query, user)
-  if(!information) {
+
+  // continue 처리
+  let continue_records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'continue'")
+  let continue_flag = false
+  for (let i in continue_records) {
+    let record = continue_records[i]
+    if (query.match(new RegExp(record.regexp, record._option))) {
+      continue_flag = true
+    }
+  }
+  if (!continue_flag) {
     information = {}
+  }
+  else {
+    // console.log("continue_flag 실행!!", information)
+  }
+  information = find_api(query, user)
+
+  if (!information) {
     information.message = '알 수 없는 키워드 입니다'
   }
-  console.log('파싱된 정보', information)
+
+  // console.log('파싱된 정보입니다', information)
   return information
 }
 
-// 1step -> api 골라내기
+// 1step -> 어떤 API인지 골라내기
 function find_api(query, user) {
   for (let item in Api) {
-    let api_name = Api[item].api_name
-    let parameter_type = Api[item].parameter_type
-    let display_name = Api[item].display_name
-    let response = Api[item].response
+    let record = Api[item]
+    let api_name = record.api_name
+    let parameter_type = record.parameter_type
+    let display_name = record.display_name
+    let response = record.response
     if (Regexpr[item] === undefined) continue
-    for (let j = 0; j < Regexpr[item].length; j++) {
-      let low = Regexpr[item][j]
-      let regexp = new RegExp(low.regexp, low._option)
+
+    for (let i = 0; i < Regexpr[item].length; i++) {
+      let record = Regexpr[item][i]
+      let regexp = new RegExp(record.regexp, record._option)
       let result = query.match(regexp)
       if (result) {
         flag = {
           api_name: api_name,
-          display_name: display_name
+          display_name: display_name,
+          information : Api[item]
         }
         let ret = find_parameters(api_name, query, user)
         ret.information = Api[item]
@@ -154,33 +175,46 @@ function find_api(query, user) {
       }
     }
   }
-  return null
+  return {}
 }
 
-// 2step -> parameter 마다 파싱
+// 2step -> 필요한 parameter 마다 파싱
 function find_parameters(api_name, query, user) {
   let parameters = Parameter[api_name]
   let ret = {}
+  // api_name에 맞지 않는 파라미터 삭제
+  for (let item in information) {
+    let delete_flag = true
+    for (let i = 0; i < parameters.length; i++) {
+      let record = parameters[i]
+      let parameter = record.parameter
+      if (item == parameter) delete_flag = false
+    }
+    if (delete_flag) delete information[item]
+  }
+  // console.log("delete_flag", information)
   if (flag) {
     ret = information
-    ret.message = flag.display_name + " 실행중"
+    ret.information = flag.information
+    ret.message = flag.display_name + " 실행중입니다"
   }
   for (let i = 0; i < parameters.length; i++) {
-    let parameter = parameters[i].parameter
-    let display_name = parameters[i].display_name
-    let parameter_type = parameters[i].parameter_type
-    let necessary = parameters[i].necessary
+    let record = parameters[i]
+    let parameter = record.parameter
+    let display_name = record.display_name
+    let parameter_type = record.parameter_type
+    let necessary = record.necessary
     let parsing_ret
-    if(user[parameter])
+    if (user[parameter])
       parsing_ret = user[parameter]
-    else{
+    else {
       parsing_ret = parsing(Regexpr[parameter_type], query)
       if (parsing_ret == null && information[parameter] != null) continue
     }
     ret[parameter] = {
-      display_name : display_name,
-      result : parsing_ret,
-      necessary : necessary
+      display_name: display_name,
+      result: parsing_ret,
+      necessary: necessary
     }
   }
   return ret
@@ -189,28 +223,48 @@ function find_parameters(api_name, query, user) {
 // 3step -> 파싱 함수
 function parsing(regs, query) {
   if (regs == null) return null
+  let ret = []
   for (let i = 0; i < regs.length; i++) {
     let reg = regs[i]
-    let regexp = new RegExp(reg.regexp, reg._option);
-    let parsing_array = query.match(regexp)
-
+    let parsing_array = query.match(new RegExp(reg.regexp, reg._option))
     if (parsing_array == null) continue
-    if (parsing_array.length == 1) {
-      let ret = (reg.return_value === null || reg.return_value === "") ? parsing_array[0].substr(reg.start, reg._length) : reg.return_value;
-      query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length);
-      return ret
-    } else if (parsing_array.length > 1) {
-      console.log("정규표현식 결과가 2개이상이므로 모호합니다")
+    // console.log(parsing_array)
+    for (let j = 0; j < parsing_array.length; j++) {
+      let str = (reg.return_value === null || reg.return_value === "") ?
+        parsing_array[j].substr(reg.start, reg._length) : reg.return_value;
+      query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length)
+      ret.push(str)
     }
+    return ret
   }
   return null
 }
 
-exports.init = init
-exports.Api = Api
-exports.Parameter = Parameter
-exports.Regexpr = Regexpr
-exports.sqlConfig = sqlConfig
-exports.sqlQuery = sqlQuery
-exports.read_DB = read_DB
-exports.initialize = initialize
+function cancel_function(order) {
+  ret = {
+    message: "정보가 초기화 되었습니다"
+  }
+  if (order == 'ESC') {
+    information = {}
+  }
+  else {
+    ret.message = '실행이 완료되었습니다'
+  }
+  flag = null
+  console.log("CLEAR EXECUTE")
+  return ret
+}
+
+module.exports = function() {
+  return {
+    init: init,
+    Api: Api,
+    Parameter: Parameter,
+    Regexpr: Regexpr,
+    sqlConfig: sqlConfig,
+    sqlQuery: sqlQuery,
+    read_DB: read_DB,
+    initialize: initialize,
+    cancel_function: cancel_function
+  }
+}()
