@@ -141,11 +141,11 @@ async function init(query, user) {
   }
   information = find_api(query, user)
 
-  if (!information) {
+  if (Object.keys(information).length === 0) {
     information.message = '알 수 없는 키워드 입니다'
   }
 
-  // console.log('파싱된 정보입니다', information)
+  console.log('파싱된 정보입니다', information)
   return information
 }
 
