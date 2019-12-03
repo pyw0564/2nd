@@ -46,7 +46,7 @@ module.exports = function() {
     }
 
     let value = msg + NONCE;
-    let hmac = crypto.createHmac("sha512", process.env.HmacKey);
+    let hmac = crypto.createHmac("sha256", process.env.HmacKey);
     let hash = hmac.update(value).digest('base64');
     return base64url.escape(hash);
   }

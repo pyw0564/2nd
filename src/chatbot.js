@@ -86,7 +86,56 @@ router.post('/chat/response', async function(req, res) {
   let data = req.body.data
   const url = data.information.url
   const api_name = data.information.api_name
+  console.log(data)
+  let index_Object = {}
+  let max_index = 0
+  for (let item in data) {
+    if (typeof data[item] != 'object') {
+      delete data[item]
+    } else {
+      if (data[item].result) {
+        if (Array.isArray(data[item].result)) {
+          index_Object[item] = {
+            index : 0,
+            length : data[item].result.length
+          }
+          if (max_index < index_Object[item].length)
+            max_index = index_Object[item].length
+        }
+      } else {
+        delete data[item]
+      }
+    }
+  }
+  let result = []
+  result.push(data)
+  // JSON 형식으로 데이터 가공
+  for (let i = 0; i < max_index; i++) {
+    let json_object = {}
+    for (let item in data) {
+      if (Array.isArray(data[item].result)) {
+        let index_item = index_Object[item]
+        json_object[item] = data[item].result[index_item.index]
+        if (index_item.index < index_item.length - 1) {
+          index_item.index += 1
+        }
+      } else {
+        json_object[item] = data[item].result
+      }
+    }
+    // console.log(json_object)
+    let ret = await imc.rest_api_function(json_object, url)
+    result.push(ret)
+  }
+  console.log("REST API 통신")
+  // req.session[api_name] = data
+  return res.json(result)
+})
 
+router.get('/chat/response/:api_name', async function(req, res) {
+  let data = JSON.parse(req.query.data)
+  const url = data.information.url
+  const api_name = data.information.api_name
   let index_Object = {}
   let max_index = 0
   for (let item in data) {
@@ -126,53 +175,38 @@ router.post('/chat/response', async function(req, res) {
     let ret = await imc.rest_api_function(json_object, url)
     result.push(ret)
   }
-  console.log("REST API 통신")
-  // req.session[api_name] = data
-  return res.json(result)
-})
 
-router.get('/chat/response/:api_name', async function(req, res) {
-  let api_name = req.params.api_name
-  let url = Api[api_name].url
-  let parameters = Parameter[api_name]
-  let data = {}
-  for (let tmp in parameters) {
-    if (req.query[parameters[tmp].parameter]) {
-      data[parameters[tmp].parameter] = req.query[parameters[tmp].parameter]
-    }
-  }
-  console.log('변환결과 -> ', data)
-  const response = await imc.rest_api_function(data, url)
-  console.log("REST API 통신 결과", response)
+  console.log("REST API 통신 결과", result)
   let str
-  if (response.response_code == "OK" && response.message == "success") {
-    let result = response.result
-    let keys = Object.keys(result[0])
-    str = "<table border='1'>"
-    str += "<thead>"
-    str += "<tr>"
-    for (let tmp in keys) {
-      str += "<th>"
-      str += keys[tmp]
-      str += "</th>"
-    }
-    str += "</tr>"
-    str += "</thead>"
-    str += "<tbody>"
-    for (let tmp in result) {
-      str += "<tr>"
-      for (let values in result[tmp]) {
-        str += "<td>"
-        str += result[tmp][values]
-        str += "</td>"
-      }
-      str += "</tr>"
-    }
-    str += "</tbody>"
-    str += "</table>"
-  } else {
-    str = "조회를 할 수 없거나 결과가 없습니다"
+  let keys = Object.keys(result[0].result[0])
+  str = "<table border='1'>"
+  str += "<thead>"
+  str += "<tr>"
+  for (let tmp in keys) {
+    str += "<th>"
+    str += keys[tmp]
+    str += "</th>"
   }
+  str += "</tr>"
+  str += "</thead>"
+  for(let i = 0 ; i < result.length ; i++) {
+    let resultValue = result[i]
+    if (resultValue.response_code == "OK" && resultValue.message == "success") {
+      str += "<tbody>"
+      for (let tmp in resultValue.result) {
+        str += "<tr>"
+        for (let values in resultValue.result[tmp]) {
+          str += "<td>"
+          str += resultValue.result[tmp][values]
+          str += "</td>"
+        }
+        str += "</tr>"
+      }
+      str += "</tbody>"
+    }
+  }
+
+  str += "</table>"
   return res.send(str)
 })
 
@@ -182,12 +216,19 @@ router.post('/parsing', async function(req, res) {
   let ret = await init(text, req.session)
 
   let now = moment().format('YYYY-MM-DD HH:mm:ss');
-  sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
-          VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
+  // sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
+          // VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
   console.log('파싱결과 -> ', ret)
   return res.json(ret)
 })
-
+router.post('/insertLog', async function(req, res) {
+  let text = req.body.text
+  console.log(text)
+  let now = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
+  sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
+          VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
+  return res.json()
+})
 // ESC, API 통신 완료시 cancle 구현
 router.post('/cancel', async function(req, res) {
   let flag = req.body.flag

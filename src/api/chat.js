@@ -37,7 +37,6 @@ function client_message() {
   msg += "</div>"
   msg += "</div>"
   $("#chat_content").append(msg)
-
   scroll_bottom()
 }
 
@@ -45,7 +44,14 @@ function client_message() {
 function parsing_view() {
   let text = $("#chat_data").text()
   client_message()
-
+  $.ajax({
+    url: "/insertLog",
+    method: "post",
+    dataType: "json",
+    data: {
+      "text": text
+    },
+  });
   let xhr = new XMLHttpRequest()
   xhr.open('POST', '/parsing', true)
   xhr.setRequestHeader('Content-Type', 'application/json')
@@ -91,7 +97,14 @@ function server_message_function(object) {
   $(".load").remove()
   $("#chat_content").append(msg)
   scroll_bottom()
-
+  $.ajax({
+    url: "/insertLog",
+    method: "post",
+    dataType: "json",
+    data: {
+      "text": str
+    },
+  });
   if (necessary_count > 0 && necessary_count == match_count) {
     rest_api_ajax(object)
   }
@@ -114,46 +127,36 @@ function rest_api_ajax(object) {
     */
     let response = JSON.parse(evt.currentTarget.response)
     console.log(response) // 배열
+
     let str = ""
-    if (response.response_code == "OK" && response.message == "success") {
-      let result = response.result
-      let keys = Object.keys(result[0])
-      str = "<table border='1'>"
-      str += "<thead>"
-      str += "<tr>"
-      for (let tmp in keys) {
-        str += "<th>"
-        str += keys[tmp]
-        str += "</th>"
-      }
-      str += "</tr>"
-      str += "</thead>"
-      str += "<tbody>"
-      for (let tmp in result) {
-        str += "<tr>"
-        for (let values in result[tmp]) {
-          str += "<td>"
-          str += result[tmp][values]
-          str += "</td>"
-        }
-        str += "</tr>"
-      }
-      str += "</tbody>"
-      str += "</table>"
+    if(response.length > 1) {
+      console.log(object.information)
       str = "<a href='"
       str += "/chat/response/" + object.information.api_name + "?"
-      let api_keys = Object.keys(object)
-      for (let tmp in api_keys) {
-        if (api_keys[tmp] != "message") {
-          if (object[api_keys[tmp]].result != null)
-            str += api_keys[tmp] + "=" + object[api_keys[tmp]].result + "&"
-        }
-      }
+      str += "data="
+      str += JSON.stringify(object)
       str += "' target='_blank'>"
       str += "결과보기(새창)"
       str += "</a>"
-    } else {
+      $.ajax({
+        url: "/insertLog",
+        method: "post",
+        dataType: "json",
+        data: {
+          "text": "결과보기(새창)"
+        },
+      });
+    }
+    else {
       str = "조회를 할 수 없거나 결과가 없습니다."
+      $.ajax({
+        url: "/insertLog",
+        method: "post",
+        dataType: "json",
+        data: {
+          "text": "조회를 할 수 없거나 결과가 없습니다."
+        },
+      });
     }
     msg = "<div class='msg'>"
     msg += "<div class='user'>System</div>"
@@ -163,6 +166,7 @@ function rest_api_ajax(object) {
     msg += "</div>"
     msg += "</div>"
     $("#chat_content").append(msg)
+
 
     scroll_bottom()
     cancel_ajax('API')

@@ -15,15 +15,22 @@ create table Api(
 	response_text nvarchar(255),
 	PRIMARY KEY (api_name)
 )
+/*
+sp_help Parameter
+ALTER TABLE Parameter
+DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
+ALTER TABLE Parameter
+ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
+drop table Parameter
+*/
 create table Parameter(
-	api_name nvarchar(255) NOT NULL,
-	parameter nvarchar(255) NOT NULL,
+	api_name nvarchar(200) NOT NULL,
+	parameter nvarchar(200) NOT NULL,
 	display_name nvarchar(255) NOT NULL,
 	parameter_type nvarchar(255) NOT NULL,
 	necessary int NOT NULL,
-	PRIMARY KEY (parameter)
+	PRIMARY KEY (api_name, parameter)
 )
-
 create table Regexp(
 	idx INT NOT NULL identity,
 	parameter_type nvarchar(200) NOT NULL,
@@ -50,7 +57,9 @@ select * from _Log;
 select * from _Log ORDER BY _time DESC;
 
 select * from Parameter where api_name='sedaeinfo'
-update Parameter Set necessary = 1 where parameter_type = ''
+insert into Api VALUES('결제금액 정보 조회', 'GetServicePayInfo2', 1, 'GetServicePayInfo2', '/GetServicePayInfo2', '안녕하세요')
+
+update Api Set url = '/chatbot/rec/roombasic/get' where api_name = 'sedaeinfo'
 /* WARINIG !!! */
 /* DROP TABLES*/
 /*
@@ -81,4 +90,3 @@ INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)
 INSERT INTO Regexp VALUES('year', '[0-9]{3,4}년', 'g', '', 0,4)
 INSERT INTO Regexp VALUES('year', '[0-9]{4}년', 'g', '', 0,4)
 INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)
-INSERT INTO Regexp VALUES('cancel', '취소', 'g', '', 0,3)

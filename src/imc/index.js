@@ -31,7 +31,7 @@ module.exports = function() {
       ssotoken: token
     }
 
-    return await post("/auth/authorize", data, head);
+    return await post("/chatbot/auth/authorize", data, head);
   }
 
   async function rest_api_function(data, url) {
