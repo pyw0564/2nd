@@ -59,7 +59,7 @@ router.post('/login', async function(req, res) {
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
-  // DB READ FLAG
+  // DB READ FLAG, 실제 서비스 시 제거
   req.session.database_read = false
   // 세션 처리
   if (req.session.dancode) {
@@ -81,53 +81,91 @@ router.get('/chat', async function(req, res) {
   return res.redirect('/')
 })
 
+// 파싱하는 라우터
+router.post('/parsing', async function(req, res) {
+  let text = req.body.text
+  let ret = await init(text, req.session)
+  console.log("파싱된 정보", ret)
+  return res.json(ret)
+})
+
+// 로그 처리 라우터
+router.post('/insertLog', async function(req, res) {
+  let text = req.body.text
+  console.log('로그 텍스트입니다', text)
+  // let now = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
+  // await sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
+  // VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
+  return res.json()
+})
+
+// ESC, API 통신 완료시 cancle 구현
+router.post('/cancel', async function(req, res) {
+  let flag = req.body.flag
+  let ret = cancel_function(flag)
+  return res.json(ret)
+})
+
 // api 통신
 router.post('/chat/response', async function(req, res) {
   let data = req.body.data
-  const url = data.information.url
-  const api_name = data.information.api_name
-  console.log(data)
+  console.log('REST API 통신 라우터입니다 /chat/response', data)
+  let url = data.information.url
+  const rest_method = data.information.rest_method
+
+  // index count Object.. FOR ARRAY PROPERTY
   let index_Object = {}
   let max_index = 0
   for (let item in data) {
-    if (typeof data[item] != 'object') {
+    if (typeof data[item] != 'object' || !data[item].result) { // 오브젝트 아니거나 파라미터 값아니면 날린다.
       delete data[item]
-    } else {
-      if (data[item].result) {
-        if (Array.isArray(data[item].result)) {
-          index_Object[item] = {
-            index : 0,
-            length : data[item].result.length
-          }
-          if (max_index < index_Object[item].length)
-            max_index = index_Object[item].length
-        }
-      } else {
-        delete data[item]
+      continue
+    }
+    if (Array.isArray(data[item].result)) { //만약 배열이면
+      index_Object[item] = {
+        index: 0,
+        length: data[item].result.length
       }
+      if (max_index < index_Object[item].length)
+        max_index = index_Object[item].length
     }
   }
+  /* GET METHOD */
+  let urlArray = []
+  if (rest_method == 'get') {
+    let urlArray_temp = url.split('/')
+    for (let i in urlArray_temp)
+      if (urlArray_temp[i][0] == '{')
+        urlArray.push(urlArray_temp[i])
+  }
   let result = []
-  result.push(data)
-  // JSON 형식으로 데이터 가공
+  // JSON 형식으로 데이터 가공, 동시검색 지원 -> 배열로 반환
   for (let i = 0; i < max_index; i++) {
     let json_object = {}
     for (let item in data) {
       if (Array.isArray(data[item].result)) {
         let index_item = index_Object[item]
         json_object[item] = data[item].result[index_item.index]
-        if (index_item.index < index_item.length - 1) {
+        if (index_item.index < index_item.length - 1)
           index_item.index += 1
-        }
       } else {
         json_object[item] = data[item].result
       }
     }
-    // console.log(json_object)
-    let ret = await imc.rest_api_function(json_object, url)
-    result.push(ret)
+    let rest_api_result
+    if (rest_method == 'post') { // post rest api
+      rest_api_result = await imc.rest_api_function(json_object, url, 'post')
+    } else if (rest_method == 'get') { // get rest api
+      for (let j = 0; j < urlArray.length; j++) {
+        let param = urlArray[j]
+        url = url.replace(param, json_object[param.substr(1, param.length - 2)])
+      }
+      console.log("GET 통신 왜 안돼..", json_object, url)
+      rest_api_result = await imc.rest_api_function(json_object, url, 'get')
+    }
+    result.push(rest_api_result)
   }
-  console.log("REST API 통신")
+  console.log("REST API 통신완료", result, req.session)
   // req.session[api_name] = data
   return res.json(result)
 })
@@ -145,8 +183,8 @@ router.get('/chat/response/:api_name', async function(req, res) {
       if (data[item].result) {
         if (Array.isArray(data[item].result)) {
           index_Object[item] = {
-            index : 0,
-            length : data[item].result.length
+            index: 0,
+            length: data[item].result.length
           }
           if (max_index < index_Object[item].length)
             max_index = index_Object[item].length
@@ -172,7 +210,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
       }
     }
     // console.log(json_object)
-    let ret = await imc.rest_api_function(json_object, url)
+    let ret = await imc.rest_api_function(json_object, url, 'post')
     result.push(ret)
   }
 
@@ -189,7 +227,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
   }
   str += "</tr>"
   str += "</thead>"
-  for(let i = 0 ; i < result.length ; i++) {
+  for (let i = 0; i < result.length; i++) {
     let resultValue = result[i]
     if (resultValue.response_code == "OK" && resultValue.message == "success") {
       str += "<tbody>"
@@ -208,32 +246,6 @@ router.get('/chat/response/:api_name', async function(req, res) {
 
   str += "</table>"
   return res.send(str)
-})
-
-// 파싱
-router.post('/parsing', async function(req, res) {
-  let text = req.body.text
-  let ret = await init(text, req.session)
-
-  let now = moment().format('YYYY-MM-DD HH:mm:ss');
-  // sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
-          // VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
-  console.log('파싱결과 -> ', ret)
-  return res.json(ret)
-})
-router.post('/insertLog', async function(req, res) {
-  let text = req.body.text
-  console.log(text)
-  let now = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
-  sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
-          VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
-  return res.json()
-})
-// ESC, API 통신 완료시 cancle 구현
-router.post('/cancel', async function(req, res) {
-  let flag = req.body.flag
-  let ret = cancel_function(flag)
-  return res.json(ret)
 })
 
 module.exports = router;

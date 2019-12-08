@@ -129,7 +129,7 @@ function rest_api_ajax(object) {
     console.log(response) // 배열
 
     let str = ""
-    if(response.length > 1) {
+    if(response.length) {
       console.log(object.information)
       str = "<a href='"
       str += "/chat/response/" + object.information.api_name + "?"
@@ -169,7 +169,7 @@ function rest_api_ajax(object) {
 
 
     scroll_bottom()
-    cancel_ajax('API')
+    cancel_ajax('API COMPLETE')
   })
 }
 

@@ -14,6 +14,9 @@ module.exports = function() {
   async function post(url, data, head) {
     return (await axios.post(process.env.url + "/" + process.env.agencycode + url, data, head)).data;
   }
+  async function get(url, data, head) {
+    return (await axios.get(process.env.url + "/" + process.env.agencycode + url, data, head)).data;
+  }
   // 사용자인증
   async function authorize(id, pw) {
     if (id == undefined || pw == undefined) {
@@ -25,7 +28,6 @@ module.exports = function() {
       token: token
     });
 
-
     let head = getHeaders(XAuth);
     let data = {
       ssotoken: token
@@ -34,14 +36,19 @@ module.exports = function() {
     return await post("/chatbot/auth/authorize", data, head);
   }
 
-  async function rest_api_function(data, url) {
+  async function rest_api_function(data, url, method) {
     if (data == undefined) {
-      console.log(`imc ${url} : data undefined`);
-      return;
+      console.log(`imc ${url} : data undefined`)
+      return
     }
-    let XAuth = cryptor.getXAuth(data);
-    let head = getHeaders(XAuth);
-    return await post(url, data, head);
+    let XAuth = cryptor.getXAuth(data)
+    let head = getHeaders(XAuth)
+    console.log("XAuth, head", XAuth, head)
+    if (method == 'post') {
+      return await post(url, data, head)
+    } else if (method == 'get') {
+      return await get(url, data, head)
+    }
   }
   return {
     authorize,

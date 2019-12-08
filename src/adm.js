@@ -98,7 +98,7 @@ router.post('/insert/:tableName/row', async function(req, res) {
   const tableName = req.params.tableName
   const query = `
     INSERT INTO Parameter(api_name, parameter, display_name, parameter_type, necessary)
-    VALUES ('${api_name}', '${parameter}', '${display_name}', '${parameter_type}', ${necessary})
+    VALUES ('${api_name}', '${parameter}', '${display_name}', '${parameter_type}', '${necessary}')
   `
   console.log(query)
   await sqlQuery(query)

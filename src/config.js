@@ -92,11 +92,11 @@ async function read_DB() {
   await initialize()
   await console.log("SQL Connect . . .")
   await read_api()
-  console.log('Api 읽기완료', Api)
+  // console.log('Api 읽기완료', Api)
   await read_parameter()
-  console.log('Parameter 읽기완료', Parameter)
+  // console.log('Parameter 읽기완료', Parameter)
   await read_regexp()
-  console.log('Regexp 읽기완료', Regexpr)
+  // console.log('Regexp 읽기완료', Regexpr)
   await console.log("READ DB 종료 되었습니다.")
 }
 
@@ -129,21 +129,15 @@ async function init(query, user) {
   let continue_flag = false
   for (let i in continue_records) {
     let record = continue_records[i]
-    if (query.match(new RegExp(record.regexp, record._option))) {
+    if (query.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
-    }
   }
-  if (!continue_flag) {
+  if (!continue_flag)
     information = {}
-  }
-  else {
-    // console.log("continue_flag 실행!!", information)
-  }
   information = find_api(query, user)
 
-  if (Object.keys(information).length === 0) {
+  if (Object.keys(information).length === 0)
     information.message = '알 수 없는 키워드 입니다'
-  }
 
   console.log('파싱된 정보입니다', information)
   return information
@@ -167,7 +161,7 @@ function find_api(query, user) {
         flag = {
           api_name: api_name,
           display_name: display_name,
-          information : Api[item]
+          information: Api[item]
         }
         let ret = find_parameters(api_name, query, user)
         ret.information = Api[item]
@@ -182,7 +176,7 @@ function find_api(query, user) {
 function find_parameters(api_name, query, user) {
   let parameters = Parameter[api_name]
   let ret = {}
-  // api_name에 맞지 않는 파라미터 삭제
+  // api_name에 맞지 않는 파라미터 삭제 O(N^2)
   for (let item in information) {
     let delete_flag = true
     for (let i = 0; i < parameters.length; i++) {
@@ -192,7 +186,6 @@ function find_parameters(api_name, query, user) {
     }
     if (delete_flag) delete information[item]
   }
-  // console.log("delete_flag", information)
   if (flag) {
     ret = information
     ret.information = flag.information
@@ -228,12 +221,14 @@ function parsing(regs, query) {
     let reg = regs[i]
     let parsing_array = query.match(new RegExp(reg.regexp, reg._option))
     if (parsing_array == null) continue
-    // console.log(parsing_array)
+
     for (let j = 0; j < parsing_array.length; j++) {
-      let str = (reg.return_value === null || reg.return_value === "") ?
-        parsing_array[j].substr(reg.start, reg._length) : reg.return_value;
-      query = query.substr(0, reg.start) + query.substr(reg.start + reg._length, query.length)
-      ret.push(str)
+      let parsing_value = parsing_array[j]
+      let return_value = (reg.return_value === null || reg.return_value === "") ?
+        parsing_value.substr(reg.start, reg._length) :
+        reg.return_value;
+      query = query.replace(parsing_value, "")
+      ret.push(return_value)
     }
     return ret
   }
@@ -246,8 +241,7 @@ function cancel_function(order) {
   }
   if (order == 'ESC') {
     information = {}
-  }
-  else {
+  } else {
     ret.message = '실행이 완료되었습니다'
   }
   flag = null

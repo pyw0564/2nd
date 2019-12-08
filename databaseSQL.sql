@@ -15,14 +15,6 @@ create table Api(
 	response_text nvarchar(255),
 	PRIMARY KEY (api_name)
 )
-/*
-sp_help Parameter
-ALTER TABLE Parameter
-DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
-ALTER TABLE Parameter
-ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
-drop table Parameter
-*/
 create table Parameter(
 	api_name nvarchar(200) NOT NULL,
 	parameter nvarchar(200) NOT NULL,
@@ -56,23 +48,22 @@ select * from Regexp;
 select * from _Log;
 select * from _Log ORDER BY _time DESC;
 
+/* 작업 */
+/*
+
 select * from Parameter where api_name='sedaeinfo'
 insert into Api VALUES('결제금액 정보 조회', 'GetServicePayInfo2', 1, 'GetServicePayInfo2', '/GetServicePayInfo2', '안녕하세요')
-
 update Api Set url = '/chatbot/rec/roombasic/get' where api_name = 'sedaeinfo'
-/* WARINIG !!! */
-/* DROP TABLES*/
-/*
-drop table Api;
-drop table Parameter;
-drop table Regexp;
-drop table _Log;
-
-delete  from Parameter where parameter = 'danconde'
-
-*/
+ALTER TABLE Api
+ADD rest_method nvarchar(100)
+sp_help Parameter
+ALTER TABLE Parameter
+DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
+ALTER TABLE Parameter
+ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
+drop table Parameter
 DELETE FROM Parameter WHERE display_name='종료년도'
-
+*/
 
 /* INSERT test data */
 /* 1. API */
@@ -90,3 +81,16 @@ INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)
 INSERT INTO Regexp VALUES('year', '[0-9]{3,4}년', 'g', '', 0,4)
 INSERT INTO Regexp VALUES('year', '[0-9]{4}년', 'g', '', 0,4)
 INSERT INTO Regexp VALUES('sedaeinfo', '세대정보', 'g', '', 0,3)
+
+
+/* WARINIG !!! */
+/* DROP TABLES*/
+/*
+drop table Api;
+drop table Parameter;
+drop table Regexp;
+drop table _Log;
+
+delete  from Parameter where parameter = 'danconde'
+
+*/
