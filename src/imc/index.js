@@ -48,6 +48,14 @@ module.exports = function() {
     if (method == 'post') {
       return await post(url, data, head)
     } else if (method == 'get') {
+      data = {
+	      a1:1413,
+	      a2:101,
+	      a3:101,
+	      a4:201807,
+	      a5:1,
+	      a6:1
+      }
       return await get(url, head)
     }
   }
