@@ -9,6 +9,9 @@ script(type="text/javascript").
       $("#api_name").val(tableList[index].api_name)
       $("#response").val(tableList[index].response)
       $("#parameter_type").val(tableList[index].parameter_type)
+      $("#url").val(tableList[index].url)
+      $("#response_text").val(tableList[index].response_text)
+      $("#rest_method").val(tableList[index].rest_method)
       
       $("#prev").val(tableList[index].api_name)
       $("#createTable").attr("action", "/adm/update/table")
@@ -40,6 +43,18 @@ script(type="text/javascript").
         input#parameter_type(type="text" name="parameter_type")
       br
       label
+        | url:
+        input#url(type="text" name="url")
+      br
+      label
+        | response_text:
+        input#response_text(type="text" name="response_text")
+      br
+      label
+        | rest_method:
+        input#rest_method(type="text" name="rest_method")
+      br
+      label
         input#prev(type="hidden" name="prev" value="")
         input#submit(type="submit" value="등록")
         input#reset(type="reset" value="취소")
@@ -52,7 +67,9 @@ script(type="text/javascript").
         th api_name
         th response
         th parameter_type
-        th
+        th url
+        th response_text
+        th rest_method
     tbody
       -for(let i = 0 ; i < tableList.length ; i++) {
         tr(id=tableList[i].api_name value=i)
@@ -67,6 +84,12 @@ script(type="text/javascript").
             =tableList[i].response
           td
             =tableList[i].parameter_type
+          td
+            =tableList[i].url
+          td
+            =tableList[i].response_text
+          td
+            =tableList[i].rest_method
           td.buttonList
             button.update(value=tableList[i].api_name) 수정
             form(method="post" action="/adm/delete/table")

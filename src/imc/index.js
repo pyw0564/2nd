@@ -12,6 +12,7 @@ module.exports = function() {
     }
   }
   async function post(url, data, head) {
+    console.log('URL', process.env.url + "/" + process.env.agencycode + url)
     return (await axios.post(process.env.url + "/" + process.env.agencycode + url, data, head)).data;
   }
   async function get(url, data, head) {
@@ -37,18 +38,17 @@ module.exports = function() {
     return await post("/chatbot/auth/authorize", data, head);
   }
 
-  async function rest_api_function(data, url, method) {
+  async function rest_api_function(data, order, url, method) {
     if (data == undefined) {
       console.log(`imc ${url} : data undefined`)
       return
     }
-    let XAuth = cryptor.getXAuth(data)
+    let XAuth = cryptor.getXAuth(data, order)
     let head = getHeaders(XAuth)
-    console.log("XAuth, head", XAuth, head)
     if (method == 'post') {
       return await post(url, data, head)
     } else if (method == 'get') {
-      return await get(url, data, head)
+      return await post(url, data, head)
     }
   }
   return {

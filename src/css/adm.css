@@ -27,7 +27,7 @@ a:visited {
 }
 
 #adm_page {
-  width: 800px;
+  width: 1500px;
   padding: 15px;
   background-color: white;
   display: block;
@@ -110,6 +110,12 @@ a:visited {
 
 #adm_page #adm_sub_page #addRegexp {
   display: flex;
+}
+
+#adm_page #adm_sub_page #variables {
+  display: inline-block;
+  width: 62.5%;
+  padding: 10px;
 }
 
 #adm_page #adm_sub_page #addRegexp #variables {

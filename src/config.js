@@ -61,7 +61,7 @@ async function read_api() {
 
 // parameter 읽기
 async function read_parameter() {
-  let records = await sqlQuery(`SELECT * FROM Parameter`)
+  let records = await sqlQuery(`SELECT * FROM Parameter ORDER BY _order`)
   for (let i = 0; i < records.length; i++) {
     let record = records[i]
     if (Parameter[record.api_name] === undefined) {
@@ -92,9 +92,9 @@ async function read_DB() {
   await initialize()
   await console.log("SQL Connect . . .")
   await read_api()
-  // console.log('Api 읽기완료', Api)
+  console.log('Api 읽기완료', Api)
   await read_parameter()
-  // console.log('Parameter 읽기완료', Parameter)
+  console.log('Parameter 읽기완료', Parameter)
   await read_regexp()
   // console.log('Regexp 읽기완료', Regexpr)
   await console.log("READ DB 종료 되었습니다.")

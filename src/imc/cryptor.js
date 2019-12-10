@@ -34,19 +34,22 @@ module.exports = function() {
   }
 
   /* rest api */
-  function getXAuth(data) {
+  function getXAuth(data, order) {
     let NONCE = process.env.NONCE;
     let msg = "";
 
     if (data.token) {
       msg = data.token;
     } else {
-      let keys = Object.keys(data);
-      for (let i = 0; i < keys.length; i++) {
-        msg += data[keys[i]];
+      for (let i = 0; i < order.length; i++) {
+        let param = order[i].parameter
+        if (data[param]) {
+          // console.log('------------', data[param])
+          msg += data[param];
+        }
       }
     }
-
+    console.log(msg)
     let value = msg + NONCE;
     let hmac = crypto.createHmac("sha256", process.env.HmacKey);
     let hash = hmac.update(value).digest('base64');

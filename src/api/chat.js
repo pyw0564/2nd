@@ -112,7 +112,7 @@ function server_message_function(object) {
 
 // 3. rest api 통신 함수
 function rest_api_ajax(object) {
-  console.log("rest api 도착")
+  // console.log("rest api 도착")
   var url = '/chat/response'
   var xhr = new XMLHttpRequest()
   let data = {
@@ -126,11 +126,10 @@ function rest_api_ajax(object) {
       rest api 정보 처리하는 곳
     */
     let response = JSON.parse(evt.currentTarget.response)
-    console.log(response) // 배열
 
     let str = ""
-    if (response.length) {
-      console.log(object.information)
+    if (response == 'Y') {
+      // console.log(object.information)
       str = "<a href='"
       str += "/chat/response/" + object.information.api_name + "?"
       str += "data="

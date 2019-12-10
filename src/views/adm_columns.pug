@@ -9,6 +9,7 @@ script(type="text/javascript").
       $("#parameter").val(columns[index].parameter)
       $("#display_name").val(columns[index].display_name)
       $("#parameter_type").val(columns[index].parameter_type)
+      $("#_order").val(columns[index]._order)
       console.log(columns[index].necessary == 0)
       if(columns[index].necessary == 0) {
         $("#necessary option:eq(1)").prop("selected", "selected");
@@ -46,6 +47,10 @@ script(type="text/javascript").
         input#parameter_type(type="text" name="parameter_type")
       br
       label
+        | _order:
+        input#_order(type="text" name="_order")
+      br
+      label
         | necessary:
         select#necessary(name="necessary")
           option(value=1 selected) 필수
@@ -65,7 +70,7 @@ script(type="text/javascript").
         th display_name
         th parameter_type
         th necessary
-        th
+        th _order
     tbody
       -for(let i = 0 ; i < columns.length ; i++) {
         tr(id=columns[i].parameter value=i)
@@ -81,6 +86,8 @@ script(type="text/javascript").
             =columns[i].parameter_type
           td
             =columns[i].necessary
+          td
+            =columns[i]._order
           td.buttonList
             button.update(value=columns[i].parameter) 수정
             form(method="post" action="/adm/delete/"+tableName+"/row")

@@ -109,9 +109,11 @@ router.post('/cancel', async function(req, res) {
 // api 통신
 router.post('/chat/response', async function(req, res) {
   let data = req.body.data
+  let data_tmp = JSON.stringify(data)
   console.log('REST API 통신 라우터입니다 /chat/response', data)
   let url = data.information.url
   const rest_method = data.information.rest_method
+  const api_name = data.information.api_name
 
   // index count Object.. FOR ARRAY PROPERTY
   let index_Object = {}
@@ -139,8 +141,10 @@ router.post('/chat/response', async function(req, res) {
         urlArray.push(urlArray_temp[i])
   }
   let result = []
+  let resultFlag = false
   // JSON 형식으로 데이터 가공, 동시검색 지원 -> 배열로 반환
   for (let i = 0; i < max_index; i++) {
+    let url_temp = url
     let json_object = {}
     for (let item in data) {
       if (Array.isArray(data[item].result)) {
@@ -153,76 +157,44 @@ router.post('/chat/response', async function(req, res) {
       }
     }
     let rest_api_result
-    // json_object  = {
-    //   dancode: '9703',
-    //   dongcode: '1',
-    //   kind: '1',
-    //   rentgbn: '1',
-    //   roomno: '101',
-    //   yyyymm: '201804'
-    // }
     if (rest_method == 'post') { // post rest api
-      rest_api_result = await imc.rest_api_function(json_object, url, 'post')
+      rest_api_result = await imc.rest_api_function(json_object, Parameter[api_name], url_temp, 'post')
     } else if (rest_method == 'get') { // get rest api
       for (let j = 0; j < urlArray.length; j++) {
         let param = urlArray[j]
-        url = url.replace(param, json_object[param.substr(1, param.length - 2)])
+        url_temp = url_temp.replace(param, json_object[param.substr(1, param.length - 2)])
       }
-      console.log("GET 통신 왜 안돼..", json_object, url)
-      rest_api_result = await imc.rest_api_function(json_object, url, 'get')
+      // console.log("GET 통신 왜 안돼..", json_object, url)
+      rest_api_result = await imc.rest_api_function(json_object, Parameter[api_name], url_temp, 'get')
+    }
+    if (rest_api_result.response_code == 'OK')
+      resultFlag = true
+    if (!Array.isArray(rest_api_result.result)) {
+      rest_api_result.result = [rest_api_result.result]
     }
     result.push(rest_api_result)
   }
-  console.log("REST API 통신완료", result, req.session)
-  // req.session[api_name] = data
-  return res.json(result)
+  req.session[data_tmp] = result
+
+  console.log("REST API 통신완료", result)
+  console.log(req.session)
+
+  if (resultFlag) {
+    return res.json('Y')
+  } else {
+    return res.json('N')
+  }
 })
 
 router.get('/chat/response/:api_name', async function(req, res) {
   let data = JSON.parse(req.query.data)
   const url = data.information.url
   const api_name = data.information.api_name
-  let index_Object = {}
-  let max_index = 0
-  for (let item in data) {
-    if (typeof data[item] != 'object') {
-      delete data[item]
-    } else {
-      if (data[item].result) {
-        if (Array.isArray(data[item].result)) {
-          index_Object[item] = {
-            index: 0,
-            length: data[item].result.length
-          }
-          if (max_index < index_Object[item].length)
-            max_index = index_Object[item].length
-        }
-      } else {
-        delete data[item]
-      }
-    }
-  }
-  let result = []
-  // JSON 형식으로 데이터 가공
-  for (let i = 0; i < max_index; i++) {
-    let json_object = {}
-    for (let item in data) {
-      if (Array.isArray(data[item].result)) {
-        let index_item = index_Object[item]
-        json_object[item] = data[item].result[index_item.index]
-        if (index_item.index < index_item.length - 1) {
-          index_item.index += 1
-        }
-      } else {
-        json_object[item] = data[item].result
-      }
-    }
-    // console.log(json_object)
-    let ret = await imc.rest_api_function(json_object, url, 'post')
-    result.push(ret)
-  }
+  let result = req.session[req.query.data]
 
-  console.log("REST API 통신 결과", result)
+  console.log("Data", req.query.data)
+  console.log("새창 세션 활용", result)
+
   let str
   let keys = Object.keys(result[0].result[0])
   str = "<table border='1'>"

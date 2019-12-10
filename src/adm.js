@@ -42,8 +42,7 @@ router.get('/:tableName/columns', async function(req, res) {
     columns: queryResult,
     tableName: tableName,
     tableList: tableList,
-    tables: tables,
-    reg: reg
+    tables: tables
   })
 })
 
@@ -60,8 +59,12 @@ router.post('/insert/table', async function(req, res) {
   const api_name = req.body.api_name
   const response = req.body.response
   const parameter_type = req.body.parameter_type
+  const url = req.body.url
+  const response_text = req.body.response_text
+  const rest_method = req.body.rest_method
   const query = ` INSERT INTO API(display_name, api_name, response, parameter_type)
-                  VALUES ('${display_name}', '${api_name}', '${response}', '${parameter_type}');`
+                  VALUES ('${display_name}', '${api_name}', '${response}', '${parameter_type}',
+                '${url}', '${response_text}', '${rest_method}');`
   console.log(query);
   try {
     await sqlQuery(query)
@@ -95,10 +98,11 @@ router.post('/insert/:tableName/row', async function(req, res) {
   const display_name = req.body.display_name
   const parameter_type = req.body.parameter_type
   const necessary = req.body.necessary
+  const _order = req.body._order
   const tableName = req.params.tableName
   const query = `
-    INSERT INTO Parameter(api_name, parameter, display_name, parameter_type, necessary)
-    VALUES ('${api_name}', '${parameter}', '${display_name}', '${parameter_type}', '${necessary}')
+    INSERT INTO Parameter(api_name, parameter, display_name, parameter_type, necessary, _order)
+    VALUES ('${api_name}', '${parameter}', '${display_name}', '${parameter_type}', '${necessary}', '${order}')
   `
   console.log(query)
   await sqlQuery(query)
@@ -112,8 +116,13 @@ router.post('/update/table', async function(req, res) {
   const api_name = req.body.api_name
   const response = req.body.response
   const parameter_type = req.body.parameter_type
+  const url = req.body.url
+  const response_text = req.body.response_text
+  const rest_method = req.body.rest_method
+
   const query = `
-    UPDATE API SET display_name='${display_name}', api_name='${api_name}', response='${response}', parameter_type='${parameter_type}'
+    UPDATE API SET display_name='${display_name}', api_name='${api_name}', response='${response}', parameter_type='${parameter_type}',
+     url = '${url}', response_text = '${response_text}', rest_method = '${rest_method}'
     WHERE api_name='${prev}';
     UPDATE Parameter SET api_name = '${api_name}'
     WHERE api_name='${prev}';
@@ -148,8 +157,9 @@ router.post('/update/:tableName/row', async function(req, res) {
   const parameter_type = req.body.parameter_type
   const necessary = req.body.necessary
   const tableName = req.params.tableName
+  const _order = req.body._order
   const query = `
-    UPDATE Parameter SET api_name='${api_name}', parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}', necessary='${necessary}'
+    UPDATE Parameter SET api_name='${api_name}', parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}', necessary='${necessary}', _order='${_order}'
     WHERE parameter='${prev}' and api_name='${tableName}';
   `
   await sqlQuery(query)
