@@ -129,7 +129,7 @@ function rest_api_ajax(object) {
     console.log(response) // 배열
 
     let str = ""
-    if(response.length) {
+    if (response.length) {
       console.log(object.information)
       str = "<a href='"
       str += "/chat/response/" + object.information.api_name + "?"
@@ -146,8 +146,7 @@ function rest_api_ajax(object) {
           "text": "결과보기(새창)"
         },
       });
-    }
-    else {
+    } else {
       str = "조회를 할 수 없거나 결과가 없습니다."
       $.ajax({
         url: "/insertLog",
@@ -193,7 +192,7 @@ function cancel_ajax(flag) {
   xhr.open('POST', '/cancel', true)
   xhr.setRequestHeader('Content-Type', 'application/json')
   xhr.send(JSON.stringify({
-    flag : flag
+    flag: flag
   }))
 
   xhr.addEventListener('load', function() {

@@ -14,8 +14,9 @@ module.exports = function() {
   async function post(url, data, head) {
     return (await axios.post(process.env.url + "/" + process.env.agencycode + url, data, head)).data;
   }
-  async function get(url, data, head) {
-    return (await axios.get(process.env.url + "/" + process.env.agencycode + url, data, head)).data;
+  async function get(url, head) {
+    console.log('URL', process.env.url + "/" + process.env.agencycode + url, head)
+    return (await axios.get(process.env.url + "/" + process.env.agencycode + url, head)).data;
   }
   // 사용자인증
   async function authorize(id, pw) {
@@ -43,11 +44,11 @@ module.exports = function() {
     }
     let XAuth = cryptor.getXAuth(data)
     let head = getHeaders(XAuth)
-    console.log("XAuth, head", XAuth, head)
+    console.log("data", data)
     if (method == 'post') {
       return await post(url, data, head)
     } else if (method == 'get') {
-      return await get(url, data, head)
+      return await get(url, head)
     }
   }
   return {

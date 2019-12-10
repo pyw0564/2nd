@@ -153,6 +153,14 @@ router.post('/chat/response', async function(req, res) {
       }
     }
     let rest_api_result
+    // json_object  = {
+    //   dancode: '9703',
+    //   dongcode: '1',
+    //   kind: '1',
+    //   rentgbn: '1',
+    //   roomno: '101',
+    //   yyyymm: '201804'
+    // }
     if (rest_method == 'post') { // post rest api
       rest_api_result = await imc.rest_api_function(json_object, url, 'post')
     } else if (rest_method == 'get') { // get rest api
