@@ -4,6 +4,7 @@ const base64url = require('base64-url');
 require('dotenv').config(__dirname + "/../../.env");
 
 module.exports = function() {
+  /* 사용자인증 */
   const algo = 'aes-128-cbc';
   const key = process.env.EncryptKey;
 
@@ -32,6 +33,7 @@ module.exports = function() {
     return encodeBase64(AES);
   }
 
+  /* rest api */
   function getXAuth(data) {
     let NONCE = process.env.NONCE;
     let msg = "";
