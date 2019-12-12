@@ -48,7 +48,7 @@ module.exports = function() {
     if (method == 'post') {
       return await post(url, data, head)
     } else if (method == 'get') {
-      return await post(url, data, head)
+      return await get(url, data, head)
     }
   }
   return {

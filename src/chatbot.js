@@ -12,6 +12,12 @@ var initialize = config.initialize
 var init = config.init
 var sqlQuery = config.sqlQuery
 var cancel_function = config.cancel_function
+
+const session = require('express-session') // 세션
+const Redis = require('redis') // 레디스
+const client = Redis.createClient() // 레디스
+var redisStore = require('connect-redis')(session) // 레디스
+
 // Body parser
 router.use(bodyParser.urlencoded({
   extended: false
@@ -227,5 +233,24 @@ router.get('/chat/response/:api_name', async function(req, res) {
   str += "</table>"
   return res.send(str)
 })
+
+router.post('/change/dancode', function(req, res) {
+    // const {username} = req.body;
+    const username = "챗봇테스터001";
+// 챗봇테스터001
+    // 1. redis에서 유저정보 들고옴
+    client.get("client",function(err,value){
+      console.log(value);
+    });
+    // 2. 현재 단코드와 받은 단코드 비교
+
+
+    res.send({status:403, message:"현재 단지코드가 일치하지 않습니다."})
+    // res.send("test");
+    // res.status = 403;
+    // res.body
+    // 3. 변경
+})
+
 
 module.exports = router;
