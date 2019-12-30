@@ -157,3 +157,7 @@ a:visited {
 #adm_page #adm_sub_page .selected {
   background-color: yellow;
 }
+
+#adm_sub_page form input.inputText {
+  width: 600px;
+}

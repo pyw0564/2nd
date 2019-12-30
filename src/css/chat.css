@@ -5,7 +5,7 @@ input:focus, button:focus { outline:none; }
 #login_form {display:flex; width:100%; height:100%;justify-content: center; align-items: center;}
 #login_form > form  {text-align: right;}
 
-#chat { position: relative; width: 400px; height: 90vh;overflow: hidden;box-sizing: border-box; border: 3px solid #487CD2; border-radius:10px; }
+#chat { position: relative; width: 600px; height: 90vh;overflow: hidden;box-sizing: border-box; border: 3px solid #487CD2; border-radius:10px; }
 #chat * { box-sizing: border-box; }
 
 #chat_header { position: relative; min-width: 100%; height: 12.5%; background-color: #487CD2; color:white; padding: 5px 8px;}

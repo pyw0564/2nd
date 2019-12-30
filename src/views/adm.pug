@@ -34,6 +34,7 @@ html
         a#tables(href="/adm/tables") Parameter Table list
         a#regexps(href="/adm/regexps") Regular Expression list
         a#logs(href="/adm/logs") Logs
+        a#recommend(href="/adm/recommend") Recommend
         a#chatbot(href="/chat") ChatBot
         #extra
       case type
@@ -45,3 +46,5 @@ html
             include adm_columns.pug
           when 'logs'
             include adm_log.pug
+          when 'recommend'
+            include adm_recommend.pug

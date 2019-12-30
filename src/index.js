@@ -6,6 +6,7 @@ const Redis = require('redis') // 레디스
 const client = Redis.createClient() // 레디스
 var redisStore = require('connect-redis')(session) // 레디스
 const bodyParser = require('body-parser') // 바디 파서
+const sessionData = require('./imc/session.data')
 
 app.use(bodyParser.urlencoded({ extended: false })) // 바디 파서 init
 app.use(session({ // 세션 init

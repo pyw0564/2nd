@@ -5,6 +5,7 @@ require('dotenv').config({
 var Api = {}
 var Parameter = {}
 var Regexpr = {}
+var Recommend = {}
 const sqlConfig = {
   user: process.env.DB_USER ? process.env.DB_USER : 'njuser', // mssql username
   password: process.env.DB_PASSWORD ? process.env.DB_PASSWORD : 'imc0029', // mssql password
@@ -29,9 +30,12 @@ const sqlConfig = {
 */
 // 3개의 테이블 객체 유지하면서 속성 제거
 async function initialize() {
+  information = {}
+  flag = null
   while (Api.length) Api.pop()
   for (let key in Parameter) delete Parameter[key]
   for (let key in Regexpr) delete Regexpr[key]
+  for (let key in Recommend) delete Recommend[key]
 }
 
 // 동기화 SQL 쿼리
@@ -87,16 +91,30 @@ async function read_regexp() {
   }
 }
 
+async function read_recommend() {
+  let records = await sqlQuery(`SELECT * FROM Recommend`)
+  for (let i = 0; i < records.length; i++) {
+    let record = records[i]
+    if (Recommend[record.parameter_type] === undefined) {
+      Recommend[record.parameter_type] = []
+    }
+    let obj = {}
+    for (let item in record) obj[item] = record[item]
+    Recommend[record.parameter_type].push(obj)
+  }
+}
 // 통합 읽기
 async function read_DB() {
   await initialize()
   await console.log("SQL Connect . . .")
   await read_api()
-  console.log('Api 읽기완료', Api)
+  // console.log('Api 읽기완료', Api)
   await read_parameter()
-  console.log('Parameter 읽기완료', Parameter)
+  // console.log('Parameter 읽기완료', Parameter)
   await read_regexp()
   // console.log('Regexp 읽기완료', Regexpr)
+  await read_recommend()
+  console.log('Recommend 읽기완료', Recommend)
   await console.log("READ DB 종료 되었습니다.")
 }
 
@@ -107,17 +125,21 @@ async function read_DB() {
 */
 
 var information = {} // 파싱한 정보 객체
-var flag // 정보 유지를 위한 플래그
+var flag = {} // 정보 유지를 위한 플래그
 async function init(query, user) {
-  query = " " + query + " "
+  query = {
+    q : ' ' + query + ' '
+  }
+
   // 취소 CLEAR 처리
   let records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
   for (let i in records) {
     let record = records[i]
-    if (query.match(new RegExp(record.regexp, record._option))) {
+    if (query.q.match(new RegExp(record.regexp, record._option))) {
       return cancel_function('ESC')
     }
   }
+
   // 플래그 처리
   if (flag) {
     console.log("FLAG가 유지되고 있습니다", flag)
@@ -129,15 +151,18 @@ async function init(query, user) {
   let continue_flag = false
   for (let i in continue_records) {
     let record = continue_records[i]
-    if (query.match(new RegExp(record.regexp, record._option)))
+    if (query.q.match(new RegExp(record.regexp, record._option))) {
       continue_flag = true
+    }
   }
-  if (!continue_flag)
+  if (!continue_flag) {
     information = {}
+  }
   information = find_api(query, user)
 
-  if (Object.keys(information).length === 0)
-    information.message = '알 수 없는 키워드 입니다'
+  if (Object.keys(information).length === 0) {
+    information.message = '알 수 없는 키워드 입니다.'
+  }
 
   console.log('파싱된 정보입니다', information)
   return information
@@ -156,7 +181,7 @@ function find_api(query, user) {
     for (let i = 0; i < Regexpr[item].length; i++) {
       let record = Regexpr[item][i]
       let regexp = new RegExp(record.regexp, record._option)
-      let result = query.match(regexp)
+      let result = query.q.match(regexp)
       if (result) {
         flag = {
           api_name: api_name,
@@ -201,8 +226,11 @@ function find_parameters(api_name, query, user) {
     if (user[parameter])
       parsing_ret = user[parameter]
     else {
-      parsing_ret = parsing(Regexpr[parameter_type], query)
-      if (parsing_ret == null && information[parameter] != null) continue
+      parsing_ret = except_parameter(parameter, query)
+      if (parsing_ret == null) {
+        parsing_ret = parsing(Regexpr[parameter_type], query)
+        if (parsing_ret == null && information[parameter] != null) continue
+      }
     }
     ret[parameter] = {
       display_name: display_name,
@@ -219,7 +247,7 @@ function parsing(regs, query) {
   let ret = []
   for (let i = 0; i < regs.length; i++) {
     let reg = regs[i]
-    let parsing_array = query.match(new RegExp(reg.regexp, reg._option))
+    let parsing_array = query.q.match(new RegExp(reg.regexp, reg._option))
     if (parsing_array == null) continue
 
     for (let j = 0; j < parsing_array.length; j++) {
@@ -227,8 +255,11 @@ function parsing(regs, query) {
       let return_value = (reg.return_value === null || reg.return_value === "") ?
         parsing_value.substr(reg.start, reg._length) :
         reg.return_value;
-      query = query.replace(parsing_value, "")
-      ret.push(return_value)
+      query.q = query.q.replace(parsing_value, "")
+      ret.push({
+        parsing_value : parsing_value,
+        return_value : return_value
+      })
     }
     return ret
   }
@@ -249,12 +280,36 @@ function cancel_function(order) {
   return ret
 }
 
+function except_parameter(parameter, query) {
+  // yyyymm 처리
+  if (parameter == 'yyyymm') {
+    let year_ret = parsing(Regexpr['year'], query)
+    let month_ret = parsing(Regexpr['month'], query)
+    ret = []
+    if (year_ret == null || month_ret == null) return null
+    for (let i = 0; i < year_ret.length; i++) {
+      for (let j = 0; j < month_ret.length; j++) {
+        if (month_ret[j].length == 1) {
+          month_ret[j] = '0' + month_ret[j]
+        }
+        ret.push({
+          parsing_value : year_ret[i].parsing_value + month_ret[j].parsing_value,
+          return_value : year_ret[i].return_value + month_ret[j].return_value
+        })
+      }
+    }
+    return ret
+  }
+  return null
+}
+
 module.exports = function() {
   return {
     init: init,
     Api: Api,
     Parameter: Parameter,
     Regexpr: Regexpr,
+    Recommend: Recommend,
     sqlConfig: sqlConfig,
     sqlQuery: sqlQuery,
     read_DB: read_DB,

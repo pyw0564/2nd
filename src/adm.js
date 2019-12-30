@@ -54,6 +54,15 @@ router.get('/logs', async function(req, res) {
   })
 })
 
+router.get('/recommend', async function(req, res) {
+  const queryResult = await sqlQuery("SELECT * FROM Recommend")
+  console.log(queryResult)
+  res.render("adm", {
+    type: "recommend",
+    recommend: queryResult
+  })
+})
+
 router.post('/insert/table', async function(req, res) {
   const display_name = req.body.display_name
   const api_name = req.body.api_name
@@ -90,6 +99,19 @@ router.post('/insert/regexp', async function(req, res) {
   await sqlQuery(query)
   console.log('정규표현식 등록완료')
   res.send(alertAndRedirect('정규표현식 등록완료', '/adm/regexps'))
+})
+
+router.post('/insert/recommendexp', async function(req, res) {
+  const parameter_type = req.body.parameter_type
+  const word = req.body.word
+  const number = req.body.number
+  const query = `
+    INSERT INTO Recommend(parameter_type, word, number)
+    VALUES ('${parameter_type}', '${word}', '${number}')
+  `
+  await sqlQuery(query)
+  console.log('정규표현식 등록완료')
+  res.send(alertAndRedirect('정규표현식 등록완료', '/adm/recommend'))
 })
 
 router.post('/insert/:tableName/row', async function(req, res) {

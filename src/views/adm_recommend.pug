@@ -1,0 +1,50 @@
+script(type="text/javascript").
+  var recommend = !{JSON.stringify(recommend)}
+  console.log(recommend)
+  $(document).ready(function() {
+  })
+#adm_sub_page
+  form#addrecommendexp(method="post", action="/adm/insert/recommendexp")
+    #variables
+      label
+        | parameter_type:
+        input#parameter_type(type="text" name="parameter_type")
+      br
+      label
+        | word:
+        input#word(type="text" name="word")
+      br
+      label
+        | number:
+        input#number(type="text" name="number")
+      br
+      label
+        input#idx(type="hidden" name="idx" value="")
+        input#submit(type="submit" value="등록")
+        input#reset(type="reset" value="취소")
+  table(border="1")
+    thead
+      tr
+        th
+          input#selectAll(type="checkbox")
+        th parameter_type
+        th word
+        th number
+        th
+    tbody
+      -for(let i = 0 ; i < recommend.length ; i++) {
+        tr(id=recommend[i].idx value=i)
+          td
+            input.select(type="checkbox" value=recommend[i].idx)
+          td.parameter_type
+            =recommend[i].parameter_type
+          td.word
+            =recommend[i].word
+          td.number
+            =recommend[i].number
+          td.buttonList
+            button.update(value=recommend[i].idx) 수정
+            button.clone(value=recommend[i].idx) 복사
+            form(method="post" action="/adm/delete/recommend")
+              button.delete(name="idx" value=recommend[i].idx) 삭제
+      -}

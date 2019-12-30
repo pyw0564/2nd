@@ -5,12 +5,20 @@ html
       include ../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
     script(type="text/javascript" src="./api/chat.js")
+    script.
+      $(document).ready(function(){
+        console.log("HI")
+        $("#chat_data").text('안녕 챗봇~')
+        parsing_view()
+      })
     -if(login)
       script(type="text/javascript").
         var username = !{JSON.stringify(username)}
 
   body
     //- iframe(src="/adm" style="width:800px; height:100%;")
+    #information
+      include information.pug
     #chat
       #chat_header
         include chat_header.pug

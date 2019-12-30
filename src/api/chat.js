@@ -67,26 +67,98 @@ function parsing_view() {
 }
 
 // 2. ajax server_message 함수
-function server_message_function(object) {
+function server_message_function(res) {
+  let flag = res.flag
+  let recommend = res.recommend
+  let object = res.object
+  let clear_flag = false
+  console.log(res)
   let str = ""
-  let necessary_count = 0,
-    match_count = 0
-  if (object && object.message) str = object.message + '<br>'
-  for (let item in object) {
-    let record = object[item]
-    if (typeof record === 'object') {
-      if (record.necessary) {
-        ++necessary_count
-        if (record.result) {
-          str += "<div class='necessary'>" + record.display_name + "-> " + record.result
-            ++match_count
-        } else {
-          str += "<div class='not_necessary'>" + record.display_name + "-> [must]"
+  if (flag == 'success') {
+    let information = ""
+    if (object && object.message) information += object.message + '<br>'
+    for (let item in object) {
+      let record = object[item]
+      if (typeof record === 'object') {
+        if (record.necessary) {
+          if (record.result) {
+            console.log(res)
+            information += "<div class='necessary'>" + record.display_name + "-> "
+            if (Array.isArray(record.result)) {
+              for (let i in record.result) {
+                information += record.result[i].parsing_value + " "
+              }
+            } else {
+              information += record.result + " "
+            }
+          } else {
+            information += "<div class='not_necessary'>" + record.display_name + "-> [must]"
+          }
+          information += "</div>"
         }
-        str += "</div>"
       }
     }
+    $("#inforamtion_body").html(information)
+    return rest_api_ajax(object)
+  } else if (flag == 'home') {
+    console.log("HOME")
+    str += "<div>안녕하세요. 원하는 기능을 선택해주세요.<div/>"
+    let idx = 1
+    for (let item in recommend) {
+      str += `<div><button class='recommend'> ${idx}. ${recommend[item]}</button></div>`
+      idx += 1
+    }
+    $("#inforamtion_body").html("")
+  } else if (flag == 'not') {
+    str += `<div>[`
+    let idx = 0
+    for (let item in recommend) {
+      if (idx) str += ','
+      str += `${recommend[item].display_name}`
+      idx += 1
+    }
+    str += `]의 정보가 필요합니다.</div>`
+    str += `<div>`
+    let necessary_array = res.necessary_array
+    console.log(necessary_array)
+    if (necessary_array.length) {
+      str += `<div>추천어를 누르시거나, 정보를 입력해주세요!</div>`
+      for (let item in necessary_array) {
+        str += `<button class='recommend'>${necessary_array[item]}</button>`
+      }
+    } else {
+      str += `<div>정보를 직접 입력해주세요!</div>`
+    }
+    str += `</div>`
+
+    let information = ""
+    if (object && object.message) information += object.message + '<br>'
+    for (let item in object) {
+      let record = object[item]
+      if (typeof record === 'object') {
+        if (record.necessary) {
+          if (record.result) {
+            console.log(res)
+            information += "<div class='necessary'>" + record.display_name + "-> "
+            if (Array.isArray(record.result)) {
+              for (let i in record.result) {
+                information += record.result[i].parsing_value + " "
+              }
+            } else {
+              information += record.result + " "
+            }
+          } else {
+            information += "<div class='not_necessary'>" + record.display_name + "-> [must]"
+          }
+          information += "</div>"
+        }
+      }
+    }
+    $("#inforamtion_body").html(information)
+  } else {
+    str += res.message
   }
+
   msg = "<div class='msg'>"
   msg += "<div class='user'>System</div>"
   msg += "<div class='content'>"
@@ -95,6 +167,7 @@ function server_message_function(object) {
   msg += "</div>"
   msg += "</div>"
   $(".load").remove()
+  console.log(res)
   $("#chat_content").append(msg)
   scroll_bottom()
   $.ajax({
@@ -105,9 +178,6 @@ function server_message_function(object) {
       "text": str
     },
   });
-  if (necessary_count > 0 && necessary_count == match_count) {
-    rest_api_ajax(object)
-  }
 }
 
 // 3. rest api 통신 함수
@@ -163,9 +233,10 @@ function rest_api_ajax(object) {
     msg += "<div class='time'>" + getTime() + "</div>"
     msg += "</div>"
     msg += "</div>"
+
     $("#chat_content").append(msg)
 
-
+    console.log(msg)
     scroll_bottom()
     cancel_ajax('API COMPLETE')
   })
@@ -193,7 +264,7 @@ function cancel_ajax(flag) {
   xhr.send(JSON.stringify({
     flag: flag
   }))
-
+  console.log(flag)
   xhr.addEventListener('load', function() {
     let ret = JSON.parse(xhr.responseText)
     server_message_function(ret)
@@ -234,6 +305,9 @@ $(document).ready(function() {
   $("#chat_data").keydown(function(e) {
     if (e.which == 27) { // ESC
       cancel_ajax('ESC')
+      $("#chat_data").text('다른거 할래요')
+      $("#inforamtion_body").html('')
+      parsing_view()
     } else if (e.which == 13) { // ENTER
       idx = 0
       buffer.splice(1, 0, $("#chat_data").text())
@@ -248,5 +322,10 @@ $(document).ready(function() {
       idx = (idx + buffer.length) % buffer.length
       $("#chat_data").text(currMsg)
     }
+  })
+  // button 처리
+  $("body").on('click', '.recommend', function(e) {
+    $("#chat_data").text(e.target.innerText)
+    parsing_view()
   })
 })

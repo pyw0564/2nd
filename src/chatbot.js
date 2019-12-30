@@ -8,15 +8,17 @@ var read_DB = config.read_DB
 var Api = config.Api
 var Parameter = config.Parameter
 var Regexpr = config.Regexpr
+var Recommend = config.Recommend
 var initialize = config.initialize
 var init = config.init
 var sqlQuery = config.sqlQuery
 var cancel_function = config.cancel_function
+// const session = require('express-session') // 세션
+// const Redis = require('redis') // 레디스
+// const client = Redis.createClient() // 레디스
+// var redisStore = require('connect-redis')(session) // 레디스
 
-const session = require('express-session') // 세션
-const Redis = require('redis') // 레디스
-const client = Redis.createClient() // 레디스
-var redisStore = require('connect-redis')(session) // 레디스
+const sessionData = require('./imc/session.data');
 
 // Body parser
 router.use(bodyParser.urlencoded({
@@ -59,12 +61,15 @@ router.post('/login', async function(req, res) {
     req.session.dancode = auth.result[0].dancode
     req.session.username = auth.result[0].username
     req.session.usergubun = auth.result[0].usergubun
+
+    sessionData[`${auth.result[0].username}`] = req.session
     res.redirect("/chat")
   }
 })
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
+  console.log("/chat 세션 정보", req.session, sessionData)
   // DB READ FLAG, 실제 서비스 시 제거
   req.session.database_read = false
   // 세션 처리
@@ -90,8 +95,58 @@ router.get('/chat', async function(req, res) {
 // 파싱하는 라우터
 router.post('/parsing', async function(req, res) {
   let text = req.body.text
-  let ret = await init(text, req.session)
-  console.log("파싱된 정보", ret)
+  let parsing_object = await init(text, req.session)
+
+  let ret = {
+    object: parsing_object
+  }
+  let recommend = []
+  ret.recommend = recommend
+  if (Object.keys(parsing_object).length == 1) {
+    for (let i in Api) {
+      recommend.push(Api[i].display_name)
+    }
+    console.log('home', recommend)
+    ret.flag = 'home'
+    return res.json(ret)
+  }
+  let necessary_count = 0
+  let match_count = 0
+  for (let item in parsing_object) {
+    let record = parsing_object[item]
+    if (typeof record === 'object') {
+      if (record.necessary) {
+        ++necessary_count
+        if (record.result) {
+          ++match_count
+        } else {
+          recommend.push({
+            display_name: record.display_name,
+            parameter_type: item
+          })
+        }
+      }
+    }
+  }
+
+  if (necessary_count > 0 && necessary_count == match_count) {
+    ret.flag = 'success'
+    console.log("match")
+    return res.json(ret)
+  }
+  ret.flag = 'not'
+  console.log("not", recommend)
+  let necessary_array = []
+  for (let item in recommend) {
+    let parameter_type = recommend[item].parameter_type
+    if (Recommend[parameter_type]) {
+      for (let i in Recommend[parameter_type]) {
+        necessary_array.push(Recommend[parameter_type][i].word)
+      }
+    }
+  }
+  ret.necessary_array = necessary_array
+  console.log("필요한 배열", necessary_array)
   return res.json(ret)
 })
 
@@ -109,6 +164,7 @@ router.post('/insertLog', async function(req, res) {
 router.post('/cancel', async function(req, res) {
   let flag = req.body.flag
   let ret = cancel_function(flag)
+  console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ",ret)
   return res.json(ret)
 })
 
@@ -155,7 +211,7 @@ router.post('/chat/response', async function(req, res) {
     for (let item in data) {
       if (Array.isArray(data[item].result)) {
         let index_item = index_Object[item]
-        json_object[item] = data[item].result[index_item.index]
+        json_object[item] = data[item].result[index_item.index].return_value
         if (index_item.index < index_item.length - 1)
           index_item.index += 1
       } else {
@@ -163,6 +219,7 @@ router.post('/chat/response', async function(req, res) {
       }
     }
     let rest_api_result
+    console.log(json_object)
     if (rest_method == 'post') { // post rest api
       rest_api_result = await imc.rest_api_function(json_object, Parameter[api_name], url_temp, 'post')
     } else if (rest_method == 'get') { // get rest api
@@ -235,21 +292,31 @@ router.get('/chat/response/:api_name', async function(req, res) {
 })
 
 router.post('/change/dancode', function(req, res) {
-    // const {username} = req.body;
-    const username = "챗봇테스터001";
-// 챗봇테스터001
-    // 1. redis에서 유저정보 들고옴
-    client.get("client",function(err,value){
-      console.log(value);
-    });
-    // 2. 현재 단코드와 받은 단코드 비교
+  const username = req.body.username;
+  const dancode = req.body.dancode;
 
+  // const username = "챗봇테스터001"
+  // 챗봇테스터001
+  // 1. redis에서 유저정보 들고옴
+  var data = sessionData[`${username}`]
+  // 2. 현재 단코드와 받은 단코드 비교
+  if (data.dancode == dancode) {
+    // 세션에 값넣어주기
+    console.log(sessionData)
+    // delete sessionData[`${username}`]
+    sessionData[`${username}`].dancode = 1234
+    console.log(sessionData)
+    return res.send({
+      status: 200,
+      message: "Session destroy"
+    })
+  }
+  // 3. 변경
+  return res.send({
+    status: 403,
+    message: "현재 단지코드가 일치하지 않습니다."
+  })
 
-    res.send({status:403, message:"현재 단지코드가 일치하지 않습니다."})
-    // res.send("test");
-    // res.status = 403;
-    // res.body
-    // 3. 변경
 })
 
 
