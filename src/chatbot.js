@@ -12,13 +12,12 @@ var Recommend = config.Recommend
 var initialize = config.initialize
 var init = config.init
 var sqlQuery = config.sqlQuery
-var cancel_function = config.cancel_function
+var flag_function = config.flag_function
+var sessionData = require('./imc/session.data');
 // const session = require('express-session') // 세션
 // const Redis = require('redis') // 레디스
 // const client = Redis.createClient() // 레디스
 // var redisStore = require('connect-redis')(session) // 레디스
-
-const sessionData = require('./imc/session.data');
 
 // Body parser
 router.use(bodyParser.urlencoded({
@@ -94,78 +93,21 @@ router.get('/chat', async function(req, res) {
 
 // 파싱하는 라우터
 router.post('/parsing', async function(req, res) {
+  let query_flag = req.body.flag
   let text = req.body.text
-  let parsing_object = await init(text, req.session)
 
-  let ret = {
-    object: parsing_object
-  }
-  let recommend = []
-  ret.recommend = recommend
-  if (Object.keys(parsing_object).length == 1) {
-    for (let i in Api) {
-      recommend.push(Api[i].display_name)
-    }
-    console.log('home', recommend)
-    ret.flag = 'home'
-    return res.json(ret)
-  }
-  let necessary_count = 0
-  let match_count = 0
-  for (let item in parsing_object) {
-    let record = parsing_object[item]
-    if (typeof record === 'object') {
-      if (record.necessary) {
-        ++necessary_count
-        if (record.result) {
-          ++match_count
-        } else {
-          recommend.push({
-            display_name: record.display_name,
-            parameter_type: item
-          })
-        }
-      }
-    }
-  }
-
-  if (necessary_count > 0 && necessary_count == match_count) {
-    ret.flag = 'success'
-    console.log("match")
-    return res.json(ret)
-  }
-  ret.flag = 'not'
-  console.log("not", recommend)
-  let necessary_array = []
-  for (let item in recommend) {
-    let parameter_type = recommend[item].parameter_type
-    if (Recommend[parameter_type]) {
-      for (let i in Recommend[parameter_type]) {
-        necessary_array.push(Recommend[parameter_type][i].word)
-      }
-    }
-  }
-  ret.necessary_array = necessary_array
-  console.log("필요한 배열", necessary_array)
-  return res.json(ret)
+  let parsing_object = await init(query_flag, text, req.session)
+  return res.json(parsing_object)
 })
 
 // 로그 처리 라우터
 router.post('/insertLog', async function(req, res) {
   let text = req.body.text
-  console.log('로그 텍스트입니다', text)
+  // console.log('로그 텍스트입니다', text)
   // let now = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
   // await sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)
   // VALUES('${now}','${req.session.dancode}','${req.session.username}','${text}')`)
   return res.json()
-})
-
-// ESC, API 통신 완료시 cancle 구현
-router.post('/cancel', async function(req, res) {
-  let flag = req.body.flag
-  let ret = cancel_function(flag)
-  console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ",ret)
-  return res.json(ret)
 })
 
 // api 통신
@@ -173,9 +115,9 @@ router.post('/chat/response', async function(req, res) {
   let data = req.body.data
   let data_tmp = JSON.stringify(data)
   console.log('REST API 통신 라우터입니다 /chat/response', data)
-  let url = data.information.url
-  const rest_method = data.information.rest_method
-  const api_name = data.information.api_name
+  let url = data.API_information.url
+  const rest_method = data.API_information.rest_method
+  const api_name = data.API_information.api_name
 
   // index count Object.. FOR ARRAY PROPERTY
   let index_Object = {}
@@ -238,9 +180,7 @@ router.post('/chat/response', async function(req, res) {
     result.push(rest_api_result)
   }
   req.session[data_tmp] = result
-
-  console.log("REST API 통신완료", result)
-  console.log(req.session)
+  console.log("REST API 통신완료, 결과값", result)
 
   if (resultFlag) {
     return res.json('Y')
@@ -249,14 +189,14 @@ router.post('/chat/response', async function(req, res) {
   }
 })
 
+// api 새창
 router.get('/chat/response/:api_name', async function(req, res) {
   let data = JSON.parse(req.query.data)
-  const url = data.information.url
-  const api_name = data.information.api_name
+  const url = data.API_information.url
+  const api_name = data.API_information.api_name
   let result = req.session[req.query.data]
 
-  console.log("Data", req.query.data)
-  console.log("새창 세션 활용", result)
+  console.log("새창 세션 활용~", result)
 
   let str
   let keys = Object.keys(result[0].result[0])
@@ -294,7 +234,6 @@ router.get('/chat/response/:api_name', async function(req, res) {
 router.post('/change/dancode', function(req, res) {
   const username = req.body.username;
   const dancode = req.body.dancode;
-
   // const username = "챗봇테스터001"
   // 챗봇테스터001
   // 1. redis에서 유저정보 들고옴
@@ -318,6 +257,5 @@ router.post('/change/dancode', function(req, res) {
   })
 
 })
-
 
 module.exports = router;

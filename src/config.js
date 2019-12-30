@@ -2,6 +2,12 @@ const sql = require('mssql');
 require('dotenv').config({
   path: __dirname + '/../' + '.env'
 })
+
+/*
+
+  여기는 READ DB 입니다.
+
+*/
 var Api = {}
 var Parameter = {}
 var Regexpr = {}
@@ -23,11 +29,7 @@ const sqlConfig = {
     idleTimeoutMillis: 30000
   }
 }
-/*
 
-  여기는 READ DB 입니다.
-
-*/
 // 3개의 테이블 객체 유지하면서 속성 제거
 async function initialize() {
   information = {}
@@ -91,6 +93,7 @@ async function read_regexp() {
   }
 }
 
+// recommend 읽기
 async function read_recommend() {
   let records = await sqlQuery(`SELECT * FROM Recommend`)
   for (let i = 0; i < records.length; i++) {
@@ -103,6 +106,7 @@ async function read_recommend() {
     Recommend[record.parameter_type].push(obj)
   }
 }
+
 // 통합 읽기
 async function read_DB() {
   await initialize()
@@ -114,7 +118,7 @@ async function read_DB() {
   await read_regexp()
   // console.log('Regexp 읽기완료', Regexpr)
   await read_recommend()
-  console.log('Recommend 읽기완료', Recommend)
+  // console.log('Recommend 읽기완료', Recommend)
   await console.log("READ DB 종료 되었습니다.")
 }
 
@@ -126,9 +130,17 @@ async function read_DB() {
 
 var information = {} // 파싱한 정보 객체
 var flag = {} // 정보 유지를 위한 플래그
-async function init(query, user) {
+var continue_flag
+async function init(query_flag, query, user) {
+
+  // 파싱 플래그가 아니면 따로 처리한다
+  if (query_flag != "PARSE") {
+    return flag_function(query_flag)
+  }
+
+  // 쿼리 객체화
   query = {
-    q : ' ' + query + ' '
+    q: " " + query + " "
   }
 
   // 취소 CLEAR 처리
@@ -136,36 +148,36 @@ async function init(query, user) {
   for (let i in records) {
     let record = records[i]
     if (query.q.match(new RegExp(record.regexp, record._option))) {
-      return cancel_function('ESC')
+      return flag_function("CANCEL")
     }
   }
 
   // 플래그 처리
   if (flag) {
-    console.log("FLAG가 유지되고 있습니다", flag)
-    return find_parameters(flag.api_name, query, user)
+    // console.log("FLAG가 유지되고 있습니다", flag)
+    information = find_parameters(flag.api_name, query, user)
+    return flag_function("RUN")
   }
 
   // continue 처리
   let continue_records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'continue'")
-  let continue_flag = false
+  continue_flag = false
   for (let i in continue_records) {
     let record = continue_records[i]
-    if (query.q.match(new RegExp(record.regexp, record._option))) {
+    if (query.q.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
-    }
   }
-  if (!continue_flag) {
+  // continue 없으면 정보 초기화
+  if (!continue_flag)
     information = {}
-  }
+
+  // 파싱 실행
   information = find_api(query, user)
+  console.log(information, "......")
+  if (Object.keys(information).length === 0)
+    return flag_function("UNKNOWN")
 
-  if (Object.keys(information).length === 0) {
-    information.message = '알 수 없는 키워드 입니다.'
-  }
-
-  console.log('파싱된 정보입니다', information)
-  return information
+  return flag_function("RUN")
 }
 
 // 1step -> 어떤 API인지 골라내기
@@ -186,13 +198,20 @@ function find_api(query, user) {
         flag = {
           api_name: api_name,
           display_name: display_name,
-          information: Api[item]
+          API_information: Api[item]
         }
         let ret = find_parameters(api_name, query, user)
-        ret.information = Api[item]
         return ret
       }
     }
+  }
+  if (continue_flag) {
+    let api_name = information.API_information.api_name
+    let ret = find_parameters(api_name, query, user)
+    ret.API_information = Api[api_name]
+    // console.log(ret)
+    // console.log(ret.dongcode.result)
+    return ret
   }
   return {}
 }
@@ -213,8 +232,8 @@ function find_parameters(api_name, query, user) {
   }
   if (flag) {
     ret = information
-    ret.information = flag.information
-    ret.message = flag.display_name + " 실행중입니다"
+    ret.API_information = flag.API_information
+    ret.message = flag.display_name + " 실행중입니다."
   }
   for (let i = 0; i < parameters.length; i++) {
     let record = parameters[i]
@@ -229,7 +248,10 @@ function find_parameters(api_name, query, user) {
       parsing_ret = except_parameter(parameter, query)
       if (parsing_ret == null) {
         parsing_ret = parsing(Regexpr[parameter_type], query)
-        if (parsing_ret == null && information[parameter] != null) continue
+        if (parsing_ret == null && information[parameter] &&
+          information[parameter].result != null) {
+          parsing_ret = information[parameter].result
+        }
       }
     }
     ret[parameter] = {
@@ -257,8 +279,8 @@ function parsing(regs, query) {
         reg.return_value;
       query.q = query.q.replace(parsing_value, "")
       ret.push({
-        parsing_value : parsing_value,
-        return_value : return_value
+        parsing_value: parsing_value,
+        return_value: return_value
       })
     }
     return ret
@@ -266,18 +288,80 @@ function parsing(regs, query) {
   return null
 }
 
-function cancel_function(order) {
-  ret = {
-    message: "정보가 초기화 되었습니다"
+function flag_function(query_flag) {
+  // console.log("query_flag", query_flag)
+
+  let recommend = []
+  let return_object = {
+    flag: query_flag,
+    object: information,
+    recommend: recommend
   }
-  if (order == 'ESC') {
-    information = {}
-  } else {
-    ret.message = '실행이 완료되었습니다'
+  if (query_flag == "RUN") {
+    let necessary_count = 0
+    let match_count = 0
+    for (let item in information) {
+      let record = information[item]
+      if (typeof record === 'object') {
+        if (record.necessary) {
+          ++necessary_count
+          if (record.result) {
+            ++match_count
+          } else {
+            recommend.push({
+              display_name: record.display_name,
+              parameter_type: item
+            })
+          }
+        }
+      }
+    }
+    if (necessary_count > 0 && necessary_count == match_count) {
+      return_object.flag = 'SUCCESS'
+      flag = null
+      return return_object
+    }
+    return_object.flag = 'NOT SUCCESS'
+    let necessary_array = []
+    for (let item in recommend) {
+      let parameter_type = recommend[item].parameter_type
+      if (Recommend[parameter_type]) {
+        for (let i in Recommend[parameter_type]) {
+          necessary_array.push(Recommend[parameter_type][i].word)
+        }
+      }
+    }
+    return_object.necessary_array = necessary_array
+    return return_object
   }
+
   flag = null
-  console.log("CLEAR EXECUTE")
-  return ret
+  console.log(query_flag, "쿼리플래그")
+  if (query_flag == "HOME") {
+    information.flag = "HOME"
+    information.message = "안녕하세요. 원하는 기능을 선택해주세요!"
+  } else if (query_flag == "ESC") {
+    information = {}
+    information.flag = "ESC"
+    information.message = "ESC로 취소되었습니다."
+  } else if (query_flag == "CANCEL") {
+    information = {}
+    information.flag = "CANCEL"
+    information.message = "취소되었습니다."
+  } else if (query_flag == "UNKNOWN") {
+    information = {}
+    information.flag = "UNKNOWN"
+    information.message = "정확한 정보를 입력해주세요."
+  }
+  for (let i in Api) {
+    recommend.push({
+      display_name: Api[i].display_name,
+      parameter_type: i
+    })
+  }
+  return_object.object = information
+  // console.log("FLAG FUNCTION EXECUTE", return_object, information)
+  return return_object
 }
 
 function except_parameter(parameter, query) {
@@ -289,12 +373,12 @@ function except_parameter(parameter, query) {
     if (year_ret == null || month_ret == null) return null
     for (let i = 0; i < year_ret.length; i++) {
       for (let j = 0; j < month_ret.length; j++) {
-        if (month_ret[j].length == 1) {
-          month_ret[j] = '0' + month_ret[j]
+        if (month_ret[j].return_value.length == 1) {
+          month_ret[j].return_value = '0' + month_ret[j].return_value
         }
         ret.push({
-          parsing_value : year_ret[i].parsing_value + month_ret[j].parsing_value,
-          return_value : year_ret[i].return_value + month_ret[j].return_value
+          parsing_value: year_ret[i].parsing_value + month_ret[j].parsing_value,
+          return_value: year_ret[i].return_value + month_ret[j].return_value
         })
       }
     }
@@ -314,6 +398,6 @@ module.exports = function() {
     sqlQuery: sqlQuery,
     read_DB: read_DB,
     initialize: initialize,
-    cancel_function: cancel_function
+    flag_function: flag_function
   }
 }()
