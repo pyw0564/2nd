@@ -20,7 +20,7 @@ function log(text) {
 // 스크롤 내리기
 function scroll_bottom() {
   var offset = $("#chat_content .msg").last().offset()
-  $("#chat_body").scrollTop(offset.top * 10)
+  $("#chat_body").scrollTop(offset.top * 10000)
 }
 
 // client_message 보여주는 함수
@@ -219,6 +219,7 @@ function rest_api_ajax(object) {
     msg += "<div class='time'>" + getTime() + "</div>"
     msg += "</div>"
     msg += "</div>"
+    /* 구분선 */
 
     $("#chat_content").append(msg)
     parsing_ajax("COMPLETE")

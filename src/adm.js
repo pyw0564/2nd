@@ -10,7 +10,7 @@ var tables = config.Parameter
 var reg = config.Regexpr
 
 router.get('/', async function(req, res) {
-  await read_DB()
+  await read_DB(req.session)
   res.redirect('/adm/tables')
 })
 
@@ -240,12 +240,12 @@ function alertAndRedirect(aler, href) {
 }
 
 async function sqlQuery(query) {
-  await initialize()
+  // await initialize()
   return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
     return pool.request().query(query)
   }).then(async result => {
     await sql.close()
-    await read_DB()
+    // await read_DB()
     return result.recordset
   }).catch(err => {
     console.error(err)

@@ -60,26 +60,24 @@ router.post('/login', async function(req, res) {
     req.session.dancode = auth.result[0].dancode
     req.session.username = auth.result[0].username
     req.session.usergubun = auth.result[0].usergubun
-
+    req.session.information = {} // 파싱한 정보 객체
+    req.session.flag = null // 정보 유지를 위한 플래그
+    req.session.continue_flag = null
     sessionData[`${auth.result[0].username}`] = req.session
+
     res.redirect("/chat")
   }
 })
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
+  await read_DB(req.session)
+  console.log("Database_read initialize complete")
   console.log("/chat 세션 정보", req.session, sessionData)
   // DB READ FLAG, 실제 서비스 시 제거
-  req.session.database_read = false
   // 세션 처리
   if (req.session.dancode) {
     // 파싱 테이블 초기화
-    if (req.session.database_read == false) {
-      req.session.database_read = true
-      await initialize()
-      await read_DB()
-      console.log("Database_read initialize complete")
-    }
     let info = {
       login: true,
       dancode: req.session.dancode,
@@ -95,8 +93,9 @@ router.get('/chat', async function(req, res) {
 router.post('/parsing', async function(req, res) {
   let query_flag = req.body.flag
   let text = req.body.text
-
+  // console.log("BEFORE", req.session)
   let parsing_object = await init(query_flag, text, req.session)
+  console.log("파싱오브젝트", parsing_object)
   return res.json(parsing_object)
 })
 
@@ -153,7 +152,9 @@ router.post('/chat/response', async function(req, res) {
     for (let item in data) {
       if (Array.isArray(data[item].result)) {
         let index_item = index_Object[item]
-        json_object[item] = data[item].result[index_item.index].return_value
+        console.log(data[item].result, index_item.index)
+        if (data[item].result[index_item.index])
+          json_object[item] = data[item].result[index_item.index].return_value
         if (index_item.index < index_item.length - 1)
           index_item.index += 1
       } else {
@@ -195,7 +196,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
   const url = data.API_information.url
   const api_name = data.API_information.api_name
   let result = req.session[req.query.data]
-
+  console.log(data)
   console.log("새창 세션 활용~", result)
 
   let str
@@ -213,7 +214,7 @@ router.get('/chat/response/:api_name', async function(req, res) {
   for (let i = 0; i < result.length; i++) {
     let resultValue = result[i]
     if (resultValue.response_code == "OK" && resultValue.message == "success") {
-      str += "<tbody>"
+      str += "<tbody style='border-bottom:3px double black'>"
       for (let tmp in resultValue.result) {
         str += "<tr>"
         for (let values in resultValue.result[tmp]) {

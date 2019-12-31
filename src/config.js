@@ -31,9 +31,9 @@ const sqlConfig = {
 }
 
 // 3개의 테이블 객체 유지하면서 속성 제거
-async function initialize() {
-  information = {}
-  flag = null
+async function initialize(user) {
+  user.information = {}
+  user.flag = null
   while (Api.length) Api.pop()
   for (let key in Parameter) delete Parameter[key]
   for (let key in Regexpr) delete Regexpr[key]
@@ -108,8 +108,8 @@ async function read_recommend() {
 }
 
 // 통합 읽기
-async function read_DB() {
-  await initialize()
+async function read_DB(user) {
+  await initialize(user)
   await console.log("SQL Connect . . .")
   await read_api()
   // console.log('Api 읽기완료', Api)
@@ -128,14 +128,15 @@ async function read_DB() {
 
 */
 
-var information = {} // 파싱한 정보 객체
-var flag = {} // 정보 유지를 위한 플래그
-var continue_flag
 async function init(query_flag, query, user) {
-
+  let information = user.information // 파싱한 정보 객체
+  let flag = user.flag // 정보 유지를 위한 플래그
+  let continue_flag = user.continue_flag
+  // console.log("CHANGE", user)
+  // console.log(query_flag, query)
   // 파싱 플래그가 아니면 따로 처리한다
   if (query_flag != "PARSE") {
-    return flag_function(query_flag)
+    return flag_function(query_flag, user)
   }
 
   // 쿼리 객체화
@@ -147,41 +148,51 @@ async function init(query_flag, query, user) {
   let records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
   for (let i in records) {
     let record = records[i]
-    if (query.q.match(new RegExp(record.regexp, record._option))) {
-      return flag_function("CANCEL")
+    if (await query.q.match(new RegExp(record.regexp, record._option))) {
+      return await flag_function("CANCEL", user)
     }
   }
-
   // 플래그 처리
   if (flag) {
-    // console.log("FLAG가 유지되고 있습니다", flag)
-    information = find_parameters(flag.api_name, query, user)
-    return flag_function("RUN")
+    console.log("FLAG가 유지되고 있습니다", flag)
+    information = await find_parameters(flag.api_name, query, user)
+    user.information = information
+    return await flag_function("RUN", user)
   }
 
   // continue 처리
   let continue_records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'continue'")
   continue_flag = false
+  user.continue_flag = continue_flag
   for (let i in continue_records) {
     let record = continue_records[i]
-    if (query.q.match(new RegExp(record.regexp, record._option)))
+    if (await query.q.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
+    user.continue_flag = continue_flag
   }
   // continue 없으면 정보 초기화
-  if (!continue_flag)
+  if (!continue_flag) {
     information = {}
+    user.information = information
+  }
 
   // 파싱 실행
-  information = find_api(query, user)
-  console.log(information, "......")
-  if (Object.keys(information).length === 0)
-    return flag_function("UNKNOWN")
-
-  return flag_function("RUN")
+  console.log("...쿼리", query)
+  information = await find_api(query, user)
+  user.information = information
+  if (Object.keys(information).length === 0) {
+    console.log("......", information)
+    return await flag_function("UNKNOWN", user)
+  }
+  console.log("RUN", information)
+  return await flag_function("RUN", user)
 }
 
 // 1step -> 어떤 API인지 골라내기
-function find_api(query, user) {
+async function find_api(query, user) {
+  let information = user.information // 파싱한 정보 객체
+  let flag = user.flag // 정보 유지를 위한 플래그
+  let continue_flag = user.continue_flag
   for (let item in Api) {
     let record = Api[item]
     let api_name = record.api_name
@@ -193,21 +204,23 @@ function find_api(query, user) {
     for (let i = 0; i < Regexpr[item].length; i++) {
       let record = Regexpr[item][i]
       let regexp = new RegExp(record.regexp, record._option)
-      let result = query.q.match(regexp)
+      let result = await query.q.match(regexp)
       if (result) {
+        console.log("API FIND", result)
         flag = {
           api_name: api_name,
           display_name: display_name,
           API_information: Api[item]
         }
-        let ret = find_parameters(api_name, query, user)
+        user.flag = flag // 정보 유지를 위한 플래그
+        let ret = await find_parameters(api_name, query, user)
         return ret
       }
     }
   }
   if (continue_flag) {
     let api_name = information.API_information.api_name
-    let ret = find_parameters(api_name, query, user)
+    let ret = await find_parameters(api_name, query, user)
     ret.API_information = Api[api_name]
     // console.log(ret)
     // console.log(ret.dongcode.result)
@@ -217,8 +230,12 @@ function find_api(query, user) {
 }
 
 // 2step -> 필요한 parameter 마다 파싱
-function find_parameters(api_name, query, user) {
+async function find_parameters(api_name, query, user) {
+  let information = user.information // 파싱한 정보 객체
+  let flag = user.flag // 정보 유지를 위한 플래그
   let parameters = Parameter[api_name]
+  console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", Parameter)
+  console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", parameters, api_name)
   let ret = {}
   // api_name에 맞지 않는 파라미터 삭제 O(N^2)
   for (let item in information) {
@@ -230,6 +247,7 @@ function find_parameters(api_name, query, user) {
     }
     if (delete_flag) delete information[item]
   }
+  user.information = information // 파싱한 정보 객체
   if (flag) {
     ret = information
     ret.API_information = flag.API_information
@@ -245,9 +263,9 @@ function find_parameters(api_name, query, user) {
     if (user[parameter])
       parsing_ret = user[parameter]
     else {
-      parsing_ret = except_parameter(parameter, query)
+      parsing_ret = await except_parameter(parameter, query)
       if (parsing_ret == null) {
-        parsing_ret = parsing(Regexpr[parameter_type], query)
+        parsing_ret = await parsing(Regexpr[parameter_type], query)
         if (parsing_ret == null && information[parameter] &&
           information[parameter].result != null) {
           parsing_ret = information[parameter].result
@@ -264,12 +282,12 @@ function find_parameters(api_name, query, user) {
 }
 
 // 3step -> 파싱 함수
-function parsing(regs, query) {
+async function parsing(regs, query) {
   if (regs == null) return null
   let ret = []
   for (let i = 0; i < regs.length; i++) {
     let reg = regs[i]
-    let parsing_array = query.q.match(new RegExp(reg.regexp, reg._option))
+    let parsing_array = await query.q.match(new RegExp(reg.regexp, reg._option))
     if (parsing_array == null) continue
 
     for (let j = 0; j < parsing_array.length; j++) {
@@ -288,7 +306,10 @@ function parsing(regs, query) {
   return null
 }
 
-function flag_function(query_flag) {
+async function flag_function(query_flag, user) {
+  // console.log("flag function", user)
+  let information = user.information // 파싱한 정보 객체
+  let flag = user.flag // 정보 유지를 위한 플래그
   // console.log("query_flag", query_flag)
 
   let recommend = []
@@ -319,9 +340,11 @@ function flag_function(query_flag) {
     if (necessary_count > 0 && necessary_count == match_count) {
       return_object.flag = 'SUCCESS'
       flag = null
+      user.flag = flag // 정보 유지를 위한 플래그
       return return_object
     }
     return_object.flag = 'NOT SUCCESS'
+    console.log("부족한것", recommend)
     let necessary_array = []
     for (let item in recommend) {
       let parameter_type = recommend[item].parameter_type
@@ -336,6 +359,7 @@ function flag_function(query_flag) {
   }
 
   flag = null
+  user.flag = flag // 정보 유지를 위한 플래그
   console.log(query_flag, "쿼리플래그")
   if (query_flag == "HOME") {
     information.flag = "HOME"
@@ -353,6 +377,7 @@ function flag_function(query_flag) {
     information.flag = "UNKNOWN"
     information.message = "정확한 정보를 입력해주세요."
   }
+  user.information = information
   for (let i in Api) {
     recommend.push({
       display_name: Api[i].display_name,
@@ -364,12 +389,13 @@ function flag_function(query_flag) {
   return return_object
 }
 
-function except_parameter(parameter, query) {
+async function except_parameter(parameter, query) {
   // yyyymm 처리
   if (parameter == 'yyyymm') {
-    let year_ret = parsing(Regexpr['year'], query)
-    let month_ret = parsing(Regexpr['month'], query)
+    let year_ret = await parsing(Regexpr['year'], query)
+    let month_ret = await parsing(Regexpr['month'], query)
     ret = []
+    console.log(year_ret, month_ret)
     if (year_ret == null || month_ret == null) return null
     for (let i = 0; i < year_ret.length; i++) {
       for (let j = 0; j < month_ret.length; j++) {
@@ -382,7 +408,10 @@ function except_parameter(parameter, query) {
         })
       }
     }
-    return ret
+    console.log(ret)
+    if (ret.length)
+      return ret
+    return null
   }
   return null
 }
