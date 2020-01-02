@@ -17,6 +17,15 @@ function log(text) {
   })
 }
 
+function isdigit(query) {
+  if (query == null || query == "") return false
+  for (let i in query) {
+    if (0 <= Number(query[i]) && Number(query[i]) <= 9) continue
+    else return false
+  }
+  return true
+}
+
 // 스크롤 내리기
 function scroll_bottom() {
   var offset = $("#chat_content .msg").last().offset()
@@ -55,12 +64,23 @@ function client_message() {
 // 1. 파싱 보여주는 함수
 function parsing_ajax(flag) {
   let text = $("#chat_data").text()
+  /* 숫자 처리 */
+  console.log("입력한 값", text)
+  if (isdigit(text)) {
+    if ($(`#API_${text}`).text()) {
+      $("#chat_data").text($(`#API_${text}`).text())
+      return parsing_ajax("PARSE")
+    }
+  }
   if (flag != "COMPLETE") {
     client_message()
     log(text) // log
   } else {
     flag = "HOME"
   }
+
+  // 숫자로 API 처리
+
 
   let xhr = new XMLHttpRequest()
   xhr.open('POST', '/parsing', true)
@@ -84,35 +104,14 @@ function server_message_function(res) {
   let object = res.object
   let clear_flag = false
 
-  console.log("파싱 후 받은 오브젝트입니다", res)
+  information_function(res)
 
   let str = ""
-  if (flag == 'SUCCESS') {
-    let information = ""
-    if (object && object.message) information += object.message + '<br>'
-    for (let item in object) {
-      let record = object[item]
-      if (typeof record === 'object') {
-        if (record.necessary) {
-          if (record.result) {
-            console.log(res)
-            information += "<div class='necessary'>" + record.display_name + ": "
-            if (Array.isArray(record.result)) {
-              for (let i in record.result)
-                information += record.result[i].parsing_value + " "
-            } else {
-              information += record.result + " "
-            }
-          } else {
-            information += "<div class='not_necessary'>" + record.display_name + ": [must]"
-          }
-          information += "</div>"
-        }
-      }
-    }
-    $("#inforamtion_body").html(information)
+  if (flag == 'SUCCESS')
     return rest_api_ajax(object)
-  } else if (flag == 'NOT SUCCESS') {
+
+  if (flag == 'NOT SUCCESS') {
+    str += `<div class='object_message'>${object.message}</div>`
     str += `<div>[`
     let idx = 0
     console.log("추천어", recommend)
@@ -123,48 +122,40 @@ function server_message_function(res) {
     }
     str += `]의 정보가 필요합니다.</div>`
     str += `<div>`
+
     let necessary_array = res.necessary_array
     console.log("필요 파라미터", necessary_array)
-    if (necessary_array.length) {
-      str += `<div>${object.message}</div>`
-      for (let item in necessary_array)
-        str += `<button class='recommend'>${necessary_array[item]}</button>`
-    } else {
-      str += `<div>정보를 직접 입력해주세요!</div>`
+
+    if (necessary_array) {
+      if (necessary_array.Y.length && necessary_array.N.length)
+        str += `<div>추천어를 누르시거나, 정보를 직접 입력해주세요!</div>`
+      else if (necessary_array.Y.length) {
+        str += `<div>추천어를 눌러주세요!</div>`
+      } else if (necessary_array.N.length) {
+        str += `<div>정보를 직접 입력해주세요!</div>`
+      }
+
+      if (necessary_array.N.length) {
+        let idx = 0
+        str += `<div> ex) `
+        for (let item in necessary_array.N) {
+          if (idx++) str += ', '
+          str += `${necessary_array.N[item]}`
+        }
+        str += `</div>`
+      }
+      for (let item in necessary_array.Y)
+        str += `<button class='recommend'>${necessary_array.Y[item]}</button>`
     }
     str += `</div>`
-
-    let information = ""
-    if (object && object.message) information += object.message + '<br>'
-    for (let item in object) {
-      let record = object[item]
-      if (typeof record === 'object') {
-        if (record.necessary) {
-          if (record.result) {
-            information += "<div class='necessary'>" + record.display_name + "-> "
-            if (Array.isArray(record.result)) {
-              for (let i in record.result)
-                information += record.result[i].parsing_value + " "
-            } else {
-              information += record.result + " "
-            }
-          } else {
-            information += "<div class='not_necessary'>" + record.display_name + "-> [must]"
-          }
-          information += "</div>"
-        }
-      }
-    }
-    $("#inforamtion_body").html(information)
   } else if (flag == 'HOME' || flag == 'ESC' || flag == 'CANCEL' || flag == 'UNKNOWN') {
-    console.log("HOME, ESC, CANCEL, UNKNOWN")
+    console.log("HOME, ESC, CANCEL, UNKNOWN FLAG. API 목록 표출")
     str += `<div>${object.message}</div>`
     let idx = 1
     for (let item in recommend) {
-      str += `<div><button class='recommend'> ${idx}. ${recommend[item].display_name}</button></div>`
+      str += `<div><button id='API_${idx}' class='recommend'> ${idx}. ${recommend[item].display_name}</button></div>`
       idx += 1
     }
-    // $("#inforamtion_body").html("")
   } else {
     str += res
   }
@@ -200,7 +191,7 @@ function rest_api_ajax(object) {
     let str = ""
     if (response == 'Y') {
       // console.log(object.information)
-      str = "<a href='"
+      str = "<a class='new_window' href='"
       str += "/chat/response/" + object.API_information.api_name + "?"
       str += "data="
       str += JSON.stringify(object)
@@ -239,11 +230,47 @@ function extractDomain(url) {
   return domain;
 }
 
-$(document).ready(function() {
-  console.log("START")
-  $("#chat_data").text('안녕, 챗봇~!')
-  parsing_ajax("HOME")
-})
+function information_function(res) {
+  let flag = res.flag
+  let recommend = res.recommend
+  let object = res.object
+  console.log(res)
+  if (flag == 'ESC' || flag == 'CANCEL') {
+    $("#inforamtion_body").html('')
+    return
+  }
+  if (flag == 'HOME' || flag == 'UNKNOWN') {
+    return
+  }
+  let information = ""
+  if (object && object.message) information += `<div id='information_message'>${object.message}</div>`
+  information += `<table id='infomation_table'>`
+  for (let item in object) {
+    let record = object[item]
+    if (typeof record === 'object') {
+      if (record.necessary) {
+        information += `<tr>`
+        if (record.result) {
+          information += `<td class='necessary'>${record.display_name}`
+          information += `<td class='necessary'>`
+          if (Array.isArray(record.result)) {
+            for (let i in record.result)
+              information += record.result[i].parsing_value + " "
+          } else {
+            information += record.result + " "
+          }
+          information += `</td>`
+        } else {
+          information += `<td class='not_necessary'>${record.display_name}</td>`
+          information += `<td class='not_necessary'></td>`
+        }
+        information += `</tr>`
+      }
+    }
+  }
+  information += "</table>"
+  $("#inforamtion_body").html(information)
+}
 
 $(document).ready(function() {
   // Recommend button 처리

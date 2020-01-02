@@ -5,8 +5,27 @@ html
       include ../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
     script(type="text/javascript" src="./api/chat.js")
-    -if(login)
+    -if (login)
       script(type="text/javascript").
+        $(document).ready(function() {
+          console.log("START")
+          $("#chat_data").text('안녕, 챗봇~!')
+          parsing_ajax("HOME")
+
+          let information_flag = false
+          $("#inforamtion_body").css('display', 'none')
+          $("#information_button").click(function(e) {
+            information_flag = !information_flag
+            if (information_flag) {
+              $("#information_button").css("background-color", "blue")
+              $("#inforamtion_body").css('display', 'block')
+            }
+            else {
+              $("#information_button").css("background-color", "#399aff")
+              $("#inforamtion_body").css('display', 'none')
+            }
+          })
+        })
         var username = !{JSON.stringify(username)}
 
   body
@@ -20,4 +39,3 @@ html
         include chat_body.pug
       #chat_submit
         include chat_submit.pug
-  

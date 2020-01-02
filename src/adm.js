@@ -101,17 +101,17 @@ router.post('/insert/regexp', async function(req, res) {
   res.send(alertAndRedirect('정규표현식 등록완료', '/adm/regexps'))
 })
 
-router.post('/insert/recommendexp', async function(req, res) {
+router.post('/insert/recommend', async function(req, res) {
   const parameter_type = req.body.parameter_type
   const word = req.body.word
-  const number = req.body.number
+  const button = req.body.button
   const query = `
-    INSERT INTO Recommend(parameter_type, word, number)
-    VALUES ('${parameter_type}', '${word}', '${number}')
+    INSERT INTO Recommend(parameter_type, word, button)
+    VALUES ('${parameter_type}', '${word}', '${button}')
   `
   await sqlQuery(query)
-  console.log('정규표현식 등록완료')
-  res.send(alertAndRedirect('정규표현식 등록완료', '/adm/recommend'))
+  console.log('추천어 등록완료')
+  res.send(alertAndRedirect('추천어 등록완료', '/adm/recommend'))
 })
 
 router.post('/insert/:tableName/row', async function(req, res) {
@@ -152,6 +152,21 @@ router.post('/update/table', async function(req, res) {
   await sqlQuery(query)
   console.log('테이블 수정완료')
   res.send(alertAndRedirect('테이블 수정완료', `/adm/tables`))
+})
+
+router.post('/update/recommend', async function(req, res) {
+  const idx = req.body.idx
+  const parameter_type = req.body.parameter_type
+  const word = req.body.word
+  const button = req.body.button
+
+  const query = `
+    UPDATE recommend SET parameter_type='${parameter_type}', word='${word}', button='${button}'
+    WHERE idx=${idx};
+  `
+  await sqlQuery(query)
+  console.log('추천어 수정완료')
+  res.send(alertAndRedirect('추천어 수정완료', `/adm/recommend`))
 })
 
 router.post('/update/regexp', async function(req, res) {
@@ -211,6 +226,18 @@ router.post('/delete/regexp', async function(req, res) {
     await sqlQuery(query)
     console.log('정규표현식 삭제완료')
     res.send(alertAndRedirect('정규표현식 삭제완료', `/adm/regexps`))
+  } else {
+    res.send(alertAndRedirect('오류!', `/adm/regexps`))
+  }
+})
+
+router.post('/delete/recommend', async function(req, res) {
+  const idx = parseInt(req.body.idx) ? parseInt(req.body.idx) : -1
+  if (idx != -1) {
+    let query = `DELETE FROM Recommend WHERE idx = ${idx}`
+    await sqlQuery(query)
+    console.log('추천어 삭제완료')
+    res.send(alertAndRedirect('추천어 삭제완료', `/adm/recommend`))
   } else {
     res.send(alertAndRedirect('오류!', `/adm/regexps`))
   }

@@ -206,7 +206,6 @@ async function find_api(query, user) {
       let regexp = new RegExp(record.regexp, record._option)
       let result = await query.q.match(regexp)
       if (result) {
-        console.log("API FIND", result)
         flag = {
           api_name: api_name,
           display_name: display_name,
@@ -220,8 +219,10 @@ async function find_api(query, user) {
   }
   if (continue_flag) {
     let api_name = information.API_information.api_name
+    let display_name_temp = information.API_information.display_name
     let ret = await find_parameters(api_name, query, user)
     ret.API_information = Api[api_name]
+    ret.message = display_name_temp
     // console.log(ret)
     // console.log(ret.dongcode.result)
     return ret
@@ -234,8 +235,8 @@ async function find_parameters(api_name, query, user) {
   let information = user.information // 파싱한 정보 객체
   let flag = user.flag // 정보 유지를 위한 플래그
   let parameters = Parameter[api_name]
-  console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", Parameter)
-  console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", parameters, api_name)
+  // console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", Parameter)
+  // console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", parameters, api_name)
   let ret = {}
   // api_name에 맞지 않는 파라미터 삭제 O(N^2)
   for (let item in information) {
@@ -251,7 +252,7 @@ async function find_parameters(api_name, query, user) {
   if (flag) {
     ret = information
     ret.API_information = flag.API_information
-    ret.message = flag.display_name + " 실행중입니다."
+    ret.message = flag.display_name
   }
   for (let i = 0; i < parameters.length; i++) {
     let record = parameters[i]
@@ -287,7 +288,7 @@ async function parsing(regs, query) {
   let ret = []
   for (let i = 0; i < regs.length; i++) {
     let reg = regs[i]
-    let parsing_array = await query.q.match(new RegExp(reg.regexp, reg._option))
+    let parsing_array = query.q.match(new RegExp(reg.regexp, reg._option))
     if (parsing_array == null) continue
 
     for (let j = 0; j < parsing_array.length; j++) {
@@ -344,13 +345,20 @@ async function flag_function(query_flag, user) {
       return return_object
     }
     return_object.flag = 'NOT SUCCESS'
-    console.log("부족한것", recommend)
-    let necessary_array = []
+    // console.log("부족한것", recommend)
+    let necessary_array = {
+      'Y': [],
+      'N': []
+    }
     for (let item in recommend) {
       let parameter_type = recommend[item].parameter_type
       if (Recommend[parameter_type]) {
         for (let i in Recommend[parameter_type]) {
-          necessary_array.push(Recommend[parameter_type][i].word)
+          if (Recommend[parameter_type][i].button == 'Y') {
+            necessary_array.Y.push(Recommend[parameter_type][i].word)
+          } else if (Recommend[parameter_type][i].button == 'N') {
+            necessary_array.N.push(Recommend[parameter_type][i].word)
+          }
         }
       }
     }
@@ -395,7 +403,7 @@ async function except_parameter(parameter, query) {
     let year_ret = await parsing(Regexpr['year'], query)
     let month_ret = await parsing(Regexpr['month'], query)
     ret = []
-    console.log(year_ret, month_ret)
+    // console.log(year_ret, month_ret)
     if (year_ret == null || month_ret == null) return null
     for (let i = 0; i < year_ret.length; i++) {
       for (let j = 0; j < month_ret.length; j++) {

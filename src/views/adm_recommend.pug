@@ -2,9 +2,40 @@ script(type="text/javascript").
   var recommend = !{JSON.stringify(recommend)}
   console.log(recommend)
   $(document).ready(function() {
+    $(".update").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+      var index = $(".selected").attr("value")
+      $("#parameter_type").val(recommend[index].parameter_type)
+      $("#word").val(recommend[index].word)
+      $("#button").val(recommend[index].button)
+
+      $("#idx").val(recommend[index].idx)
+      $("#addRecommend").attr("action", "/adm/update/recommend")
+      $("#submit").val("수정")
+    })
+    $(".clone").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+      var index = $(".selected").attr("value")
+      
+      $("#parameter_type").val(recommend[index].parameter_type)
+      $("#word").val(recommend[index].word)
+      $("#button").val(recommend[index].button)
+
+      $("#idx").val("")
+      $("#addRecommend").attr("action", "/adm/insert/recommend")
+      $("#submit").val("등록")
+    })
+    $("#reset").click(function() {
+      $(".selected").removeClass("selected")
+      $("#idx").val("")
+      $("#addRecommend").attr("action", "/adm/insert/recommend")
+      $("#submit").val("등록")
+    })
   })
 #adm_sub_page
-  form#addrecommendexp(method="post", action="/adm/insert/recommendexp")
+  form#addRecommend(method="post", action="/adm/insert/recommend")
     #variables
       label
         | parameter_type:
@@ -15,8 +46,8 @@ script(type="text/javascript").
         input#word(type="text" name="word")
       br
       label
-        | number:
-        input#number(type="text" name="number")
+        | button:
+        input#button(type="text" name="button")
       br
       label
         input#idx(type="hidden" name="idx" value="")
@@ -29,7 +60,7 @@ script(type="text/javascript").
           input#selectAll(type="checkbox")
         th parameter_type
         th word
-        th number
+        th button
         th
     tbody
       -for(let i = 0 ; i < recommend.length ; i++) {
@@ -40,8 +71,8 @@ script(type="text/javascript").
             =recommend[i].parameter_type
           td.word
             =recommend[i].word
-          td.number
-            =recommend[i].number
+          td.button
+            =recommend[i].button
           td.buttonList
             button.update(value=recommend[i].idx) 수정
             button.clone(value=recommend[i].idx) 복사

@@ -93,7 +93,6 @@ router.get('/chat', async function(req, res) {
 router.post('/parsing', async function(req, res) {
   let query_flag = req.body.flag
   let text = req.body.text
-  // console.log("BEFORE", req.session)
   let parsing_object = await init(query_flag, text, req.session)
   console.log("파싱오브젝트", parsing_object)
   return res.json(parsing_object)
