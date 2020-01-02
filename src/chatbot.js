@@ -9,6 +9,7 @@ var Api = config.Api
 var Parameter = config.Parameter
 var Regexpr = config.Regexpr
 var Recommend = config.Recommend
+var Count = config.Count
 var initialize = config.initialize
 var init = config.init
 var sqlQuery = config.sqlQuery
@@ -65,14 +66,19 @@ router.post('/login', async function(req, res) {
     req.session.continue_flag = null
     sessionData[`${auth.result[0].username}`] = req.session
 
-    res.redirect("/chat")
+    return res.redirect("/chat")
   }
 })
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
-  await read_DB(req.session)
-  console.log("Database_read initialize complete")
+  console.log(Count)
+  if (Count.count == false) {
+    await read_DB(req.session)
+    console.log("Database_read initialize complete")
+    Count.count = true
+  }
+  console.log("session id: ", req.session.id)
   console.log("/chat 세션 정보", req.session, sessionData)
   // DB READ FLAG, 실제 서비스 시 제거
   // 세션 처리
@@ -80,6 +86,7 @@ router.get('/chat', async function(req, res) {
     // 파싱 테이블 초기화
     let info = {
       login: true,
+      information : req.session,
       dancode: req.session.dancode,
       username: req.session.username,
       usergubun: req.session.usergubun

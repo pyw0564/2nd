@@ -12,6 +12,7 @@ var Api = {}
 var Parameter = {}
 var Regexpr = {}
 var Recommend = {}
+var Count = { count : false }
 const sqlConfig = {
   user: process.env.DB_USER ? process.env.DB_USER : 'njuser', // mssql username
   password: process.env.DB_PASSWORD ? process.env.DB_PASSWORD : 'imc0029', // mssql password
@@ -431,6 +432,7 @@ module.exports = function() {
     Parameter: Parameter,
     Regexpr: Regexpr,
     Recommend: Recommend,
+    Count: Count,
     sqlConfig: sqlConfig,
     sqlQuery: sqlQuery,
     read_DB: read_DB,

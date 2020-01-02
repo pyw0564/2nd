@@ -5,13 +5,26 @@ html
       include ../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
     script(type="text/javascript" src="./api/chat.js")
+    script(type="text/javascript" src="/socket.io/socket.io.js")
     -if (login)
       script(type="text/javascript").
         $(document).ready(function() {
-          console.log("START")
+          /* 챗봇 시작 */
           $("#chat_data").text('안녕, 챗봇~!')
           parsing_ajax("HOME")
 
+          /* 소켓 */
+          let information = !{JSON.stringify(information)}
+          var socket = io()
+          //- console.log(socket)
+          socket.emit("login", {
+            information : information
+          })
+          socket.on("login2", function(data) {
+            console.log(data)
+          })
+
+          /* 정보보기 버튼 */
           let information_flag = false
           $("#inforamtion_body").css('display', 'none')
           $("#information_button").click(function(e) {
