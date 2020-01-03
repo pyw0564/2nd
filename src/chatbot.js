@@ -86,7 +86,7 @@ router.get('/chat', async function(req, res) {
     // 파싱 테이블 초기화
     let info = {
       login: true,
-      information : req.session,
+      information: req.session,
       dancode: req.session.dancode,
       username: req.session.username,
       usergubun: req.session.usergubun
@@ -168,7 +168,7 @@ router.post('/chat/response', async function(req, res) {
       }
     }
     let rest_api_result
-    console.log(json_object)
+    console.log("json_object", json_object)
     if (rest_method == 'post') { // post rest api
       rest_api_result = await imc.rest_api_function(json_object, Parameter[api_name], url_temp, 'post')
     } else if (rest_method == 'get') { // get rest api
@@ -184,6 +184,7 @@ router.post('/chat/response', async function(req, res) {
     if (!Array.isArray(rest_api_result.result)) {
       rest_api_result.result = [rest_api_result.result]
     }
+    rest_api_result.keyValue = json_object
     result.push(rest_api_result)
   }
   req.session[data_tmp] = result
@@ -202,22 +203,43 @@ router.get('/chat/response/:api_name', async function(req, res) {
   const url = data.API_information.url
   const api_name = data.API_information.api_name
   let result = req.session[req.query.data]
-  console.log(data)
-  console.log("새창 세션 활용~", result)
 
-  let str
+  // console.log("새창 세션 활용~", data)
+  // console.log("새창 세션 활용~", result)
+
+  /* result.length 만큼 반복 */
+  /* replace response text */
+  let str = ""
   let keys = Object.keys(result[0].result[0])
-  str = "<table border='1'>"
-  str += "<thead>"
-  str += "<tr>"
-  for (let tmp in keys) {
-    str += "<th>"
-    str += keys[tmp]
-    str += "</th>"
-  }
-  str += "</tr>"
-  str += "</thead>"
   for (let i = 0; i < result.length; i++) {
+    let responseText = Api[api_name].response_text
+    str += "<h3>"
+    for (let item in data) {
+      let prop = data[item]
+      if (prop.result && Array.isArray(prop.result)) {
+        let index = i < prop.result.length - 1 ? i : prop.result.length - 1
+        let value = prop.result[index].parsing_value
+        // default는 parsing_value 사용 ex) 관리비 입력시 1 (X) 관리비 (O)
+        // parameter의 return_value 없으면 return value 사용 ex) 101동 입력시 101 (O) 101동 (X)
+        if (Regexpr[item][0].return_value == '' || Regexpr[item][0].return_value == null) {
+          value = prop.result[index].return_value
+        }
+        responseText = responseText.replace(`{${item}}`, value)
+      }
+    }
+    str += responseText
+    str += "</h3>"
+
+    str += "<table border='1'>"
+    str += "<thead>"
+    str += "<tr>"
+    for (let tmp in keys) {
+      str += "<th>"
+      str += keys[tmp]
+      str += "</th>"
+    }
+    str += "</tr>"
+    str += "</thead>"
     let resultValue = result[i]
     if (resultValue.response_code == "OK" && resultValue.message == "success") {
       str += "<tbody style='border-bottom:3px double black'>"
@@ -232,9 +254,9 @@ router.get('/chat/response/:api_name', async function(req, res) {
       }
       str += "</tbody>"
     }
+    str += "</table>"
   }
 
-  str += "</table>"
   return res.send(str)
 })
 
