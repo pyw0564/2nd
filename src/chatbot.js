@@ -15,10 +15,13 @@ var init = config.init
 var sqlQuery = config.sqlQuery
 var flag_function = config.flag_function
 var sessionData = require('./imc/session.data');
-// const session = require('express-session') // 세션
-// const Redis = require('redis') // 레디스
-// const client = Redis.createClient() // 레디스
-// var redisStore = require('connect-redis')(session) // 레디스
+const Redis = require('redis') // 레디스
+const client = Redis.createClient() // 레디스
+const {
+  promisify
+} = require('util');
+const getAsync = promisify(client.get).bind(client);
+const io = require('./socketMgt').getIO();
 
 // Body parser
 router.use(bodyParser.urlencoded({
@@ -48,7 +51,7 @@ router.post('/login', async function(req, res) {
   const dancode = req.body.dancode
   // 로그인 api 사용
   const auth = await imc.authorize(id, pw)
-  console.log("로그인", auth, id, pw)
+  // console.log("로그인", auth, id, pw)
   if (auth.response_code != "OK") {
     res.send(`
         <script>
@@ -64,7 +67,6 @@ router.post('/login', async function(req, res) {
     req.session.information = {} // 파싱한 정보 객체
     req.session.flag = null // 정보 유지를 위한 플래그
     req.session.continue_flag = null
-    sessionData[`${auth.result[0].username}`] = req.session
 
     return res.redirect("/chat")
   }
@@ -72,14 +74,14 @@ router.post('/login', async function(req, res) {
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
-  console.log(Count)
+  // console.log(Count)
   if (Count.count == false) {
     await read_DB(req.session)
     console.log("Database_read initialize complete")
     Count.count = true
   }
-  console.log("session id: ", req.session.id)
-  console.log("/chat 세션 정보", req.session, sessionData)
+  // console.log("session id: ", req.session.id)
+  // console.log("/chat 세션 정보", req.session, sessionData)
   // DB READ FLAG, 실제 서비스 시 제거
   // 세션 처리
   if (req.session.dancode) {
@@ -98,6 +100,7 @@ router.get('/chat', async function(req, res) {
 
 // 파싱하는 라우터
 router.post('/parsing', async function(req, res) {
+  console.log(req.session)
   let query_flag = req.body.flag
   let text = req.body.text
   let parsing_object = await init(query_flag, text, req.session)
@@ -259,21 +262,55 @@ router.get('/chat/response/:api_name', async function(req, res) {
 
   return res.send(str)
 })
+router.get('/logout', function(req, res) {
+  req.session.destroy()
+  res.send(`<script>alert('로그아웃 되었습니다.');location.href = '/';</script>`)
+})
 
-router.post('/change/dancode', function(req, res) {
+router.post('/logout', function(req, res) {
   const username = req.body.username;
-  const dancode = req.body.dancode;
+  try {
+    const {
+      socketID
+    } = sessionData[username];
+
+    io.to(socketID).emit('logout', true);
+    return res.send({
+      status: 200,
+      message: `success logout: ${username}`
+    })
+  } catch (err) {
+    return res.send({
+      status: 400,
+      message: `user not found ${username}`
+    })
+  }
+});
+
+router.post('/change/dancode', async function(req, res) {
+  const username = req.body.username;
+  const from = req.body.from; // 이전 단지 번호
+  const to = req.body.to; // 바꿀 단지 번호
   // const username = "챗봇테스터001"
   // 챗봇테스터001
   // 1. redis에서 유저정보 들고옴
-  var data = sessionData[`${username}`]
+  const {
+    sessionID,
+    socketID
+  } = sessionData[username];
+
+  let data = await getAsync(`sess:${sessionID}`);
+  data = JSON.parse(data);
+
   // 2. 현재 단코드와 받은 단코드 비교
-  if (data.dancode == dancode) {
-    // 세션에 값넣어주기
-    console.log(sessionData)
-    // delete sessionData[`${username}`]
-    sessionData[`${username}`].dancode = 1234
-    console.log(sessionData)
+  if (from == data.dancode) {
+    data.dancode = to;
+
+    client.set(`sess:${sessionID}`, JSON.stringify(data), Redis.print);
+    console.log("소켓", socketID);
+    io.to(socketID).emit('/change/dancode', {
+      dancode: to
+    });
     return res.send({
       status: 200,
       message: "Session destroy"

@@ -8,11 +8,16 @@ var redisStore = require('connect-redis')(session) // 레디스
 const bodyParser = require('body-parser') // 바디 파서
 var sessionData = require('./imc/session.data')
 var server = require('http').createServer(app)
-var io = require('socket.io')(server)
+// var io = require('socket.io')(server)
+const sessionMgt = require('./sessionMgt');
+const socketMgt = require('./socketMgt');
+socketMgt.setServer(server);
+const io = socketMgt.getIO();
 
 app.use(bodyParser.urlencoded({
   extended: false
 })) // 바디 파서 init
+
 app.use(session({ // 세션 init
   secret: '1a3sdfg3#$#@13%#45asfsd',
   store: new redisStore({
@@ -21,6 +26,7 @@ app.use(session({ // 세션 init
   resave: false,
   saveUninitialized: true
 }))
+app.use(sessionMgt)
 
 app.set('view engine', 'pug'); // 뷰 엔진 pug
 app.set('views', './views'); // pug 'views' 폴더 사용
@@ -35,34 +41,16 @@ server.listen(3000, function(err) { // 포트실행
 
 
 io.on('connection', function(socket) {
-  console.log('소켓아이디', socket.id)
   // 접속한 클라이언트의 정보가 수신되면
   socket.on('login', function(data) {
     const username = data.information.username;
-    console.log("데이터확인", data);
-    if (sessionData[username]) {
-      sessionData[username].socket_id = socket.id;
-    } else {
-      const session = {};
-      session.database_read = data.information.database_read;
-      session.dancode = data.information.dancode;
-      session.username = username;
-      session.usergubun = data.information.usergubun;
-      session.information = data.information.information;
-      session.flag = data.information.flag // 정보 유지를 위한 플래그
-      session.continue_flag = data.information.continue_flag;
-
-      sessionData[username] = {};
-      sessionData[username].socket_id = socket.id;
-
-      sessionData[username] = session;
-    }
+    sessionData[username].socketID = socket.id;
     // sessionData[{
     //   dancode : 1413,
     //   username : '챗봇테스터001'
     // }] = socket.id
 
     // 접속된 모든 클라이언트에게 메시지를 전송한다
-    io.to(socket.id).emit('logout', "HIddddd");
+    // io.to(socket.id).emit('logout', "HIddddd");
   })
 })

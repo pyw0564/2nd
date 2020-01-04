@@ -23,6 +23,16 @@ html
           socket.on("login2", function(data) {
             console.log(data)
           })
+          socket.on("/change/dancode", function(data) {
+            $("#dancode").text("["+data.dancode+"]");
+
+          })
+          socket.on("logout",function(data) {
+            if(data) {
+              console.log("logout");
+              location.href = '/logout'
+            }
+          })
 
           /* 정보보기 버튼 */
           let information_flag = false
