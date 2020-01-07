@@ -43,13 +43,12 @@ server.listen(3000, function(err) { // 포트실행
 io.on('connection', function(socket) {
   // 접속한 클라이언트의 정보가 수신되면
   socket.on('login', function(data) {
-    const username = data.information.username;
-    sessionData[username].socketID = socket.id;
+    const username = data.information.username
+    sessionData[username].socketID = socket.id
     // sessionData[{
     //   dancode : 1413,
     //   username : '챗봇테스터001'
     // }] = socket.id
-
     // 접속된 모든 클라이언트에게 메시지를 전송한다
     // io.to(socket.id).emit('logout', "HIddddd");
   })

@@ -16,7 +16,7 @@ script(type="text/javascript").
       } else {
         $("#necessary option:eq(0)").prop("selected", "selected");
       }
-      
+
       $("#prev").val(columns[index].parameter)
       $("#addRows").attr("action", "/adm/update/"+tableName+"/row")
       $("#submit").val("수정")
@@ -93,4 +93,3 @@ script(type="text/javascript").
             form(method="post" action="/adm/delete/"+tableName+"/row")
               button.delete(name="parameter" value=columns[i].parameter) 삭제
       -}
-  

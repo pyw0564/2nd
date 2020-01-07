@@ -13,7 +13,7 @@ function log(text) {
     dataType: "json",
     data: {
       "text": text
-    },
+    }
   })
 }
 

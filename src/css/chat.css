@@ -105,13 +105,13 @@ input:focus, button:focus { outline:none; }
 #chat_submit > #submit { font-size:16px; }
 #chat_submit > #submit > button { font-size:16px; word-break: keep-all;height:100%; background-color: aqua;}
 
-a:link, a:visited {
+#chat_body a:link, #chat_body a:visited {
   font-weight: bold;
   color: blue;
   text-decoration: none;
 }
 
-.recommend, #information_button {
+.recommend, .header_button {
   color : white;
   border : 1px solid #399aff;
   border-radius : 5px;
@@ -137,6 +137,13 @@ a:link, a:visited {
 .choose_button{
   width:80px;
   height:80px;
+}
+
+a.button {
+  -webkit-appearance: button;
+  -moz-appearance: button;
+  appearance: button;
+  text-decoration: none;
 }
 
 #choose{

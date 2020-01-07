@@ -12,7 +12,7 @@ script(type="text/javascript").
       $("#url").val(tableList[index].url)
       $("#response_text").val(tableList[index].response_text)
       $("#rest_method").val(tableList[index].rest_method)
-      
+
       $("#prev").val(tableList[index].api_name)
       $("#createTable").attr("action", "/adm/update/table")
       $("#submit").val("수정")
@@ -96,4 +96,3 @@ script(type="text/javascript").
             form(method="post" action="/adm/delete/table")
               button.delete(name="api_name" value=tableList[i].api_name) 삭제
       -}
-  

@@ -100,7 +100,7 @@ router.get('/chat', async function(req, res) {
 
 // 파싱하는 라우터
 router.post('/parsing', async function(req, res) {
-  console.log(req.session)
+  // console.log(req.session)
   let query_flag = req.body.flag
   let text = req.body.text
   let parsing_object = await init(query_flag, text, req.session)
@@ -161,7 +161,7 @@ router.post('/chat/response', async function(req, res) {
     for (let item in data) {
       if (Array.isArray(data[item].result)) {
         let index_item = index_Object[item]
-        console.log(data[item].result, index_item.index)
+        // console.log(data[item].result, index_item.index)
         if (data[item].result[index_item.index])
           json_object[item] = data[item].result[index_item.index].return_value
         if (index_item.index < index_item.length - 1)
@@ -171,7 +171,7 @@ router.post('/chat/response', async function(req, res) {
       }
     }
     let rest_api_result
-    console.log("json_object", json_object)
+    // console.log("json_object", json_object)
     if (rest_method == 'post') { // post rest api
       rest_api_result = await imc.rest_api_function(json_object, Parameter[api_name], url_temp, 'post')
     } else if (rest_method == 'get') { // get rest api
@@ -264,7 +264,11 @@ router.get('/chat/response/:api_name', async function(req, res) {
 })
 router.get('/logout', function(req, res) {
   req.session.destroy()
-  res.send(`<script>alert('로그아웃 되었습니다.');location.href = '/';</script>`)
+  return res.send(`
+    <script>
+      alert('로그아웃 되었습니다.');
+      location.href = '/';
+    </script>`)
 })
 
 router.post('/logout', function(req, res) {

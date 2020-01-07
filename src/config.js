@@ -12,7 +12,9 @@ var Api = {}
 var Parameter = {}
 var Regexpr = {}
 var Recommend = {}
-var Count = { count : false }
+var Count = {
+  count: false
+}
 const sqlConfig = {
   user: process.env.DB_USER ? process.env.DB_USER : 'njuser', // mssql username
   password: process.env.DB_PASSWORD ? process.env.DB_PASSWORD : 'imc0029', // mssql password
@@ -303,8 +305,9 @@ async function parsing(regs, query) {
         return_value: return_value
       })
     }
-    return ret
   }
+  if (ret.length)
+    return ret
   return null
 }
 
@@ -401,10 +404,10 @@ async function flag_function(query_flag, user) {
 async function except_parameter(parameter, query) {
   // yyyymm 처리
   if (parameter == 'yyyymm') {
-    let year_ret = await parsing(Regexpr['year'], query)
-    let month_ret = await parsing(Regexpr['month'], query)
+    let year_ret = await parsing(Regexpr.year, query)
+    let month_ret = await parsing(Regexpr.month, query)
     ret = []
-    // console.log(year_ret, month_ret)
+    // console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 년 월", year_ret, month_ret, Regexpr.month)
     if (year_ret == null || month_ret == null) return null
     for (let i = 0; i < year_ret.length; i++) {
       for (let j = 0; j < month_ret.length; j++) {
@@ -417,7 +420,7 @@ async function except_parameter(parameter, query) {
         })
       }
     }
-    console.log(ret)
+    // console.log(ret)
     if (ret.length)
       return ret
     return null

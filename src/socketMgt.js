@@ -1,12 +1,12 @@
 module.exports = (function() {
-  var io;
+  var io
 
   function setServer(server) {
-    io = require('socket.io')(server);
+    io = require('socket.io')(server)
   }
 
   function getIO() {
-    return io;
+    return io
   }
   return {
     setServer,

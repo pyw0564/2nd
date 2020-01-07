@@ -2,7 +2,7 @@ doctype html
 html
   head
     style
-        include ../css/adm.css
+      include ../css/adm.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
     script(type='text/javascript').
       $(document).ready(function() {
@@ -38,13 +38,13 @@ html
         a#chatbot(href="/chat") ChatBot
         #extra
       case type
-          when 'tables'
-            include adm_tables.pug
-          when 'regexps'
-            include adm_regexps.pug
-          when 'columns'
-            include adm_columns.pug
-          when 'logs'
-            include adm_log.pug
-          when 'recommend'
-            include adm_recommend.pug
+        when 'tables'
+          include adm_tables.pug
+        when 'regexps'
+          include adm_regexps.pug
+        when 'columns'
+          include adm_columns.pug
+        when 'logs'
+          include adm_log.pug
+        when 'recommend'
+          include adm_recommend.pug

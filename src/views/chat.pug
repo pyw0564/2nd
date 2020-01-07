@@ -50,6 +50,18 @@ html
               $("#inforamtion_body").css('display', 'none')
             }
           })
+          
+          /* 로그아웃 버튼 */
+          $("#logout").click(function(e) {
+              let xhr = new XMLHttpRequest()
+              xhr.open('GET', '/logout', true)
+              xhr.setRequestHeader('Content-Type', 'application/json')
+              xhr.send()            
+              xhr.addEventListener('load', function() {
+                alert('로그아웃 되었습니다.');
+                location.href='/'
+              })
+          })
         })
         var username = !{JSON.stringify(username)}
 

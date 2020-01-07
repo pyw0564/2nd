@@ -30,7 +30,7 @@ script(type="text/javascript").
     $("#return_value").on("input", regexp_test)
     $("#start").on("input", regexp_test)
     $("#_length").on("input", regexp_test)
-    
+
     $(".update").click(function() {
       $(".selected").removeClass("selected")
       $("tr#"+$(this).val()).addClass("selected")
@@ -41,7 +41,7 @@ script(type="text/javascript").
       $("#return_value").val(reg[index].return_value)
       $("#start").val(reg[index].start)
       $("#_length").val(reg[index]._length)
-      
+
       $("#idx").val(reg[index].idx)
       $("#addRegexp").attr("action", "/adm/update/regexp")
       $("#submit").val("수정")
@@ -56,7 +56,7 @@ script(type="text/javascript").
       $("#return_value").val(reg[index].return_value)
       $("#start").val(reg[index].start)
       $("#_length").val(reg[index]._length)
-      
+
       $("#idx").val("")
       $("#addRegexp").attr("action", "/adm/insert/regexp")
       $("#submit").val("등록")

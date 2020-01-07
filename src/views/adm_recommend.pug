@@ -18,7 +18,7 @@ script(type="text/javascript").
       $(".selected").removeClass("selected")
       $("tr#"+$(this).val()).addClass("selected")
       var index = $(".selected").attr("value")
-      
+
       $("#parameter_type").val(recommend[index].parameter_type)
       $("#word").val(recommend[index].word)
       $("#button").val(recommend[index].button)
