@@ -21,6 +21,7 @@ input:focus, button:focus { outline:none; }
 /* #chat_body > #chat_content > .msg > .content > .data { width:auto; height:auto; min-height:20px; max-width: 100%; word-break: break-all; display: flex; align-items: center; padding:3px; background-color:blue;} */
 #chat_body > #chat_content > .msg > .content > .time { width:max-content; height:auto; min-height:20px; display: flex; align-items: flex-end; font-size: 14px; padding:0 3px;}
 
+#chat_body #breakLine {height:10px; background-color: lightgray;}
 
 #chat_body > #chat_content > .msg > .content > .data.notme {
     width: auto;

@@ -8,8 +8,10 @@ module.exports = (function() {
   function getIO() {
     return io
   }
+
   return {
     setServer,
     getIO
   }
+  
 })()

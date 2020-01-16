@@ -1,32 +1,20 @@
 const express = require('express')
 const router = express.Router()
-const imc = require('./imc')
-const config = require('./config')
+const imc = require('./api/imc_api')
 const bodyParser = require('body-parser')
-const moment = require('moment');
-var read_DB = config.read_DB
-var Api = config.Api
-var Parameter = config.Parameter
-var Regexpr = config.Regexpr
-var Recommend = config.Recommend
-var Count = config.Count
-var initialize = config.initialize
-var init = config.init
-var sqlQuery = config.sqlQuery
-var flag_function = config.flag_function
-var sessionData = require('./imc/session.data');
-const Redis = require('redis') // 레디스
-const client = Redis.createClient() // 레디스
-const {
-  promisify
-} = require('util');
-const getAsync = promisify(client.get).bind(client);
-const io = require('./socketMgt').getIO();
+const moment = require('moment')
 
-// Body parser
-router.use(bodyParser.urlencoded({
-  extended: false
-}))
+var read_database = require('./read_database')
+var Api = read_database.Api
+var Parameter = read_database.Parameter
+var Regexpr = read_database.Regexpr
+var Recommend = read_database.Recommend
+var Response = read_database.Response
+var sqlQuery = read_database.sqlQuery
+var parsing = require('./parsing').init
+
+router.use('/', require('./api/chatbot_api'))
+router.use(bodyParser.urlencoded({ extended: false }))
 router.use(bodyParser.json())
 
 // 메인
@@ -35,7 +23,7 @@ router.get('/', function(req, res) {
   if (req.session.dancode) {
     return res.redirect('/chat')
   }
-  res.render("chat", {
+  return res.render("chat", {
     login: false
   })
 })
@@ -74,14 +62,7 @@ router.post('/login', async function(req, res) {
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
-  // console.log(Count)
-  if (Count.count == false) {
-    await read_DB(req.session)
-    console.log("Database_read initialize complete")
-    Count.count = true
-  }
   // console.log("session id: ", req.session.id)
-  // console.log("/chat 세션 정보", req.session, sessionData)
   // DB READ FLAG, 실제 서비스 시 제거
   // 세션 처리
   if (req.session.dancode) {
@@ -98,13 +79,14 @@ router.get('/chat', async function(req, res) {
   return res.redirect('/')
 })
 
-// 파싱하는 라우터
+// 파싱 라우터
 router.post('/parsing', async function(req, res) {
   // console.log(req.session)
   let query_flag = req.body.flag
   let text = req.body.text
-  let parsing_object = await init(query_flag, text, req.session)
-  console.log("파싱오브젝트", parsing_object)
+  let parsing_object = await parsing(query_flag, text, req.session)
+
+  console.log("파싱된 오브젝트", parsing_object)
   return res.json(parsing_object)
 })
 
@@ -209,9 +191,9 @@ router.get('/chat/response/:api_name', async function(req, res) {
 
   // console.log("새창 세션 활용~", data)
   // console.log("새창 세션 활용~", result)
-
   /* result.length 만큼 반복 */
   /* replace response text */
+
   let str = ""
   let keys = Object.keys(result[0].result[0])
   for (let i = 0; i < result.length; i++) {
@@ -261,71 +243,6 @@ router.get('/chat/response/:api_name', async function(req, res) {
   }
 
   return res.send(str)
-})
-router.get('/logout', function(req, res) {
-  req.session.destroy()
-  return res.send(`
-    <script>
-      alert('로그아웃 되었습니다.');
-      location.href = '/';
-    </script>`)
-})
-
-router.post('/logout', function(req, res) {
-  const username = req.body.username;
-  try {
-    const {
-      socketID
-    } = sessionData[username];
-
-    io.to(socketID).emit('logout', true);
-    return res.send({
-      status: 200,
-      message: `success logout: ${username}`
-    })
-  } catch (err) {
-    return res.send({
-      status: 400,
-      message: `user not found ${username}`
-    })
-  }
-});
-
-router.post('/change/dancode', async function(req, res) {
-  const username = req.body.username;
-  const from = req.body.from; // 이전 단지 번호
-  const to = req.body.to; // 바꿀 단지 번호
-  // const username = "챗봇테스터001"
-  // 챗봇테스터001
-  // 1. redis에서 유저정보 들고옴
-  const {
-    sessionID,
-    socketID
-  } = sessionData[username];
-
-  let data = await getAsync(`sess:${sessionID}`);
-  data = JSON.parse(data);
-
-  // 2. 현재 단코드와 받은 단코드 비교
-  if (from == data.dancode) {
-    data.dancode = to;
-
-    client.set(`sess:${sessionID}`, JSON.stringify(data), Redis.print);
-    console.log("소켓", socketID);
-    io.to(socketID).emit('/change/dancode', {
-      dancode: to
-    });
-    return res.send({
-      status: 200,
-      message: "Session destroy"
-    })
-  }
-  // 3. 변경
-  return res.send({
-    status: 403,
-    message: "현재 단지코드가 일치하지 않습니다."
-  })
-
 })
 
 module.exports = router;

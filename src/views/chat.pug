@@ -4,8 +4,12 @@ html
     style
       include ../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
-    script(type="text/javascript" src="./api/chat.js")
+    script(type="text/javascript" src="./views/chat.js")
     script(type="text/javascript" src="/socket.io/socket.io.js")
+    script(type='text/javascript').
+      let information = !{JSON.stringify(information)}
+      var socket = io()
+      socket.emit("test", {})
     -if (login)
       script(type="text/javascript").
         $(document).ready(function() {
@@ -14,8 +18,6 @@ html
           parsing_ajax("HOME")
 
           /* 소켓 */
-          let information = !{JSON.stringify(information)}
-          var socket = io()
           //- console.log(socket)
           socket.emit("login", {
             information : information
@@ -25,7 +27,7 @@ html
           })
           socket.on("/change/dancode", function(data) {
             $("#dancode").text("["+data.dancode+"]");
-
+            //- $("#chat_body > #chat_content").append("<div class='msg'><div class='breakLine'></div></div>")
           })
           socket.on("logout",function(data) {
             if(data) {

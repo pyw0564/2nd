@@ -23,7 +23,8 @@ select * from Parameter where api_name='sedaeinfo'
 insert into Api VALUES('결제금액 정보 조회', 'GetServicePayInfo2', 1, 'GetServicePayInfo2', '/GetServicePayInfo2', '안녕하세요')
 ALTER TABLE Api ADD rest_method nvarchar(100) sp_help Parameter
 ALTER TABLE Parameter ADD _order int null
-
+ALTER TABLE Recommend ADD button nvarchar(10);
+ALTER TABLE Recommend ADD idx int autoincreament;
 ALTER TABLE Parameter DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
 ALTER TABLE Parameter ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
 drop table Parameter DELETE FROM Parameter WHERE display_name='종료년도'
@@ -60,6 +61,7 @@ INSERT INTO Recommend VALUES('dancode', '세대정보', 'g', '', 0,3)
 drop table Api;
 drop table Parameter;
 drop table Regexp;
+drop table Recommend;
 drop table _Log;
 
 delete  from Parameter where parameter = 'danconde'
@@ -101,8 +103,9 @@ create table _Log(
 	query nvarchar(255) NOT NULL
 )
 create table Recommend(
+	idx int not null IDENTITY,
 	parameter_type nvarchar(200) NOT NULL,
 	word nvarchar(200) NOT NULL,
-	number int,
+	button nvarchar(10) NOT NULL,
 	PRIMARY KEY (parameter_type, word)
 )

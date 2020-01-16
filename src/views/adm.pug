@@ -5,7 +5,12 @@ html
       include ../css/adm.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
     script(type='text/javascript').
+      function openReport() {
+        window.open("view?rpdfile=test2.mrd", "cxview", "width=840, heifht=650");
+      }
       $(document).ready(function() {
+        document.getElementById("hdnPrintData").value = "홍길동!@#18!@#남!@#독서!@#순간이동\n손오공!@#20!@#남!@#변신!@#장난";
+        
         //- console.log(window.parent.tableList)
         //- console.log(window.parent.tables)
         //- console.log(window.parent.reg)
@@ -23,6 +28,12 @@ html
           case 'logs':
             $("#logs").addClass("active")
             break
+          case 'recommend':
+            $("#recommend").addClass("active")
+            break
+          case 'response':
+            $("#response").addClass("active")
+            break
         }
         $("#selectAll").click(function () {
           $(".select").prop("checked", $(this).prop("checked"))
@@ -35,7 +46,10 @@ html
         a#regexps(href="/adm/regexps") Regular Expression list
         a#logs(href="/adm/logs") Logs
         a#recommend(href="/adm/recommend") Recommend
+        a#response(href="/adm/response") Response
         a#chatbot(href="/chat") ChatBot
+        input#popup(type="button" value="execute" onclick="openReport();")
+        input#hdnPrintData(type="hidden")
         #extra
       case type
         when 'tables'
@@ -48,3 +62,5 @@ html
           include adm_log.pug
         when 'recommend'
           include adm_recommend.pug
+        when 'response'
+          include adm_response.pug
