@@ -2,7 +2,7 @@ const Redis = require('redis') // 레디스
 const client = Redis.createClient() // 레디스
 const session = require('express-session') // 세션
 var redisStore = require('connect-redis')(session) // 레디스
-var sessionData = require('./api/chatbot_api/session.data')
+var sessionData = require('./session.data')
 const express = require('express') // 익스프레스
 
 module.exports = async function(req, res, next) {

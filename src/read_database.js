@@ -26,6 +26,8 @@ module.exports = function() {
   var Regexpr = {}
   var Recommend = {}
   var Response = {}
+  var Cancel = []
+  var Continue = []
 
   // 3개의 테이블 객체 유지하면서 속성 제거
   async function initialize() {
@@ -34,6 +36,8 @@ module.exports = function() {
     for (let key in Regexpr) delete Regexpr[key]
     for (let key in Recommend) delete Recommend[key]
     for (let key in Response) delete Response[key]
+    while (Cancel.length) Cancel.pop()
+    while (Continue.length) Continue.pop()
   }
 
   // 동기화 SQL 쿼리
@@ -69,7 +73,7 @@ module.exports = function() {
       Parameter[record.api_name].push(record)
     }
     for (let item in Parameter) {
-      Parameter[item].sort(function(a,b) {
+      Parameter[item].sort(function(a, b) {
         return a._order - b._order
       })
     }
@@ -101,21 +105,48 @@ module.exports = function() {
     let records = await sqlQuery(`SELECT * FROM Response`)
     for (let i = 0; i < records.length; i++) {
       let record = records[i]
-      if (Response[record.flag] === undefined)
-        Response[record.flag] = []
-      Response[record.parameter_type].push(record)
+      if (Response[record.flag] === undefined) {
+        if (record._option) {
+          Response[record.flag] = {}
+        } else {
+          Response[record.flag] = []
+        }
+      }
+      if (record._option) {
+        if (Response[record.flag][record._option] === undefined)
+          Response[record.flag][record._option] = []
+        Response[record.flag][record._option].push(record)
+      } else {
+        Response[record.flag].push(record)
+      }
     }
     for (let item in Response) {
-      Response[item].sort(function(a,b) {
-        return a._order - b._order
-      })
+      if (Array.isArray(Response[item])) {
+        Response[item].sort(function(a, b) {
+          return a._order - b._order
+        })
+      } else {
+        for (let option in Response[item])
+          Response[item][option].sort(function(a, b) {
+            return a._order - b._order
+          })
+      }
     }
+  }
+
+  async function read_cancel_continue() {
+    let result = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
+    for (let i in result)
+      Cancel.push(result[i])
+    result = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'continue'")
+    for (let i in result)
+      Continue.push(result[i])
   }
 
   // 통합 읽기
   async function read_DB() {
     await initialize()
-    await console.log("SQL Connect . . .")
+    await console.log("READ DB 중입니다 . . .")
     await read_api()
     // console.log('Api 읽기완료', Api)
     await read_parameter()
@@ -124,6 +155,9 @@ module.exports = function() {
     // console.log('Regexp 읽기완료', Regexpr)
     await read_recommend()
     // console.log('Recommend 읽기완료', Recommend)
+    await read_response()
+    // console.log('Response 읽기완료', Response)
+    await read_cancel_continue()
     await console.log("READ DB 종료 되었습니다.")
   }
 
@@ -132,6 +166,9 @@ module.exports = function() {
     Parameter,
     Regexpr,
     Recommend,
+    Response,
+    Cancel,
+    Continue,
     sqlQuery,
     read_DB
   }

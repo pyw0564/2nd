@@ -2,35 +2,41 @@ script(type="text/javascript").
   var response = !{JSON.stringify(response)}
   console.log(response)
   $(document).ready(function() {
+    // update
     $(".update").click(function() {
       $(".selected").removeClass("selected")
       $("tr#"+$(this).val()).addClass("selected")
       var index = $(".selected").attr("value")
       $("#flag").val(response[index].flag)
+      $("#_option").val(response[index]._option)
       $("#response_text").val(response[index].response_text)
       $("#_order").val(response[index]._order)
       $("#prev_flag").val(response[index].flag)
       $("#prev_order").val(response[index]._order)
+      $("#prev_option").val(response[index]._option)
 
       $("#addresponse").attr("action", "/adm/update/response")
       $("#submit").val("수정")
     })
-    //- $(".clone").click(function() {
-    //-   $(".selected").removeClass("selected")
-    //-   $("tr#"+$(this).val()).addClass("selected")
-    //-   var index = $(".selected").attr("value")
-    //- 
-    //-   $("#flag").val(response[index].flag)
-    //-   $("#response_text").val(response[index].response_text)
-    //-   $("#_order").val(response[index]._order)
-    //- 
-    //-   $("#idx").val("")
-    //-   $("#addresponse").attr("action", "/adm/insert/response")
-    //-   $("#submit").val("등록")
-    //- })
+    
+    // clone
+    $(".clone").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+      var index = $(".selected").attr("value")
+    
+      $("#flag").val(response[index].flag)
+      $("#_option").val(response[index]._option)
+      $("#response_text").val(response[index].response_text)
+      $("#_order").val(response[index]._order)
+    
+      $("#addresponse").attr("action", "/adm/insert/response")
+      $("#submit").val("등록")
+    })
+    
+    // reset
     $("#reset").click(function() {
       $(".selected").removeClass("selected")
-      $("#idx").val("")
       $("#addresponse").attr("action", "/adm/insert/response")
       $("#submit").val("등록")
     })
@@ -43,6 +49,10 @@ script(type="text/javascript").
         input#flag(type="text" name="flag")
       br
       label
+        | _option:
+        input#_option(type="text" name="_option")
+      br
+      label
         | response_text:
         input#response_text(type="text" name="response_text")
       br
@@ -53,6 +63,7 @@ script(type="text/javascript").
       label
         input#prev_flag(type="hidden" name="prev_flag" value="")
         input#prev_order(type="hidden" name="prev_order" value="")
+        input#prev_option(type="hidden" name="prev_option" value="")
         input#submit(type="submit" value="등록")
         input#reset(type="reset" value="취소")
   table(border="1")
@@ -61,6 +72,7 @@ script(type="text/javascript").
         th
           input#selectAll(type="checkbox")
         th flag
+        th _option
         th response_text
         th _order
         th
@@ -71,14 +83,17 @@ script(type="text/javascript").
             input.select(type="checkbox" value=i)
           td.flag
             =response[i].flag
+          td._option
+            =response[i]._option
           td.response_text
             =response[i].response_text
           td._order
             =response[i]._order
           td.buttonList
             button.update(value=i) 수정
-            // button.clone(value=response[i].idx) 복사
+            button.clone(value=i) 복사
             form(method="post" action="/adm/delete/response")
               button.delete(name="flag" value=response[i].flag) 삭제
+              input(type="hidden" name="_option" value=response[i]._option)
               input(type="hidden" name="_order" value=response[i]._order)
       -}

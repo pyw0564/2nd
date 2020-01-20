@@ -6,6 +6,8 @@ var Api = read_database.Api
 var Parameter = read_database.Parameter
 var Regexpr = read_database.Regexpr
 var Recommend = read_database.Recommend
+var Cancel = read_database.Cancel
+var Continue = read_database.Continue
 var Response = read_database.Response
 var sqlQuery = read_database.sqlQuery
 
@@ -17,10 +19,8 @@ var sqlQuery = read_database.sqlQuery
 
 async function init(query_flag, query, user) {
   let information = user.information // 파싱한 정보 객체
-  let flag = user.flag // 정보 유지를 위한 플래그
+  let user_flag = user.flag // 정보 유지를 위한 플래그
   let continue_flag = user.continue_flag
-  // console.log("CHANGE", user)
-  // console.log(query_flag, query)
   // 파싱 플래그가 아니면 따로 처리한다
   if (query_flag != "PARSE") {
     return flag_function(query_flag, user)
@@ -32,28 +32,29 @@ async function init(query_flag, query, user) {
   }
 
   // 취소 CLEAR 처리
-  let records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
-  for (let i in records) {
-    let record = records[i]
-    if (await query.q.match(new RegExp(record.regexp, record._option))) {
+  // console.log(Cancel)
+  await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
+  console.log(user)
+  for (let i in Cancel) {
+    let record = Cancel[i]
+    if (query.q.match(new RegExp(record.regexp, record._option))) {
       return await flag_function("CANCEL", user)
     }
   }
   // 플래그 처리
-  if (flag) {
-    console.log("FLAG가 유지되고 있습니다", flag)
-    information = await find_parameters(flag.api_name, query, user)
+  if (user_flag) {
+    console.log("FLAG가 유지되고 있습니다", user_flag)
+    information = await find_parameters(user_flag.api_name, query, user)
     user.information = information
     return await flag_function("RUN", user)
   }
 
   // continue 처리
-  let continue_records = await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'continue'")
   continue_flag = false
   user.continue_flag = continue_flag
-  for (let i in continue_records) {
-    let record = continue_records[i]
-    if (await query.q.match(new RegExp(record.regexp, record._option)))
+  for (let i in Continue) {
+    let record = Continue[i]
+    if (query.q.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
     user.continue_flag = continue_flag
   }
@@ -64,21 +65,21 @@ async function init(query_flag, query, user) {
   }
 
   // 파싱 실행
-  console.log("...쿼리", query)
+  console.log("현재 쿼리상태 /parsing 65", query)
   information = await find_api(query, user)
   user.information = information
   if (Object.keys(information).length === 0) {
-    console.log("......", information)
+    console.log("UNKOWN 알수없어요. ")
     return await flag_function("UNKNOWN", user)
   }
-  console.log("RUN", information)
+  console.log("RUN 상태입니다.")
   return await flag_function("RUN", user)
 }
 
 // 1step -> 어떤 API인지 골라내기
 async function find_api(query, user) {
   let information = user.information // 파싱한 정보 객체
-  let flag = user.flag // 정보 유지를 위한 플래그
+  let user_flag = user.flag // 정보 유지를 위한 플래그
   let continue_flag = user.continue_flag
   for (let item in Api) {
     let record = Api[item]
@@ -93,12 +94,12 @@ async function find_api(query, user) {
       let regexp = new RegExp(record.regexp, record._option)
       let result = await query.q.match(regexp)
       if (result) {
-        flag = {
+        user_flag = {
           api_name: api_name,
           display_name: display_name,
           API_information: Api[item]
         }
-        user.flag = flag // 정보 유지를 위한 플래그
+        user.flag = user_flag // 정보 유지를 위한 플래그
         let ret = await find_parameters(api_name, query, user)
         return ret
       }
@@ -109,9 +110,7 @@ async function find_api(query, user) {
     let display_name_temp = information.API_information.display_name
     let ret = await find_parameters(api_name, query, user)
     ret.API_information = Api[api_name]
-    ret.message = display_name_temp
-    // console.log(ret)
-    // console.log(ret.dongcode.result)
+    // ret.message = display_name_temp
     return ret
   }
   return {}
@@ -120,10 +119,8 @@ async function find_api(query, user) {
 // 2step -> 필요한 parameter 마다 파싱
 async function find_parameters(api_name, query, user) {
   let information = user.information // 파싱한 정보 객체
-  let flag = user.flag // 정보 유지를 위한 플래그
+  let user_flag = user.flag // 정보 유지를 위한 플래그
   let parameters = Parameter[api_name]
-  // console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", Parameter)
-  // console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ", parameters, api_name)
   let ret = {}
   // api_name에 맞지 않는 파라미터 삭제 O(N^2)
   for (let item in information) {
@@ -136,10 +133,10 @@ async function find_parameters(api_name, query, user) {
     if (delete_flag) delete information[item]
   }
   user.information = information // 파싱한 정보 객체
-  if (flag) {
+  if (user_flag) {
     ret = information
-    ret.API_information = flag.API_information
-    ret.message = flag.display_name
+    ret.API_information = user_flag.API_information
+    // ret.message = user_flag.display_name
   }
   for (let i = 0; i < parameters.length; i++) {
     let record = parameters[i]
@@ -190,50 +187,57 @@ async function parsing(regs, query) {
       })
     }
   }
-  if (ret.length)
-    return ret
+  if (ret.length) return ret
   return null
 }
 
-async function flag_function(query_flag, user) {
-  // console.log("flag function", user)
+async function flag_function(flag, user) {
+  console.log("현재 플래그 입니다!", flag)
   let information = user.information // 파싱한 정보 객체
-  let flag = user.flag // 정보 유지를 위한 플래그
-  // console.log("query_flag", query_flag)
-
   let recommend = []
   let return_object = {
-    flag: query_flag,
-    object: information,
-    recommend: recommend
+    flag,
+    information,
+    recommend
   }
-  if (query_flag == "RUN") {
+
+  information.message = ""
+  if (flag == "RUN") {
+    if (user.start_flag == false) { // API 처음 시작할때 메시지 출력
+      user.start_flag = true
+      information.message += await make_html("START", information)
+    }
+
     let necessary_count = 0
     let match_count = 0
     for (let item in information) {
       let record = information[item]
-      if (typeof record === 'object') {
-        if (record.necessary) {
-          ++necessary_count
-          if (record.result) {
-            ++match_count
-          } else {
-            recommend.push({
-              display_name: record.display_name,
-              parameter_type: item
-            })
-          }
+      if (user[item]) continue // 만약 기본 세션이면 패스(예시 : 단코드)
+      if (typeof record !== "object") continue
+      if (record.necessary) {
+        ++necessary_count
+        if (record.result) {
+          ++match_count
+        } else {
+          recommend.push({
+            display_name: record.display_name,
+            parameter_type: item
+          })
         }
       }
     }
+    // API 필요 파라미터가 완료 되었음
     if (necessary_count > 0 && necessary_count == match_count) {
-      return_object.flag = 'SUCCESS'
-      flag = null
-      user.flag = flag // 정보 유지를 위한 플래그
+      return_object.flag = "END"
+      information.message += await make_html("END", information)
+      user.start_flag = false
+      user.flag = null
+      user.information = information
+      return_object.information = information
       return return_object
     }
-    return_object.flag = 'NOT SUCCESS'
-    // console.log("부족한것", recommend)
+
+    return_object.flag = "RUN"
     let necessary_array = {
       'Y': [],
       'N': []
@@ -245,45 +249,133 @@ async function flag_function(query_flag, user) {
           if (Recommend[parameter_type][i].button == 'Y') {
             necessary_array.Y.push(Recommend[parameter_type][i].word)
           } else {
-            //  if (Recommend[parameter_type][i].button == 'N') {
             necessary_array.N.push(Recommend[parameter_type][i].word)
           }
         }
       }
     }
     return_object.necessary_array = necessary_array
+    information.message += await make_html("RUN", information, necessary_array)
+    user.information = information
+    return_object.information = information
     return return_object
   }
 
-  flag = null
-  user.flag = flag // 정보 유지를 위한 플래그
-  console.log(query_flag, "쿼리플래그")
-  if (query_flag == "HOME") {
-    information.flag = "HOME"
-    information.message = "안녕하세요. 원하는 기능을 선택해주세요!"
-  } else if (query_flag == "ESC") {
-    information = {}
-    information.flag = "ESC"
-    information.message = "ESC로 취소되었습니다."
-  } else if (query_flag == "CANCEL") {
-    information = {}
-    information.flag = "CANCEL"
-    information.message = "취소되었습니다."
-  } else if (query_flag == "UNKNOWN") {
-    information = {}
-    information.flag = "UNKNOWN"
-    information.message = "정확한 정보를 입력해주세요."
-  }
-  user.information = information
-  for (let i in Api) {
+  // 정보 유지를 위한 플래그
+  for (let item in Api) {
     recommend.push({
-      display_name: Api[i].display_name,
-      parameter_type: i
+      display_name: Api[item].display_name,
+      parameter_type: item
     })
   }
-  return_object.object = information
-  // console.log("FLAG FUNCTION EXECUTE", return_object, information)
+  if (flag == "LOGIN") {
+    information.flag = "LOGIN"
+    information.message = await make_html("LOGIN", recommend)
+  } else if (flag == "ESC") {
+    information = {}
+    information.flag = "ESC"
+    information.message = await make_html("ESC")
+    information.message += await make_html("HOME", recommend)
+  } else if (flag == "CANCEL") {
+    information = {}
+    information.flag = "CANCEL"
+    information.message = await make_html("CANCEL")
+    information.message += await make_html("HOME", recommend)
+  } else if (flag == "UNKNOWN") {
+    information = {}
+    information.flag = "UNKNOWN"
+    information.message = await make_html("UNKNOWN")
+    information.message += await make_html("HOME", recommend)
+  } else if (flag == "HOME") {
+    information.flag = "HOME"
+    information.message = await make_html("HOME", recommend)
+  }
+  user.start_flag = false
+  user.flag = null
+  user.information = information
+  return_object.information = information
   return return_object
+}
+
+async function make_html(flag, recommend, necessary_array) {
+  let str = ""
+  // API 시작
+  if (flag == "START") {
+    let information = recommend
+    let api_name = information.API_information.api_name
+    let response_array
+    if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
+    else response_array = Response[api_name].START
+    str += await make_response_text(response_array)
+    return server_message(str)
+  }
+  // API 진행중
+  if (flag == "RUN") {
+    let information = recommend
+    let api_name = information.API_information.api_name
+    let response_array
+    if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
+    else response_array = Response[api_name].RUN
+    str += await make_response_text(response_array)
+
+    if (necessary_array) {
+      let tmp
+      if (necessary_array.Y.length && necessary_array.N.length) {
+        if (Response[api_name] == null || Response[api_name] == undefined) temp = []
+        else tmp = Response[api_name].ALL
+        str += await make_response_text(tmp)
+      } else if (necessary_array.Y.length) {
+        if (Response[api_name] == null || Response[api_name] == undefined) temp = []
+        else tmp = Response[api_name].BUTTON
+        str += await make_response_text(tmp)
+      } else if (necessary_array.N.length) {
+        if (Response[api_name] == null || Response[api_name] == undefined) temp = []
+        else tmp = Response[api_name].TEXT
+        str += await make_response_text(tmp)
+      }
+
+      if (necessary_array.N.length) {
+        let idx = 0
+        str += `<div> ex) `
+        for (let item in necessary_array.N) {
+          if (idx++) str += ', '
+          str += `${necessary_array.N[item]}`
+        }
+        str += `</div>`
+      }
+      for (let item in necessary_array.Y)
+        str += `<button class='recommend'>${necessary_array.Y[item]}</button>`
+    }
+    return server_message(str)
+  }
+  // API 종료
+  if (flag == "END") {
+    let information = recommend
+    let api_name = information.API_information.api_name
+    let response_array
+    if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
+    else response_array = Response[api_name].END
+    str += await make_response_text(response_array)
+    return server_message(str)
+  }
+
+  // 그 외
+  let response_array = Response[flag]
+  if (response_array == null || response_array.length == 0) {
+    str += `${flag}에서 response가 존재하지 않습니다`
+  }
+
+  // 텍스트 우선 처리
+  str += await make_response_text(response_array)
+  // 추천 API
+  if (recommend) {
+    let idx = 1
+    for (let item in recommend) {
+      str += `<div><button id='API_${idx}' class='recommend'> ${idx}. ${recommend[item].display_name}</button></div>`
+      idx += 1
+    }
+  }
+  return server_message(str)
 }
 
 async function except_parameter(parameter, query) {
@@ -292,7 +384,6 @@ async function except_parameter(parameter, query) {
     let year_ret = await parsing(Regexpr.year, query)
     let month_ret = await parsing(Regexpr.month, query)
     ret = []
-    // console.log("ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 년 월", year_ret, month_ret, Regexpr.month)
     if (year_ret == null || month_ret == null) return null
     for (let i = 0; i < year_ret.length; i++) {
       for (let j = 0; j < month_ret.length; j++) {
@@ -305,12 +396,46 @@ async function except_parameter(parameter, query) {
         })
       }
     }
-    // console.log(ret)
     if (ret.length)
       return ret
     return null
   }
   return null
+}
+
+// response_text 중복 함수
+async function make_response_text(response_array) {
+  let str = ""
+  for (let i in response_array) {
+    let response_text = response_array[i].response_text
+    if (response_array[i]._order == 0) {
+      str = `<div class='object_message'>${response_text}</div>`
+    } else {
+      str += `<div>${response_text}</div>`
+    }
+  }
+  return str
+}
+
+// 시간 구하기
+function getTime() {
+  var currentTime = new Date()
+  return (currentTime.getHours() < 10 ? '0' + currentTime.getHours() : currentTime.getHours()) + ":" +
+    (currentTime.getMinutes() < 10 ? '0' + currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
+    (currentTime.getSeconds() < 10 ? '0' + currentTime.getSeconds() : currentTime.getSeconds())
+}
+
+// 서버함수
+function server_message(str) {
+  if (str == "") return ""
+  let msg = "<div class='msg'>"
+  msg += "<div class='user'>System</div>"
+  msg += "<div class='content'>"
+  msg += "<div class='data notme'>" + str + "</div>"
+  msg += "<div class='time'>" + getTime() + "</div>"
+  msg += "</div>"
+  msg += "</div>"
+  return msg
 }
 
 module.exports = function() {

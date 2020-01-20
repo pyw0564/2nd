@@ -11,8 +11,8 @@ var server = require('http').createServer(app)
 var read_database = require('./read_database')
 var read_DB = read_database.read_DB
 
-const sessionMgt = require('./sessionMgt')
-const socketMgt = require('./socketMgt')
+const sessionMgt = require('./api/chatbot_api/sessionMgt')
+const socketMgt = require('./api/chatbot_api/socketMgt')
 socketMgt.setServer(server)
 
 app.use(bodyParser.urlencoded({

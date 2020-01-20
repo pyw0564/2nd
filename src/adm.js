@@ -173,11 +173,12 @@ router.post('/insert/recommend', async function(req, res) {
 
 router.post('/insert/response', async function(req, res) {
   const flag = req.body.flag
+  const _option = req.body._option
   const response_text = req.body.response_text
   const _order = req.body._order
   const query = `
-    INSERT INTO response(flag, response_text, _order)
-    VALUES ('${flag}', '${response_text}', '${_order}')
+    INSERT INTO response(flag, _option, response_text, _order)
+    VALUES ('${flag}', '${_option}', '${response_text}', '${_order}')
   `
   await sqlQuery(query)
   console.log('응답 텍스트 등록완료')
@@ -240,15 +241,17 @@ router.post('/update/recommend', async function(req, res) {
 })
 
 router.post('/update/response', async function(req, res) {
-  const prev_flag = req.body.flag
+  const prev_flag = req.body.prev_flag
   const prev_order = req.body.prev_order
+  const prev_option = req.body.prev_option
   const flag = req.body.flag
+  const _option = req.body._option
   const response_text = req.body.response_text
   const _order = req.body._order
 
   const query = `
-    UPDATE Response SET flag='${flag}', response_text='${response_text}', _order='${_order}'
-    WHERE flag='${prev_flag}' and _order='${prev_order}';
+    UPDATE Response SET flag='${flag}', _option='${_option}', response_text='${response_text}', _order='${_order}'
+    WHERE flag='${prev_flag}' and _order='${prev_order}' and _option='${prev_option}';
   `
   await sqlQuery(query)
   console.log('응답 텍스트 수정완료')
@@ -331,9 +334,10 @@ router.post('/delete/recommend', async function(req, res) {
 
 router.post('/delete/response', async function(req, res) {
   const flag = req.body.flag
+  const _option = req.body._option
   const response_text = req.body.response_text
   const _order = req.body._order
-  let query = `DELETE FROM Response WHERE flag = '${flag}' and _order = '${_order}'`
+  let query = `DELETE FROM Response WHERE flag = '${flag}' and _option='${_option}' and _order = '${_order}'`
   await sqlQuery(query)
   console.log('응답 텍스트 삭제완료')
   return res.send(await alertAndRedirect('응답 텍스트 삭제완료', `/adm/response`))
@@ -354,12 +358,10 @@ router.post('/delete/:tableName/row', async function(req, res) {
 
 async function alertAndRedirect(aler, href) {
   await read_DB()
-  let return_script =
-  `<script>
-    alert("${aler}");
-    location.href="${href}";
+  return `<script>
+    alert("${aler}")
+    location.href="${href}"
   </script>`
-  return return_script
 }
 
 module.exports = router;

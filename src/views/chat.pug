@@ -4,69 +4,36 @@ html
     style
       include ../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
+    script(type="text/javascript" src="./views/document_ready.js")
+    script(type="text/javascript" src="./views/support.js")
     script(type="text/javascript" src="./views/chat.js")
     script(type="text/javascript" src="/socket.io/socket.io.js")
     script(type='text/javascript').
-      let information = !{JSON.stringify(information)}
-      var socket = io()
-      socket.emit("test", {})
     -if (login)
       script(type="text/javascript").
         $(document).ready(function() {
-          /* 챗봇 시작 */
-          $("#chat_data").text('안녕, 챗봇~!')
-          parsing_ajax("HOME")
+          /* 로그인 처리 */
+          let login_object = !{JSON.stringify(login_object)}
+          server_message_function(login_object)
 
-          /* 소켓 */
-          //- console.log(socket)
+          /* 소켓 처리  */
+          let information = !{JSON.stringify(information)}
+          var socket = io()
           socket.emit("login", {
-            information : information
+            information
           })
-          socket.on("login2", function(data) {
-            console.log(data)
-          })
+          /* 단코드 변경 */
           socket.on("/change/dancode", function(data) {
             $("#dancode").text("["+data.dancode+"]");
-            //- $("#chat_body > #chat_content").append("<div class='msg'><div class='breakLine'></div></div>")
           })
-          socket.on("logout",function(data) {
-            if(data) {
-              console.log("logout");
+          /* 로그아웃 */
+          socket.on("logout", function(data) {
+            if (data) {
+              console.log("logout")
               location.href = '/logout'
             }
           })
-
-          /* 정보보기 버튼 */
-          let information_flag = false
-          $("#inforamtion_body").css('display', 'none')
-          $("#information_button").click(function(e) {
-            information_flag = !information_flag
-            if (information_flag) {
-              $("#information_button").css("background-color", "blue")
-              $("#information_button").text("정보끄기")
-              $("#inforamtion_body").css('display', 'block')
-            }
-            else {
-              $("#information_button").css("background-color", "#399aff")
-              $("#information_button").text("정보보기")
-              $("#inforamtion_body").css('display', 'none')
-            }
-          })
-          
-          /* 로그아웃 버튼 */
-          $("#logout").click(function(e) {
-              let xhr = new XMLHttpRequest()
-              xhr.open('GET', '/logout', true)
-              xhr.setRequestHeader('Content-Type', 'application/json')
-              xhr.send()            
-              xhr.addEventListener('load', function() {
-                alert('로그아웃 되었습니다.');
-                location.href='/'
-              })
-          })
         })
-        var username = !{JSON.stringify(username)}
-
   body
     //- iframe(src="/adm" style="width:800px; height:100%;")
     #information
