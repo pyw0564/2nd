@@ -108,40 +108,34 @@ a:visited {
   text-align: center;
 }
 
-#adm_page #adm_sub_page #addRegexp {
+#adm_page #adm_sub_page #adm_form {
   display: flex;
 }
 
-#adm_page #adm_sub_page #variables {
+#adm_page #adm_sub_page #adm_form #variables {
   display: inline-block;
-  width: 62.5%;
+  width: 100%;
   padding: 10px;
 }
 
-#adm_page #adm_sub_page #addRegexp #variables {
-  display: inline-block;
-  width: 62.5%;
-  padding: 10px;
-}
-
-#adm_page #adm_sub_page #addRegexp #testing {
+#adm_page #adm_sub_page #adm_form #testing {
   display: inline-block;
   width: 37.5%;
   padding: 10px;
 }
 
-#adm_page #adm_sub_page #addRegexp #testing #text_field {
+#adm_page #adm_sub_page #adm_form #testing #text_field {
   width: 100%;
   height: calc(100% - 50px);
 }
 
-#adm_page #adm_sub_page #addRegexp #testing textarea {
+#adm_page #adm_sub_page #adm_form #testing textarea {
   width: 100%;
   height: 100%;
   resize: none;
 }
 
-#adm_page #adm_sub_page #addRegexp #testing #result_field {
+#adm_page #adm_sub_page #adm_form #testing #result_field {
   width: 100%;
   height: 50px;
   border: 1px solid black;
@@ -158,6 +152,6 @@ a:visited {
   background-color: yellow;
 }
 
-#adm_sub_page form input.inputText {
+#adm_sub_page form input.adm_input {
   width: 600px;
 }

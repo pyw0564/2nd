@@ -12,7 +12,10 @@ select * from Parameter;
 select * from Regexp;
 select * from _Log;
 select * from Recommend
+select * from Response
 select * from _Log ORDER BY _time DESC;
+ UPDATE Response SET flag='CANCEL', _option='', response_text='취소되었습니다', _order='1', style='''blue'''
+    WHERE flag='CANCEL' and _order='1' and _option='';
 
 /* 작업 */
 /*
@@ -22,10 +25,12 @@ update Api Set url = '/GetServicePayInfo2/{dancode}/{dongcode}/{roomno}/{yyyymm}
 select * from Parameter where api_name='sedaeinfo'
 insert into Api VALUES('결제금액 정보 조회', 'GetServicePayInfo2', 1, 'GetServicePayInfo2', '/GetServicePayInfo2', '안녕하세요')
 ALTER TABLE Api ADD rest_method nvarchar(100) sp_help Parameter
+ALTER TABLE Response ADD style nvarchar(100) sp_help Parameter
 ALTER TABLE Parameter ADD _order int null
 ALTER TABLE Recommend ADD button nvarchar(10);
 ALTER TABLE Recommend ADD idx int autoincreament;
 ALTER TABLE Parameter DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
+ALTER TABLE Recommend DROP COLUMN idx
 ALTER TABLE Parameter ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
 drop table Parameter DELETE FROM Parameter WHERE display_name='종료년도'
 */
@@ -55,6 +60,9 @@ INSERT INTO Recommend VALUES('kind', '임대', -1)
 INSERT INTO Recommend VALUES('roomno', '세대정보', 'g', '', 0,3)
 INSERT INTO Recommend VALUES('dancode', '세대정보', 'g', '', 0,3)
 
+INSERT INTO Response VALUES('LOGIN', '', '안녕하세요~', 1)
+
+
 /* WARINIG !!! */
 /* DROP TABLES*/
 /*
@@ -63,7 +71,7 @@ drop table Parameter;
 drop table Regexp;
 drop table Recommend;
 drop table _Log;
-
+drop table Response
 delete  from Parameter where parameter = 'danconde'
 
 */
@@ -108,4 +116,11 @@ create table Recommend(
 	word nvarchar(200) NOT NULL,
 	button nvarchar(10) NOT NULL,
 	PRIMARY KEY (parameter_type, word)
+)
+create table Response(
+	flag nvarchar(100) NOT NULL,
+	_option nvarchar(100) NOT NULL,
+	response_text nvarchar(200) NOT NULL,
+	_order int NOT NULL,
+	PRIMARY KEY (flag, _option, _order) 
 )

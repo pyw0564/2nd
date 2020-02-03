@@ -1,0 +1,36 @@
+script(type="text/javascript").
+  $(document).ready(function() {
+    function regexp_test() {
+      var regexp
+      try {
+        regexp = new RegExp($("#input_regexp").val(), $("#input__option").val());
+      } catch (e) {
+        regexp = "";
+      }
+      //- console.log(regexp)
+      let parsing_array = $("#textarea").val().match(regexp);
+      //- console.log(parsing_array)
+      if (parsing_array != null) {
+        let return_value = $("#input_return_value").val()
+        if (return_value === null || return_value === ""){
+          let start = $("#input_start").val() ? parseInt($("#input_start").val()) : -1
+          let _length = $("#input__length").val() ? parseInt($("#input__length").val()) : -1
+          $("#result").text(parsing_array[0].substr(start, _length))
+        } else {
+          $("#result").text(return_value)
+        }
+      } else {
+        $("#result").text("")
+      }
+    }
+    $("#textarea").on("input", regexp_test)
+    for (let i in keys) {
+      let item = keys[i]
+      $("#input_" + item).on("input", regexp_test)
+    }
+  })
+#testing
+  #text_field
+    textarea#textarea
+  #result_field
+    #result

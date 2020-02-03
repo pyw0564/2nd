@@ -46,20 +46,25 @@ router.post('/login', async function(req, res) {
   if (auth.response_code != "OK") {
     return res.send(alertAndRedirect("아이디 또는 비밀번호가 틀립니다.", "/"))
   }
+  console.log(auth)
   // 로그인 성공
   req.session.dancode = auth.result[0].dancode
   req.session.username = auth.result[0].username
   req.session.usergubun = auth.result[0].usergubun
   req.session.information = {} // 파싱한 정보 객체
   req.session.flag = null // 정보 유지를 위한 플래그
-  req.session.continue_flag = null
-  req.session.start_flag = false
+  req.session.continue_flag = null // 그리고, 또 플래그
+  req.session.start_flag = false // START option 플래그
+  req.session.api_result = {} // API 결과값 객체
+  req.session.api_count = 0 // API 결과값 카운트
   return res.redirect("/chat")
 })
 
 // 챗봇 화면
 router.get('/chat', async function(req, res) {
   // 세션 처리
+  req.session.api_result = {}
+  req.session.api_count = 0
   if (req.session.dancode) {
     let login_object = await flag_function("LOGIN", req.session)
     // 파싱 테이블 초기화
@@ -83,7 +88,7 @@ router.post('/parsing', async function(req, res) {
   let parsing_object = await parsing(flag, text, req.session)
   // console.log("/parsing 라우터 결과", parsing_object)
   console.log("/parsing 라우터 결과", req.session)
-  return res.json(parsing_object)
+  return await res.json(parsing_object)
 })
 
 // api 통신
@@ -170,14 +175,16 @@ router.post('/chat/response', async function(req, res) {
     result.push(rest_api_result)
   }
   // 최종 결과값 세션에 저장
-  req.session[stringify_data] = result
+  req.session.api_count += 1
+  let count = req.session.api_count
+  req.session.api_result[count] = result
   // console.log("REST API 통신완료 하였으며, 결과값은", result)
 
   if (resultFlag) {
     str = "<a class='new_window' href='"
     str += "/chat/response/" + api_name + "?"
     str += "data="
-    str += JSON.stringify(data)
+    str += count
     str += "' target='_blank'>"
     str += await make_response_text(Response.LINK)
     str += "</a>"
@@ -190,19 +197,18 @@ router.post('/chat/response', async function(req, res) {
 
 // api 새창
 router.get('/chat/response/:api_name', async function(req, res) {
-  let data = JSON.parse(req.query.data)
-  const url = req.session.information.API_information.url
-  const api_name = req.session.information.API_information.api_name
-  let result = req.session[req.query.data] // 세션에 있던거 불러옴
-
+  let information = req.session.information
+  const url = information.API_information.url
+  const api_name = information.API_information.api_name
+  let result = req.session.api_result[JSON.parse(req.query.data)] // 세션에 있던거 불러옴
   /* result.length 만큼 반복 */
   let str = ""
   let keys = Object.keys(result[0].result[0])
   for (let i = 0; i < result.length; i++) {
     let responseText = Api[api_name].response_text
     str += "<h3>"
-    for (let item in data) {
-      let prop = data[item]
+    for (let item in information) {
+      let prop = information[item]
       if (prop.result && Array.isArray(prop.result)) {
         let index = i < prop.result.length - 1 ? i : prop.result.length - 1
         let value = prop.result[index].parsing_value
@@ -216,7 +222,6 @@ router.get('/chat/response/:api_name', async function(req, res) {
     }
     str += responseText
     str += "</h3>"
-
     str += "<table border='1'>"
     str += "<thead>"
     str += "<tr>"
@@ -243,14 +248,12 @@ router.get('/chat/response/:api_name', async function(req, res) {
     }
     str += "</table>"
   }
-
   return res.send(str)
 })
 
 // 로그 처리 라우터
 router.post('/insertLog', async function(req, res) {
   let text = req.body.text
-
   // console.log('로그 텍스트입니다', text)
   // let now = moment().format('YYYY-MM-DD HH:mm:ss.SSS');
   // await sqlQuery(`INSERT INTO _Log(_time, dancode, id, query)

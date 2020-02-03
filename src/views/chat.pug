@@ -25,6 +25,7 @@ html
           /* 단코드 변경 */
           socket.on("/change/dancode", function(data) {
             $("#dancode").text("["+data.dancode+"]");
+            $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
           })
           /* 로그아웃 */
           socket.on("logout", function(data) {
@@ -36,12 +37,12 @@ html
         })
   body
     //- iframe(src="/adm" style="width:800px; height:100%;")
-    #information
-      include information.pug
     #chat
       #chat_header
         include chat_header.pug
       #chat_body
         include chat_body.pug
+        #information
+          include information.pug
       #chat_submit
         include chat_submit.pug

@@ -1,0 +1,101 @@
+script(type="text/javascript").
+  var object = !{JSON.stringify(object)}
+  var type = !{JSON.stringify(type)}
+  console.log(object, type)
+  $(document).ready(function() {
+
+    // update
+    $(".update").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+
+      var index = $(".selected").attr("value")
+      let keys = Object.keys(object[0]);
+      for (let i in keys) {
+        let item = keys[i]
+        $("#input_" + item).val(object[index][item])
+      }
+      for (let i in keys) {
+        let item = keys[i]
+        $("#prev_" + item).val(object[index][item])
+      }
+
+      $("#adm_form").attr("action", "/adm/update/" + type)
+      $("#submit").val("수정")
+    })
+
+    // clone
+    $(".clone").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+
+      var index = $(".selected").attr("value")
+      let keys = Object.keys(object[0]);
+      for (let i in keys) {
+        let item = keys[i]
+        $("#input_" + item).val(object[index][item])
+      }
+      $("#adm_form").attr("action", "/adm/insert/" + type)
+      $("#submit").val("등록")
+    })
+
+    // reset
+    $("#reset").click(function() {
+      $(".selected").removeClass("selected")
+      $("#adm_form").attr("action", "/adm/insert/" + type)
+      $("#submit").val("등록")
+    })
+  })
+
+#adm_sub_page
+  -if (type != '_log') {
+    form#adm_form(method="post", action="/adm/insert/"+type)
+      #variables
+        -for (let item in object[0]) {
+          label
+            =item
+            | :
+            input(id="input_"+item class='adm_input' type="text" name=item)
+          br
+        -}
+        label
+        -for (let item in object[0]) {
+          input(id="prev_"+item type="hidden" name="prev_"+item value="")
+        -}
+          input#submit(type="submit" value="등록")
+          input#reset(type="reset" value="취소")
+
+      -if (type == 'regexp') {
+        include adm_regexp.pug
+      -}
+  -}
+
+  table(border="1")
+    thead
+      tr
+        th
+          input#selectAll(type="checkbox")
+        -for (let item in object[0]) {
+          th
+            =item
+        -}
+        th
+          | 버튼
+    tbody
+      -for(let i = 0; i < object.length ; i++) {
+        tr(id=i value=i)
+          td
+            input.select(type="checkbox" value=i)
+          -for (let item in object[i]) {
+            td(class=item)
+              =object[i][item]
+          -}
+          td.buttonList
+            button.update(value=i) 수정
+            button.clone(value=i) 복사
+            form(method="post" action="/adm/delete/"+type)
+              button.delete(value=i) 삭제
+              -for (let item in object[i]) {
+                input(type="hidden" name=item value=object[i][item])
+              -}
+      -}

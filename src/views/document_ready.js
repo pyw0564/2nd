@@ -2,17 +2,17 @@
 $(document).ready(function() {
   /* 정보보기 버튼 */
   let information_flag = false
-  $("#inforamtion_body").css('display', 'none')
+  // $("#inforamtion_body").css('display', 'none')
   $("#information_button").click(function(e) {
     information_flag = !information_flag
     if (information_flag) {
       $("#information_button").css("background-color", "blue")
       $("#information_button").text("정보끄기")
-      $("#inforamtion_body").css('display', 'block')
+      $("#information").css('display', 'block')
     } else {
       $("#information_button").css("background-color", "#399aff")
       $("#information_button").text("정보보기")
-      $("#inforamtion_body").css('display', 'none')
+      $("#information").css('display', 'none')
     }
   })
 

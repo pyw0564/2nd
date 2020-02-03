@@ -21,7 +21,17 @@ input:focus, button:focus { outline:none; }
 /* #chat_body > #chat_content > .msg > .content > .data { width:auto; height:auto; min-height:20px; max-width: 100%; word-break: break-all; display: flex; align-items: center; padding:3px; background-color:blue;} */
 #chat_body > #chat_content > .msg > .content > .time { width:max-content; height:auto; min-height:20px; display: flex; align-items: flex-end; font-size: 14px; padding:0 3px;}
 
-#chat_body #breakLine {height:10px; background-color: lightgray;}
+#chat_body > #chat_content > .msg > .breakLine {
+  height:10px;
+  background-color: white;
+  padding:10px;
+  background:
+    linear-gradient(135deg, lightgray 25%, transparent 25%) -50px 0,
+    linear-gradient(225deg, lightgray 25%, transparent 25%) -50px 0,
+    linear-gradient(315deg, lightgray 25%, transparent 25%),
+    linear-gradient(45deg, lightgray 25%, transparent 25%);
+  background-size: 20px 20px;
+}
 
 #chat_body > #chat_content > .msg > .content > .data.notme {
     width: auto;
@@ -120,11 +130,6 @@ input:focus, button:focus { outline:none; }
   margin : 1px;
 }
 
-.object_message {
-  font-weight: bold;
-  color: #ff1800;
-}
-
 .necessary{
   font-family: serif;
   font-weight: bold;
@@ -168,9 +173,15 @@ a.button {
 /* information */
 
 #information {
-  margin : 15px;
+  position:absolute;
+  left:0;
+  top:0;
+  background-color: white;
+  display:none;
 }
-
+#inforamtion_body {
+  padding : 15px;
+}
 #information_message {
   font-weight: bold;
   color: #ff1800;

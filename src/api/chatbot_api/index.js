@@ -3,10 +3,14 @@ const router = express.Router()
 
 const Redis = require('redis') // 레디스
 const client = Redis.createClient() // 레디스
-const { promisify } = require('util')
+const {
+  promisify
+} = require('util')
 const getAsync = promisify(client.get).bind(client)
 var sessionData = require('./session.data')
 const io = require('./socketMgt').getIO()
+
+var Response = require('./../../read_database').Response
 
 const bodyParser = require('body-parser')
 router.use(bodyParser.urlencoded({
@@ -16,9 +20,15 @@ router.use(bodyParser.json())
 
 router.get('/logout', function(req, res) {
   req.session.destroy()
+  let str = ""
+  let response_array = Response["LOGOUT"]
+  for (let i in response_array) {
+    let response_text = response_array[i].response_text
+    str += response_text
+  }
   return res.send(`
     <script>
-      alert('로그아웃 되었습니다.')
+      alert("${str}")
       location.href = '/'
     </script>`)
 })

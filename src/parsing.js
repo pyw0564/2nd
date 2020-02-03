@@ -23,7 +23,7 @@ async function init(query_flag, query, user) {
   let continue_flag = user.continue_flag
   // 파싱 플래그가 아니면 따로 처리한다
   if (query_flag != "PARSE") {
-    return flag_function(query_flag, user)
+    return await flag_function(query_flag, user)
   }
 
   // 쿼리 객체화
@@ -33,11 +33,11 @@ async function init(query_flag, query, user) {
 
   // 취소 CLEAR 처리
   // console.log(Cancel)
-  await sqlQuery("SELECT * FROM Regexp WHERE parameter_type = 'cancel'")
+  await sqlQuery("")
   console.log(user)
   for (let i in Cancel) {
     let record = Cancel[i]
-    if (query.q.match(new RegExp(record.regexp, record._option))) {
+    if (await query.q.match(new RegExp(record.regexp, record._option))) {
       return await flag_function("CANCEL", user)
     }
   }
@@ -54,7 +54,7 @@ async function init(query_flag, query, user) {
   user.continue_flag = continue_flag
   for (let i in Continue) {
     let record = Continue[i]
-    if (query.q.match(new RegExp(record.regexp, record._option)))
+    if (await query.q.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
     user.continue_flag = continue_flag
   }
@@ -255,7 +255,7 @@ async function flag_function(flag, user) {
       }
     }
     return_object.necessary_array = necessary_array
-    information.message += await make_html("RUN", information, necessary_array)
+    information.message += await make_html("RUN", information, necessary_array, recommend)
     user.information = information
     return_object.information = information
     return return_object
@@ -270,7 +270,8 @@ async function flag_function(flag, user) {
   }
   if (flag == "LOGIN") {
     information.flag = "LOGIN"
-    information.message = await make_html("LOGIN", recommend)
+    information.message = await make_html("LOGIN")
+    information.message += await make_html("HOME", recommend)
   } else if (flag == "ESC") {
     information = {}
     information.flag = "ESC"
@@ -297,7 +298,7 @@ async function flag_function(flag, user) {
   return return_object
 }
 
-async function make_html(flag, recommend, necessary_array) {
+async function make_html(flag, recommend, necessary_array, need) {
   let str = ""
   // API 시작
   if (flag == "START") {
@@ -307,7 +308,7 @@ async function make_html(flag, recommend, necessary_array) {
     if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
     else response_array = Response[api_name].START
     str += await make_response_text(response_array)
-    return server_message(str)
+    return await server_message(str)
   }
   // API 진행중
   if (flag == "RUN") {
@@ -316,7 +317,8 @@ async function make_html(flag, recommend, necessary_array) {
     let response_array
     if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
     else response_array = Response[api_name].RUN
-    str += await make_response_text(response_array)
+    console.log("필요항목", need)
+    str += await make_response_text(response_array, need)
 
     if (necessary_array) {
       let tmp
@@ -346,7 +348,7 @@ async function make_html(flag, recommend, necessary_array) {
       for (let item in necessary_array.Y)
         str += `<button class='recommend'>${necessary_array.Y[item]}</button>`
     }
-    return server_message(str)
+    return await server_message(str)
   }
   // API 종료
   if (flag == "END") {
@@ -356,7 +358,7 @@ async function make_html(flag, recommend, necessary_array) {
     if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
     else response_array = Response[api_name].END
     str += await make_response_text(response_array)
-    return server_message(str)
+    return await server_message(str)
   }
 
   // 그 외
@@ -375,7 +377,7 @@ async function make_html(flag, recommend, necessary_array) {
       idx += 1
     }
   }
-  return server_message(str)
+  return await server_message(str)
 }
 
 async function except_parameter(parameter, query) {
@@ -404,35 +406,43 @@ async function except_parameter(parameter, query) {
 }
 
 // response_text 중복 함수
-async function make_response_text(response_array) {
+async function make_response_text(response_array, need) {
   let str = ""
-  for (let i in response_array) {
-    let response_text = response_array[i].response_text
-    if (response_array[i]._order == 0) {
-      str = `<div class='object_message'>${response_text}</div>`
-    } else {
-      str += `<div>${response_text}</div>`
+  let need_str = ""
+  if (need) {
+    let i = 0
+    for (let index in need) {
+      if (i++) need_str += ", "
+      let display_name = need[index].display_name
+      need_str += display_name
     }
   }
+  // console.log(need_str)
+  for (let i in response_array) {
+    let response_text = response_array[i].response_text
+    let style = response_array[i].style
+    str += `<div  style='${style}'>${response_text}</div>`
+  }
+  str = str.replace("{need}", need_str)
   return str
 }
 
 // 시간 구하기
-function getTime() {
+async function getTime() {
   var currentTime = new Date()
-  return (currentTime.getHours() < 10 ? '0' + currentTime.getHours() : currentTime.getHours()) + ":" +
-    (currentTime.getMinutes() < 10 ? '0' + currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
-    (currentTime.getSeconds() < 10 ? '0' + currentTime.getSeconds() : currentTime.getSeconds())
+  return (await currentTime.getHours() < 10 ? '0' + await currentTime.getHours() : await currentTime.getHours()) + ":" +
+    (await currentTime.getMinutes() < 10 ? '0' + await currentTime.getMinutes() : await currentTime.getMinutes()) + ":" +
+    (await currentTime.getSeconds() < 10 ? '0' + await currentTime.getSeconds() : await currentTime.getSeconds())
 }
 
 // 서버함수
-function server_message(str) {
+async function server_message(str) {
   if (str == "") return ""
   let msg = "<div class='msg'>"
   msg += "<div class='user'>System</div>"
   msg += "<div class='content'>"
   msg += "<div class='data notme'>" + str + "</div>"
-  msg += "<div class='time'>" + getTime() + "</div>"
+  msg += "<div class='time'>" + await getTime() + "</div>"
   msg += "</div>"
   msg += "</div>"
   return msg
@@ -441,6 +451,7 @@ function server_message(str) {
 module.exports = function() {
   return {
     init,
+    make_html,
     flag_function
   }
 }()

@@ -12,7 +12,7 @@ var read_DB = read_database.read_DB
 
 router.get('/', async function(req, res) {
   await read_DB()
-  res.redirect('/adm/tables')
+  return res.redirect('/adm/api')
 })
 
 router.get("/view", function(req, res) {
@@ -58,149 +58,46 @@ router.get("/view", function(req, res) {
     `)
 })
 
-router.get('/tables', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM API")
-  res.render("adm", {
-    type: "tables",
-    tableList: queryResult,
-    tables: Parameter,
-    reg: Regexpr
-  })
-})
-
-router.get('/regexps', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM regexp")
-  await read_DB()
-  res.render("adm", {
-    type: "regexps",
-    tableList: Api,
-    tables: Parameter,
-    reg: queryResult
-  })
-})
-
-router.get('/:tableName/columns', async function(req, res) {
-  const tableName = req.params.tableName
-  let queryResult = await sqlQuery(`SELECT * FROM Parameter where api_name = '${tableName}'`)
-  res.render("adm", {
-    type: "columns",
-    columns: queryResult,
-    tableName: tableName,
-    tableList: Api,
-    tables: Parameter
-  })
-})
-
-/* 로그 페이지 */
-router.get('/logs', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM _log ORDER BY _time DESC")
-  res.render("adm", {
-    type: "logs",
-    logs: queryResult
-  })
-})
-
-/* 추천어 관리 페이지 */
-router.get('/recommend', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM Recommend")
-  console.log(queryResult)
-  res.render("adm", {
-    type: "recommend",
-    recommend: queryResult
-  })
-})
-
-/* 응답 텍스트 관리 페이지 */
-router.get('/response', async function(req, res) {
-  const queryResult = await sqlQuery("SELECT * FROM Response")
-  console.log(queryResult)
-  res.render("adm", {
-    type: "response",
-    response: queryResult
-  })
-})
-
-router.post('/insert/table', async function(req, res) {
-  const display_name = req.body.display_name
-  const api_name = req.body.api_name
-  const response = req.body.response
-  const parameter_type = req.body.parameter_type
-  const url = req.body.url
-  const response_text = req.body.response_text
-  const rest_method = req.body.rest_method
-  const query = ` INSERT INTO API(display_name, api_name, response, parameter_type)
-                  VALUES ('${display_name}', '${api_name}', '${response}', '${parameter_type}',
-                '${url}', '${response_text}', '${rest_method}');`
-  console.log(query);
+// 완료
+router.get('/:tableName', async function(req, res) {
   try {
-    await sqlQuery(query)
+    const tableName = req.params.tableName
+    let queryResult = await sqlQuery(`SELECT * FROM ${tableName}`)
+    return res.render("./administer/adm", {
+      type: tableName,
+      object: queryResult
+    })
   } catch (e) {
-    console.log('테이블 등록실패')
-    res.send(await alertAndRedirect('테이블 등록 실패', '/adm/tables'))
+    return res.send(await alertAndRedirect('잘못된 접근 입니다.', '/adm/api'))
   }
-  console.log('테이블 등록완료')
-  res.send(await alertAndRedirect('테이블 등록이 완료되었습니다', '/adm/tables'))
 })
 
-router.post('/insert/regexp', async function(req, res) {
-  const parameter_type = req.body.parameter_type
-  const regexp = req.body.regexp
-  const _option = req.body._option
-  const return_value = req.body.return_value ? req.body.return_value : ""
-  const start = req.body.start ? parseInt(req.body.start) : -1
-  const _length = req.body._length ? parseInt(req.body._length) : -1
-  const query = `
-    INSERT INTO REGEXP(parameter_type, regexp, _option, return_value, start, _length)
-    VALUES ('${parameter_type}', '${regexp}', '${_option}', '${return_value}', ${start}, ${_length})
-  `
-  await sqlQuery(query)
-  console.log('정규표현식 등록완료')
-  res.send(await alertAndRedirect('정규표현식 등록완료', '/adm/regexps'))
-})
-
-router.post('/insert/recommend', async function(req, res) {
-  const parameter_type = req.body.parameter_type
-  const word = req.body.word
-  const button = req.body.button
-  const query = `
-    INSERT INTO Recommend(parameter_type, word, button)
-    VALUES ('${parameter_type}', '${word}', '${button}')
-  `
-  await sqlQuery(query)
-  console.log('추천어 등록완료')
-  res.send(await alertAndRedirect('추천어 등록완료', '/adm/recommend'))
-})
-
-router.post('/insert/response', async function(req, res) {
-  const flag = req.body.flag
-  const _option = req.body._option
-  const response_text = req.body.response_text
-  const _order = req.body._order
-  const query = `
-    INSERT INTO response(flag, _option, response_text, _order)
-    VALUES ('${flag}', '${_option}', '${response_text}', '${_order}')
-  `
-  await sqlQuery(query)
-  console.log('응답 텍스트 등록완료')
-  res.send(await alertAndRedirect('추천어 등록완료', '/adm/response'))
-})
-
-router.post('/insert/:tableName/row', async function(req, res) {
-  const api_name = req.body.api_name
-  const parameter = req.body.parameter
-  const display_name = req.body.display_name
-  const parameter_type = req.body.parameter_type
-  const necessary = req.body.necessary
-  const _order = req.body._order
-  const tableName = req.params.tableName
-  const query = `
-    INSERT INTO Parameter(api_name, parameter, display_name, parameter_type, necessary, _order)
-    VALUES ('${api_name}', '${parameter}', '${display_name}', '${parameter_type}', '${necessary}', '${order}')
-  `
-  console.log(query)
-  await sqlQuery(query)
-  console.log('테이블 속성 등록완료')
-  res.send(await alertAndRedirect('테이블 속성 등록완료', `/adm/${api_name}/columns`))
+// 완료
+router.post('/insert/:tableName', async function(req, res) {
+  try {
+    const tableName = req.params.tableName
+    let query = `INSERT INTO ${tableName}(`
+    let idx = 0
+    for (let item in req.body) {
+      if (item.substr(0, 5) == "prev_") continue
+      if (idx++) query += ", "
+      query += item
+    }
+    query += ") VALUES ("
+    idx = 0
+    for (let item in req.body) {
+      if (item.substr(0, 5) == "prev_") continue
+      if (idx++) query += ", "
+      let value = req.body[item]
+      if (item == 'style') value = await replace_quotes(req.body[item])
+      query += `'${value}'`
+    }
+    query += ")"
+    await sqlQuery(query)
+    return res.send(await alertAndRedirect(`${tableName} 등록 완료`, `/adm/${tableName}`))
+  } catch (e) {
+    return res.send(await alertAndRedirect(`${tableName} 등록 중 오류발생! PK, NULL값 확인`, `/adm/${tableName}`))
+  }
 })
 
 router.post('/update/table', async function(req, res) {
@@ -226,36 +123,44 @@ router.post('/update/table', async function(req, res) {
 })
 
 router.post('/update/recommend', async function(req, res) {
-  const idx = req.body.idx
   const parameter_type = req.body.parameter_type
   const word = req.body.word
   const button = req.body.button
-
-  const query = `
-    UPDATE recommend SET parameter_type='${parameter_type}', word='${word}', button='${button}'
-    WHERE idx=${idx};
-  `
-  await sqlQuery(query)
-  console.log('추천어 수정완료')
-  res.send(await alertAndRedirect('추천어 수정완료', `/adm/recommend`))
+  const prev_parameter_type = req.body.prev_parameter_type
+  const prev_word = req.body.prev_word
+  const prev_prev_button = req.body.prev_button
+  try {
+    const query = `
+      UPDATE recommend SET parameter_type='${parameter_type}', word='${word}', button='${button}'
+      WHERE parameter_type='${prev_parameter_type}' and word='${prev_word}' and button='${prev_prev_button}';
+    `
+    await sqlQuery(query)
+    return res.send(await alertAndRedirect('recommend 수정완료', `/adm/recommend`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('recommend 수정 오류발생', `/adm/recommend`))
+  }
 })
 
 router.post('/update/response', async function(req, res) {
   const prev_flag = req.body.prev_flag
-  const prev_order = req.body.prev_order
-  const prev_option = req.body.prev_option
+  const prev__order = req.body.prev__order
+  const prev__option = req.body.prev__option
   const flag = req.body.flag
   const _option = req.body._option
   const response_text = req.body.response_text
   const _order = req.body._order
+  const style = await replace_quotes(req.body.style)
 
-  const query = `
-    UPDATE Response SET flag='${flag}', _option='${_option}', response_text='${response_text}', _order='${_order}'
-    WHERE flag='${prev_flag}' and _order='${prev_order}' and _option='${prev_option}';
-  `
-  await sqlQuery(query)
-  console.log('응답 텍스트 수정완료')
-  res.send(await alertAndRedirect('응답 텍스트 수정완료', `/adm/response`))
+  try {
+    let query = `
+      UPDATE Response SET flag='${flag}', _option='${_option}', response_text='${response_text}', _order='${_order}', style='${style}'
+      WHERE flag='${prev_flag}' and _order='${prev__order}' and _option='${prev__option}';
+    `
+    await sqlQuery(query)
+    return res.send(await alertAndRedirect('Response 수정완료', `/adm/response`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('Response 수정 오류발생', '/adm/response'))
+  }
 })
 
 router.post('/update/regexp', async function(req, res) {
@@ -275,22 +180,32 @@ router.post('/update/regexp', async function(req, res) {
   res.send(await alertAndRedirect('정규표현식 수정완료', `/adm/regexps`))
 })
 
-router.post('/update/:tableName/row', async function(req, res) {
-  const prev = req.body.prev
+router.post('/update/:tableName', async function(req, res) {
   const api_name = req.body.api_name
   const parameter = req.body.parameter
   const display_name = req.body.display_name
   const parameter_type = req.body.parameter_type
   const necessary = req.body.necessary
-  const tableName = req.params.tableName
   const _order = req.body._order
-  const query = `
-    UPDATE Parameter SET api_name='${api_name}', parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}', necessary='${necessary}', _order='${_order}'
-    WHERE parameter='${prev}' and api_name='${tableName}';
-  `
-  await sqlQuery(query)
-  console.log('테이블 속성 수정완료')
-  res.send(await alertAndRedirect('테이블 속성 수정완료', `/adm/${api_name}/columns`))
+
+  const prev_api_name = req.body.prev_api_name
+  const prev_parameter = req.body.prev_parameter
+  const prev_display_name = req.body.prev_display_name
+  const prev_parameter_type = req.body.prev_parameter_type
+  const prev_necessary = req.body.prev_necessary
+  const prev__order = req.body.prev__order
+
+  const tableName = req.params.tableName
+  try {
+    const query = `
+      UPDATE Parameter SET api_name='${api_name}', parameter='${parameter}', display_name='${display_name}', parameter_type='${parameter_type}', necessary='${necessary}', _order='${_order}'
+      WHERE api_name='${prev_api_name}' and parameter='${prev_parameter}';
+    `
+    await sqlQuery(query)
+    return res.send(await alertAndRedirect('테이블 속성 수정완료', `/adm/${api_name}`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('테이블 속성 오류발생', `/adm/${api_name}`))
+  }
 })
 
 router.post('/delete/table', async function(req, res) {
@@ -321,14 +236,15 @@ router.post('/delete/regexp', async function(req, res) {
 })
 
 router.post('/delete/recommend', async function(req, res) {
-  const idx = parseInt(req.body.idx) ? parseInt(req.body.idx) : -1
-  if (idx != -1) {
-    let query = `DELETE FROM Recommend WHERE idx = ${idx}`
+  const parameter_type = req.body.parameter_type
+  const word = req.body.word
+  const button = req.body.button
+  try {
+    let query = `DELETE FROM Recommend WHERE parameter_type='${parameter_type}' and word='${word}' and button='${button}';`
     await sqlQuery(query)
-    console.log('추천어 삭제완료')
-    res.send(await alertAndRedirect('추천어 삭제완료', `/adm/recommend`))
-  } else {
-    res.send(await alertAndRedirect('오류!', `/adm/regexps`))
+    return res.send(await alertAndRedirect('recommend 삭제완료', `/adm/recommend`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('recommend 삭제 오류발생', `/adm/recommend`))
   }
 })
 
@@ -337,22 +253,31 @@ router.post('/delete/response', async function(req, res) {
   const _option = req.body._option
   const response_text = req.body.response_text
   const _order = req.body._order
-  let query = `DELETE FROM Response WHERE flag = '${flag}' and _option='${_option}' and _order = '${_order}'`
-  await sqlQuery(query)
-  console.log('응답 텍스트 삭제완료')
-  return res.send(await alertAndRedirect('응답 텍스트 삭제완료', `/adm/response`))
+  const style = await replace_quotes(req.body.style)
+
+  try {
+    let query = `DELETE FROM Response WHERE flag = '${flag}' and _option='${_option}' and _order = '${_order}'`
+    await sqlQuery(query)
+    return res.send(await alertAndRedirect('Response 삭제완료', `/adm/response`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('Response 삭제 오류발생', '/adm/response'))
+  }
 })
 
-router.post('/delete/:tableName/row', async function(req, res) {
-  const tableName = req.params.tableName
+router.post('/delete/:tableName', async function(req, res) {
+  const api_name = req.body.api_name
   const parameter = req.body.parameter
-  if (tableName) {
-    let query = `DELETE FROM Parameter WHERE parameter = '${parameter}' and api_name = '${tableName}'`
+  const display_name = req.body.display_name
+  const parameter_type = req.body.parameter_type
+  const necessary = req.body.necessary
+  const _order = req.body._order
+
+  try {
+    let query = `DELETE FROM Parameter WHERE parameter = '${parameter}' and api_name = '${api_name}'`
     await sqlQuery(query)
-    console.log('테이블 속성삭제완료')
-    res.send(await alertAndRedirect('테이블 속성삭제완료', `/adm/${tableName}/columns`))
-  } else {
-    res.send(await alertAndRedirect('오류!!', `/adm/${tableName}/columns`))
+    return res.send(await alertAndRedirect('테이블 속성 삭제완료', `/adm/${api_name}`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('테이블 속성 삭제 오류발생!!', `/adm/${api_name}`))
   }
 })
 
@@ -364,4 +289,7 @@ async function alertAndRedirect(aler, href) {
   </script>`
 }
 
+async function replace_quotes(text) {
+  return text.replace(/'/gi, "''")
+}
 module.exports = router;
