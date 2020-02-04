@@ -30,8 +30,8 @@ app.use(sessionMgt)
 app.set('view engine', 'pug') // 뷰 엔진 pug
 app.set('views', './views') // pug 'views' 폴더 사용
 app.use('/', express.static(__dirname)) // 기본 디렉터리 위치 사용
-app.use('/adm', require('./adm')) // adm는 모두 /adm 을 사용
-app.use('/', require('./chatbot')) // chatbot은 모두 / 를 사용
+app.use('/adm', require('./adm_router')) // adm는 모두 /adm 을 사용
+app.use('/', require('./chatbot_router')) // chatbot은 모두 / 를 사용
 app.locals.pretty = true // 클라이언트 코드 설정
 
 server.listen(3000, async function(err) { // 포트실행

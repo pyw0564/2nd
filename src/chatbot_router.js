@@ -11,8 +11,13 @@ var Regexpr = read_database.Regexpr
 var Recommend = read_database.Recommend
 var Response = read_database.Response
 var sqlQuery = read_database.sqlQuery
-var parsing = require('./parsing').init
-var flag_function = require('./parsing').flag_function
+
+var parsing_moudle = require('./parsing')
+var parsing = parsing_moudle.init
+var flag_function = parsing_moudle.flag_function
+var make_response_text = parsing_moudle.make_response_text
+var getTime = parsing_moudle.getTime
+var server_message = parsing_moudle.server_message
 
 router.use('/', require('./api/chatbot_api')) // 단코드 변경, 로그아웃 API
 router.use(bodyParser.urlencoded({
@@ -22,59 +27,76 @@ router.use(bodyParser.json())
 
 // 메인
 router.get('/', function(req, res) {
+  req.session.icon = {}
+  req.session.homepage = {}
+  console.log("로그인 정보", req.session)
   // 세션 유지 처리
-  if (req.session.dancode)
-    return res.redirect('/chat')
-
-  return res.render("chat", {
+  return res.render("./chatbot/chat", {
     login: false
   })
 })
 
 // 로그인
-router.post('/login', async function(req, res) {
+router.post('/login/:route', async function(req, res) {
   // 세션 유지 처리
-  if (req.session.dancode)
-    return res.redirect('/chat')
-
   const id = req.body.userid
   const pw = req.body.userpw
-  const dancode = req.body.dancode
+  const server = req.body.userserver
+  const route = req.params.route
+
   // 로그인 api 사용
   const auth = await imc.authorize(id, pw)
   // 로그인 실패
   if (auth.response_code != "OK") {
     return res.send(alertAndRedirect("아이디 또는 비밀번호가 틀립니다.", "/"))
   }
-  console.log(auth)
+  // 잘못된 접근
+  if (route != "icon" && route != "homepage") {
+    return res.send(alertAndRedirect("잘못된 경로 입니다", "/"))
+  }
+  if (route == "icon" && server == "") {
+    return res.send(alertAndRedirect("서버를 적어주세요", "/"))
+  }
+
+  console.log("로그인 정보", auth)
   // 로그인 성공
-  req.session.dancode = auth.result[0].dancode
-  req.session.username = auth.result[0].username
-  req.session.usergubun = auth.result[0].usergubun
-  req.session.information = {} // 파싱한 정보 객체
-  req.session.flag = null // 정보 유지를 위한 플래그
-  req.session.continue_flag = null // 그리고, 또 플래그
-  req.session.start_flag = false // START option 플래그
-  req.session.api_result = {} // API 결과값 객체
-  req.session.api_count = 0 // API 결과값 카운트
-  return res.redirect("/chat")
+  let session = {}
+  session.dancode = auth.result[0].dancode
+  session.username = auth.result[0].username
+  session.usergubun = auth.result[0].usergubun
+  session.information = {} // 파싱한 정보 객체
+  session.continue_flag = null // 그리고, 또 플래그
+  session.flag = null // 정보 유지를 위한 플래그
+  session.start_flag = false // START option 플래그
+  session.api_result = {} // API 결과값 객체
+  session.api_count = 0 // API 결과값 카운트
+  req.session[route][server] = session
+
+  return res.redirect(`/chat/${route}/${server}`)
 })
 
 // 챗봇 화면
-router.get('/chat', async function(req, res) {
-  // 세션 처리
-  req.session.api_result = {}
-  req.session.api_count = 0
-  if (req.session.dancode) {
-    let login_object = await flag_function("LOGIN", req.session)
+router.get('/chat/:route/:server', async function(req, res) {
+  const route = req.params.route
+  const server = req.params.server
+  console.log(req.session)
+
+  // 새로 고침 시 기존세션 삭제
+  req.session[route][server].api_result = {}
+  req.session[route][server].api_count = 0
+  let currSession = req.session[route][server]
+
+  // 로그인 활성화
+  if (currSession.dancode) {
+    let login_object = await flag_function("LOGIN", currSession)
     // 파싱 테이블 초기화
-    return res.render('chat', {
+    return res.render('./chatbot/chat', {
       login: true,
       login_object: login_object, // 로그인 시작 메시지 이용
-      information: req.session, // 소켓 이용
-      dancode: req.session.dancode,
-      username: req.session.username,
-      usergubun: req.session.usergubun
+      information: currSession, // 소켓 이용
+      dancode: currSession.dancode,
+      username: currSession.username,
+      usergubun: currSession.usergubun
     })
   }
   // 로그인 필요
@@ -188,10 +210,10 @@ router.post('/chat/response', async function(req, res) {
     str += "' target='_blank'>"
     str += await make_response_text(Response.LINK)
     str += "</a>"
-    return res.json(server_message(str))
+    return res.json(await server_message(str))
   } else {
     str = await make_response_text(Response.ERROR)
-    return res.json(server_message(str))
+    return res.json(await server_message(str))
   }
 })
 
@@ -267,39 +289,6 @@ function alertAndRedirect(text, link) {
             alert("${text}")
             location.href="${link}"
           </script>`
-}
-
-// 시간 구하기
-function getTime() {
-  var currentTime = new Date()
-  return (currentTime.getHours() < 10 ? '0' + currentTime.getHours() : currentTime.getHours()) + ":" +
-    (currentTime.getMinutes() < 10 ? '0' + currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
-    (currentTime.getSeconds() < 10 ? '0' + currentTime.getSeconds() : currentTime.getSeconds())
-}
-
-// 서버함수
-function server_message(str) {
-  let msg = "<div class='msg'>"
-  msg += "<div class='user'>System</div>"
-  msg += "<div class='content'>"
-  msg += "<div class='data notme'>" + str + "</div>"
-  msg += "<div class='time'>" + getTime() + "</div>"
-  msg += "</div>"
-  msg += "</div>"
-  return msg
-}
-
-async function make_response_text(response_array) {
-  let str = ""
-  for (let i in response_array) {
-    let response_text = response_array[i].response_text
-    if (response_array[i]._order == 0) {
-      str = `<div class='object_message'>${response_text}</div>`
-    } else {
-      str += `<div>${response_text}</div>`
-    }
-  }
-  return str
 }
 
 module.exports = router;

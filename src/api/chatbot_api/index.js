@@ -94,7 +94,9 @@ io.on('connection', function(socket) {
   // })
 
   socket.on('login', function(data) {
+    console.log("소켓", data)
     const username = data.information.username
+    if(sessionData[username] == null) sessionData[username] = {}
     sessionData[username].socketID = socket.id
     // sessionData[{
     //   dancode : 1413,

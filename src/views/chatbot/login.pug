@@ -1,5 +1,5 @@
 #login_form
-  form(method="post" action="/login")
+  form(method="post" action="/login/icon")
     label
       | ID:
       input#userid(type="text" name="userid")
@@ -7,6 +7,10 @@
     label
       | PW:
       input#userpw(type="password" name="userpw")
+    br
+    label
+      | SERVER:
+      input#userserver(type="text" name="userserver")
     br
     label
       input(type="submit" value="로그인")

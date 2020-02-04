@@ -1,5 +1,5 @@
-const cryptor = require('./cryptor');
-const axios = require('axios');
+const cryptor = require('./cryptor')
+const axios = require('axios')
 
 module.exports = function() {
   function getHeaders(XAuth) {
@@ -13,29 +13,29 @@ module.exports = function() {
   }
   async function post(url, data, head) {
     console.log('URL', process.env.url + "/" + process.env.agencycode + url)
-    return (await axios.post(process.env.url + "/" + process.env.agencycode + url, data, head)).data;
+    return (await axios.post(process.env.url + "/" + process.env.agencycode + url, data, head)).data
   }
   async function get(url, data, head) {
     console.log('URL', process.env.url + "/" + process.env.agencycode + url)
-    return (await axios.get(process.env.url + "/" + process.env.agencycode + url, head)).data;
+    return (await axios.get(process.env.url + "/" + process.env.agencycode + url, head)).data
   }
   // 사용자인증
   async function authorize(id, pw) {
     if (id == undefined || pw == undefined) {
-      console.log("imc authorize: id or pw equal undefined");
-      return;
+      console.log("imc authorize: id or pw equal undefined")
+      return
     }
-    let token = cryptor.getToken(id, pw);
+    let token = cryptor.getToken(id, pw)
     let XAuth = cryptor.getXAuth({
       token: token
-    });
+    })
 
     let head = getHeaders(XAuth);
     let data = {
       ssotoken: token
     }
 
-    return await post("/chatbot/auth/authorize", data, head);
+    return await post("/chatbot/auth/authorize", data, head)
   }
 
   async function rest_api_function(data, order, url, method) {

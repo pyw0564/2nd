@@ -44,13 +44,11 @@ module.exports = function() {
       for (let i = 0; i < order.length; i++) {
         let param = order[i].parameter
         if (data[param]) {
-          // console.log('------------', data[param])
           msg += data[param];
         }
       }
     }
-
-    // console.log(msg)
+    
     let value = msg + NONCE;
     let hmac = crypto.createHmac("sha256", process.env.HmacKey);
     let hash = hmac.update(value).digest('base64');

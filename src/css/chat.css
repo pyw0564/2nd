@@ -117,8 +117,6 @@ input:focus, button:focus { outline:none; }
 #chat_submit > #submit > button { font-size:16px; word-break: keep-all;height:100%; background-color: aqua;}
 
 #chat_body a:link, #chat_body a:visited {
-  font-weight: bold;
-  color: blue;
   text-decoration: none;
 }
 
@@ -157,19 +155,6 @@ a.button {
   display: flex;
 }
 
-#yes{
-  cursor:pointer;
-  border: 1px solid black;
-  text-align: center;
-  background-color: white;
-}
-
-#no {
-  cursor:pointer;
-  border: 1px solid black;
-  text-align: center;
-  background-color: white;
-}
 /* information */
 
 #information {
@@ -179,9 +164,11 @@ a.button {
   background-color: white;
   display:none;
 }
+
 #inforamtion_body {
   padding : 15px;
 }
+
 #information_message {
   font-weight: bold;
   color: #ff1800;

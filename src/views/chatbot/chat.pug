@@ -2,11 +2,10 @@ doctype html
 html
   head
     style
-      include ../css/chat.css
+      include ../../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
-    script(type="text/javascript" src="./views/document_ready.js")
-    script(type="text/javascript" src="./views/support.js")
-    script(type="text/javascript" src="./views/chat.js")
+    script(type="text/javascript" src="/views/chatbot/chat_event.js")
+    script(type="text/javascript" src="/views/chatbot/chat_function.js")
     script(type="text/javascript" src="/socket.io/socket.io.js")
     script(type='text/javascript').
     -if (login)
@@ -36,13 +35,12 @@ html
           })
         })
   body
-    //- iframe(src="/adm" style="width:800px; height:100%;")
     #chat
       #chat_header
         include chat_header.pug
       #chat_body
         include chat_body.pug
         #information
-          include information.pug
+          #inforamtion_body
       #chat_submit
         include chat_submit.pug

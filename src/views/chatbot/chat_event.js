@@ -1,8 +1,6 @@
-/* 로그인 관련 */
 $(document).ready(function() {
-  /* 정보보기 버튼 */
-  let information_flag = false
-  // $("#inforamtion_body").css('display', 'none')
+  /* 정보보기 버튼 이벤트 */
+  var information_flag = false
   $("#information_button").click(function(e) {
     information_flag = !information_flag
     if (information_flag) {
@@ -16,7 +14,7 @@ $(document).ready(function() {
     }
   })
 
-  /* 로그아웃 버튼 */
+  /* 로그아웃 버튼 이벤트 */
   $("#logout").click(function(e) {
     let xhr = new XMLHttpRequest()
     xhr.open('GET', '/logout', true)
@@ -26,11 +24,8 @@ $(document).ready(function() {
       location.href = '/logout'
     })
   })
-})
 
-
-$(document).ready(function() {
-  // 추천어 버튼 처리
+  // 추천어 버튼 이벤트 처리
   $("body").on('click', '.recommend', function(e) {
     $("#chat_data").text(e.target.innerText)
     parsing_ajax("PARSE")

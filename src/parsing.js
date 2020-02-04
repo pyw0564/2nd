@@ -298,6 +298,31 @@ async function flag_function(flag, user) {
   return return_object
 }
 
+async function except_parameter(parameter, query) {
+  // yyyymm 처리
+  if (parameter == 'yyyymm') {
+    let year_ret = await parsing(Regexpr.year, query)
+    let month_ret = await parsing(Regexpr.month, query)
+    ret = []
+    if (year_ret == null || month_ret == null) return null
+    for (let i = 0; i < year_ret.length; i++) {
+      for (let j = 0; j < month_ret.length; j++) {
+        if (month_ret[j].return_value.length == 1) {
+          month_ret[j].return_value = '0' + month_ret[j].return_value
+        }
+        ret.push({
+          parsing_value: year_ret[i].parsing_value + month_ret[j].parsing_value,
+          return_value: year_ret[i].return_value + month_ret[j].return_value
+        })
+      }
+    }
+    if (ret.length)
+      return ret
+    return null
+  }
+  return null
+}
+
 async function make_html(flag, recommend, necessary_array, need) {
   let str = ""
   // API 시작
@@ -380,31 +405,6 @@ async function make_html(flag, recommend, necessary_array, need) {
   return await server_message(str)
 }
 
-async function except_parameter(parameter, query) {
-  // yyyymm 처리
-  if (parameter == 'yyyymm') {
-    let year_ret = await parsing(Regexpr.year, query)
-    let month_ret = await parsing(Regexpr.month, query)
-    ret = []
-    if (year_ret == null || month_ret == null) return null
-    for (let i = 0; i < year_ret.length; i++) {
-      for (let j = 0; j < month_ret.length; j++) {
-        if (month_ret[j].return_value.length == 1) {
-          month_ret[j].return_value = '0' + month_ret[j].return_value
-        }
-        ret.push({
-          parsing_value: year_ret[i].parsing_value + month_ret[j].parsing_value,
-          return_value: year_ret[i].return_value + month_ret[j].return_value
-        })
-      }
-    }
-    if (ret.length)
-      return ret
-    return null
-  }
-  return null
-}
-
 // response_text 중복 함수
 async function make_response_text(response_array, need) {
   let str = ""
@@ -421,7 +421,10 @@ async function make_response_text(response_array, need) {
   for (let i in response_array) {
     let response_text = response_array[i].response_text
     let style = response_array[i].style
-    str += `<div  style='${style}'>${response_text}</div>`
+    str += `<div`
+    if (style)
+      str += ` style='${style}'`
+    str += `>${response_text}</div>`
   }
   str = str.replace("{need}", need_str)
   return str
@@ -452,6 +455,9 @@ module.exports = function() {
   return {
     init,
     make_html,
-    flag_function
+    flag_function,
+    make_response_text,
+    getTime,
+    server_message
   }
 }()
