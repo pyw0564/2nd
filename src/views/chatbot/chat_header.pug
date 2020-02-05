@@ -1,9 +1,15 @@
 #dan_info
-  span#dancode
-    |[
-    =dancode
-    |]
+  -if (route == 'homepage') { // 동기화
+    span#dancode
+      |[
+      =dancode
+      |]
+  -} else if (route == "icon") { // 아이콘
+    input#dancode(type="text" value=dancode)
+    input#prev_dancode(type="hidden" value=dancode)
+  -}
   span#danname
+    =server
   -if (login)
     span#buttons
       button#logout.header_button
@@ -17,7 +23,7 @@
     span#userId
       =username
   div
-    |시간: 
+    |세션: 
     span#login_time
       -var time = new Date();
       = time.getHours() < 10 ? '0'+time.getHours() : time.getHours()

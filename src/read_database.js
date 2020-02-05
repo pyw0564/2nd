@@ -60,7 +60,8 @@ module.exports = function() {
     let records = await sqlQuery('SELECT * FROM Api')
     for (let i = 0; i < records.length; i++) {
       let record = records[i]
-      Api[record.api_name] = record
+      if (Api[record.server] === undefined) Api[record.server] = {}
+      Api[record.server][record.api_name] = record
     }
   }
 

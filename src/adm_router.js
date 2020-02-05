@@ -68,9 +68,12 @@ router.get('/:tableName', async function(req, res) {
   try {
     const tableName = req.params.tableName
     let queryResult = await sqlQuery(`SELECT * FROM ${tableName}`)
+    let columns = await sqlQuery(`SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${tableName}'`)
+
     return res.render("./administer/adm", {
       type: tableName,
-      object: queryResult
+      object: queryResult,
+      columns
     })
   } catch (e) {
     return res.send(await alertAndRedirect('잘못된 접근 입니다.', '/adm/api'))

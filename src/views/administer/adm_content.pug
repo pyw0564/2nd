@@ -51,7 +51,8 @@ script(type="text/javascript").
   -if (type != '_log') {
     form#adm_form(method="post", action="/adm/insert/"+type)
       #variables
-        -for (let item in object[0]) {
+        -for (let i in columns) {
+          -var item = columns[i].COLUMN_NAME
           label
             =item
             | :
@@ -59,7 +60,8 @@ script(type="text/javascript").
           br
         -}
         label
-        -for (let item in object[0]) {
+        -for (let i in columns) {
+          -var item = columns[i].COLUMN_NAME
           input(id="prev_"+item type="hidden" name="prev_"+item value="")
         -}
           input#submit(type="submit" value="등록")
@@ -70,7 +72,7 @@ script(type="text/javascript").
       -}
   -}
 
-  table(border="1")
+  table#adm_table(border="1")
     thead
       tr
         th

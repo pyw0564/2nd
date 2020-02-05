@@ -14,11 +14,12 @@ select * from _Log;
 select * from Recommend
 select * from Response
 select * from _Log ORDER BY _time DESC;
- UPDATE Response SET flag='CANCEL', _option='', response_text='취소되었습니다', _order='1', style='''blue'''
-    WHERE flag='CANCEL' and _order='1' and _option='';
+UPDATE response SET flag='HOME', _option='', response_text='메인 페이지', _order='0', style='color:red;' WHERE flag='HOME' and _option='' and response_text='메인 페이지' and _order='0'
+DELETE FROM response WHERE style is null
 
 /* 작업 */
 /*
+SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Api'
 update Api Set rest_method = 'post' where api_name = 'sedaeinfo'
 update Api Set rest_method = 'get' where api_name = 'GetServicePayInfo2'
 update Api Set url = '/GetServicePayInfo2/{dancode}/{dongcode}/{roomno}/{yyyymm}/{kind}/{rentgbn}' where api_name = 'GetServicePayInfo2'
@@ -30,7 +31,7 @@ ALTER TABLE Parameter ADD _order int null
 ALTER TABLE Recommend ADD button nvarchar(10);
 ALTER TABLE Recommend ADD idx int autoincreament;
 ALTER TABLE Parameter DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
-ALTER TABLE Recommend DROP COLUMN idx
+ALTER TABLE Regexp DROP COLUMN idx
 ALTER TABLE Parameter ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
 drop table Parameter DELETE FROM Parameter WHERE display_name='종료년도'
 */
@@ -78,14 +79,18 @@ delete  from Parameter where parameter = 'danconde'
 
 /* create table */
 create table Api(
-	display_name nvarchar(255) NOT NULL,
-	api_name nvarchar(255) NOT NULL,
+	server nvarchar(100) NOT NULL,
+	display_name nvarchar(100) NOT NULL,
+	api_name nvarchar(100) NOT NULL,
+	parameter_type nvarchar(100) NOT NULL,
+	url nvarchar(100) NOT NULL,
+	response_text nvarchar(100),
 	response int NOT NULL,
-	parameter_type nvarchar(255) NOT NULL,
-	url nvarchar(255) NOT NULL,
-	response_text nvarchar(255),
-	PRIMARY KEY (api_name)
+	rest_method nvarchar(10) NOT NULL,
+	show nvarchar(10) NOT NULL,
+	PRIMARY KEY (server, api_name)
 )
+
 create table Parameter(
 	api_name nvarchar(200) NOT NULL,
 	parameter nvarchar(200) NOT NULL,

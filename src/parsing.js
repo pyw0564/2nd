@@ -17,13 +17,13 @@ var sqlQuery = read_database.sqlQuery
 
 */
 
-async function init(query_flag, query, user) {
+async function init(query_flag, query, user, server) {
   let information = user.information // 파싱한 정보 객체
   let user_flag = user.flag // 정보 유지를 위한 플래그
   let continue_flag = user.continue_flag
   // 파싱 플래그가 아니면 따로 처리한다
   if (query_flag != "PARSE") {
-    return await flag_function(query_flag, user)
+    return await flag_function(query_flag, user, server)
   }
 
   // 쿼리 객체화
@@ -38,7 +38,7 @@ async function init(query_flag, query, user) {
   for (let i in Cancel) {
     let record = Cancel[i]
     if (await query.q.match(new RegExp(record.regexp, record._option))) {
-      return await flag_function("CANCEL", user)
+      return await flag_function("CANCEL", user, server)
     }
   }
   // 플래그 처리
@@ -46,7 +46,7 @@ async function init(query_flag, query, user) {
     console.log("FLAG가 유지되고 있습니다", user_flag)
     information = await find_parameters(user_flag.api_name, query, user)
     user.information = information
-    return await flag_function("RUN", user)
+    return await flag_function("RUN", user, server)
   }
 
   // continue 처리
@@ -66,23 +66,23 @@ async function init(query_flag, query, user) {
 
   // 파싱 실행
   console.log("현재 쿼리상태 /parsing 65", query)
-  information = await find_api(query, user)
+  information = await find_api(query, user, server)
   user.information = information
   if (Object.keys(information).length === 0) {
     console.log("UNKOWN 알수없어요. ")
-    return await flag_function("UNKNOWN", user)
+    return await flag_function("UNKNOWN", user, server)
   }
   console.log("RUN 상태입니다.")
-  return await flag_function("RUN", user)
+  return await flag_function("RUN", user, server)
 }
 
 // 1step -> 어떤 API인지 골라내기
-async function find_api(query, user) {
+async function find_api(query, user, server) {
   let information = user.information // 파싱한 정보 객체
   let user_flag = user.flag // 정보 유지를 위한 플래그
   let continue_flag = user.continue_flag
-  for (let item in Api) {
-    let record = Api[item]
+  for (let item in Api[server]) {
+    let record = Api[server][item]
     let api_name = record.api_name
     let parameter_type = record.parameter_type
     let display_name = record.display_name
@@ -97,7 +97,7 @@ async function find_api(query, user) {
         user_flag = {
           api_name: api_name,
           display_name: display_name,
-          API_information: Api[item]
+          API_information: Api[server][item]
         }
         user.flag = user_flag // 정보 유지를 위한 플래그
         let ret = await find_parameters(api_name, query, user)
@@ -191,7 +191,7 @@ async function parsing(regs, query) {
   return null
 }
 
-async function flag_function(flag, user) {
+async function flag_function(flag, user, server) {
   console.log("현재 플래그 입니다!", flag)
   let information = user.information // 파싱한 정보 객체
   let recommend = []
@@ -262,9 +262,9 @@ async function flag_function(flag, user) {
   }
 
   // 정보 유지를 위한 플래그
-  for (let item in Api) {
+  for (let item in Api[server]) {
     recommend.push({
-      display_name: Api[item].display_name,
+      display_name: Api[server][item].display_name,
       parameter_type: item
     })
   }

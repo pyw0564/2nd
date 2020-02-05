@@ -4,27 +4,31 @@ html
     style
       include ../../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
-    script(type="text/javascript" src="/views/chatbot/chat_event.js")
-    script(type="text/javascript" src="/views/chatbot/chat_function.js")
     script(type="text/javascript" src="/socket.io/socket.io.js")
     script(type='text/javascript').
     -if (login)
+      include chat_function.pug
+      include chat_event.pug
       script(type="text/javascript").
         $(document).ready(function() {
           /* 로그인 처리 */
-          let login_object = !{JSON.stringify(login_object)}
-          server_message_function(login_object)
+          var login = !{JSON.stringify(login)}
+          var route = !{JSON.stringify(route)}
+          var server = !{JSON.stringify(server)}
+          server_message_function(login)
 
           /* 소켓 처리  */
-          let information = !{JSON.stringify(information)}
+          var information = !{JSON.stringify(information)}
           var socket = io()
           socket.emit("login", {
+            server,
             information
           })
           /* 단코드 변경 */
           socket.on("/change/dancode", function(data) {
-            $("#dancode").text("["+data.dancode+"]");
-            $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+             $("#dancode").prop("value", data.dancode)
+             $("#prev_dancode").prop("value", data.dancode)
+             $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
           })
           /* 로그아웃 */
           socket.on("logout", function(data) {
@@ -34,6 +38,7 @@ html
             }
           })
         })
+
   body
     #chat
       #chat_header
