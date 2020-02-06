@@ -265,7 +265,8 @@ async function flag_function(flag, user, server) {
   for (let item in Api[server]) {
     recommend.push({
       display_name: Api[server][item].display_name,
-      parameter_type: item
+      parameter_type: item,
+      show: Api[server][item].show
     })
   }
   if (flag == "LOGIN") {
@@ -396,10 +397,11 @@ async function make_html(flag, recommend, necessary_array, need) {
   str += await make_response_text(response_array)
   // 추천 API
   if (recommend) {
-    let idx = 1
-    for (let item in recommend) {
-      str += `<div><button id='API_${idx}' class='recommend'> ${idx}. ${recommend[item].display_name}</button></div>`
-      idx += 1
+    for (let idx in recommend) {
+      let next = Number(idx) + 1
+      if (recommend[idx].show == 'Y') {
+        str += `<div><button id='API_${next}' class='recommend'> ${next}. ${recommend[idx].display_name}</button></div>`
+      }
     }
   }
   return await server_message(str)

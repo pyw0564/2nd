@@ -29,13 +29,23 @@ router.use(bodyParser.json())
 
 // 메인
 router.get('/', function(req, res) {
-  console.log(req.session.id)
+  console.log("로그인 정보", req.session)
+  // 세션 유지 처리
+  return res.render("./chatbot/chat", {
+    login: false,
+    test: false
+  })
+})
+
+// 메인테스트
+router.get('/test', function(req, res) {
   req.session.icon = {}
   req.session.homepage = {}
   console.log("로그인 정보", req.session)
   // 세션 유지 처리
   return res.render("./chatbot/chat", {
-    login: false
+    login: false,
+    test: true
   })
 })
 
@@ -65,15 +75,15 @@ router.post('/login/:route', async function(req, res) {
   console.log("로그인 통신 결과", auth)
   // 로그인 성공
   const session = {
-    dancode : auth.result[0].dancode,
-    username : auth.result[0].username,
-    usergubun : auth.result[0].usergubun,
-    information : {}, // 파싱한 정보 객체
-    continue_flag : null, // 그리고, 또 플래그
-    start_flag : false, // START option 플래그
-    flag : null,  // 정보 유지를 위한 플래그
-    api_result : {}, // API 결과값 객체
-    api_count : 0 // API 결과값 카운트
+    dancode: auth.result[0].dancode,
+    username: auth.result[0].username,
+    usergubun: auth.result[0].usergubun,
+    information: {}, // 파싱한 정보 객체
+    continue_flag: null, // 그리고, 또 플래그
+    start_flag: false, // START option 플래그
+    flag: null, // 정보 유지를 위한 플래그
+    api_result: {}, // API 결과값 객체
+    api_count: 0 // API 결과값 카운트
   }
 
   if (req.session[route] == null)
@@ -94,9 +104,11 @@ router.get('/chat/:route/:server', async function(req, res) {
   req.session[route][server].api_count = 0
   const sessionID = req.session.id
   const username = req.session[route][server].username
-  if (sessionData[server] == null) sessionData[server] = {}
-  if (sessionData[server][username] == null) sessionData[server][username] = {}
-  sessionData[server][username].sessionID = req.session.id
+  if (route == "homepage") {
+    if (sessionData[server] == null) sessionData[server] = {}
+    if (sessionData[server][username] == null) sessionData[server][username] = {}
+    sessionData[server][username].sessionID = req.session.id
+  }
   console.log("현재 세션", req.session)
   // 새로 고침 시 기존세션 삭제
 
@@ -310,6 +322,7 @@ function alertAndRedirect(text, link) {
           </script>`
 }
 
+// 따옴표 처리
 async function replace_quotes(text) {
   return text.replace(/'/gi, "''")
 }

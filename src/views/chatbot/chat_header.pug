@@ -7,27 +7,38 @@
   -} else if (route == "icon") { // 아이콘
     input#dancode(type="text" value=dancode)
     input#prev_dancode(type="hidden" value=dancode)
+  -} else  {
+    span#title
+      | 동서씨앤아이 CHAT BOT
   -}
-  span#danname
-    =server
   -if (login)
+    span#danname
+      =server
     span#buttons
-      button#logout.header_button
-        |로그아웃
-      button#information_button.header_button
-        |정보보기
+      -if (route == "icon") {
+        button#logout.header_button
+          |로그아웃
+      -}
+        button#information_button.header_button
+          |정보보기
 #user_info
   div(style="display:flex;")
-    |사용자: 
-    //- #userId(contenteditable style="background-color:white;width:150px;color:black;")
-    span#userId
-      =username
+    -if (login) {
+      |사용자: 
+      span#userId
+        =username
+    -}
   div
-    |세션: 
-    span#login_time
-      -var time = new Date();
-      = time.getHours() < 10 ? '0'+time.getHours() : time.getHours()
-      |:
-      = time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes()
-      |:
-      = time.getSeconds() < 10 ? '0'+time.getSeconds() : time.getSeconds()
+    -if (login) {
+      | 세션 만료: 
+      span#login_time
+    -} else {
+      | 서버 동작 중: 
+      span#login_time
+        -var time = new Date();
+        = time.getHours() < 10 ? '0'+time.getHours() : time.getHours()
+        |:
+        = time.getMinutes() < 10 ? '0'+time.getMinutes() : time.getMinutes()
+        |:
+        = time.getSeconds() < 10 ? '0'+time.getSeconds() : time.getSeconds()
+    -}

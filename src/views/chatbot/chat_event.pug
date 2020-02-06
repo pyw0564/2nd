@@ -1,7 +1,38 @@
 script(type="text/javascript").
   $(document).ready(function() {
+      /* 로그인 처리 */
+    var login = !{JSON.stringify(login)}
     var route = !{JSON.stringify(route)}
     var server = !{JSON.stringify(server)}
+    var username = !{JSON.stringify(username)}
+    server_message_function(login)
+
+    /* 소켓 처리  */
+    var information = !{JSON.stringify(information)}
+    var socket = io()
+    if (route == "homepage") {
+      /* 로그인 소켓 저장 처리 */
+      socket.emit("login", {
+        server,
+        information
+      })
+      /* 단코드 변경 */
+      socket.on("/change/dancode", function(data) {
+        $("#dancode").prop("innerText", "["+data.to+"]")
+        make_breakLine(data.from, data.to)
+      })
+      
+      /* 로그아웃 */
+      socket.on("logout", function(data) {
+        logout_function()
+      })
+    }
+    
+    /* 로그아웃 버튼 이벤트 */
+    $("#logout").click(function(e) {
+      logout_function()
+    })
+    
     /* 정보보기 버튼 이벤트 */
     var information_flag = false
     $("#information_button").click(function(e) {
@@ -17,24 +48,13 @@ script(type="text/javascript").
       }
     })
 
-    /* 로그아웃 버튼 이벤트 */
-    $("#logout").click(function(e) {
-      let xhr = new XMLHttpRequest()
-      xhr.open('GET', '/logout', true)
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send()
-      xhr.addEventListener('load', function() {
-        location.href = '/logout'
-      })
-    })
-
-    // 추천어 버튼 이벤트 처리
+    /* 추천어 버튼 이벤트 처리 */
     $("body").on('click', '.recommend', function(e) {
       $("#chat_data").text(e.target.innerText)
       parsing_ajax("PARSE")
     })
 
-    // 마우스 이벤트 처리
+    /* 마우스 이벤트 처리 */
     var buffer = [""]
     var idx = 0
     $("#chat_submit_btn").on("click", function() {
@@ -43,9 +63,11 @@ script(type="text/javascript").
       parsing_ajax("PARSE")
     })
 
-    // 키보드 이벤트 처리
+    /* 키보드 이벤트 처리 */
     $("#chat_data").keydown(function(e) {
       if (e.which == 27) { // ESC KEY
+        idx = 0
+        $("#chat_data").text("")
         parsing_ajax("ESC")
       } else if (e.which == 13) { // ENTER KEY
         idx = 0
@@ -63,6 +85,35 @@ script(type="text/javascript").
       }
     })
 
+    /* 아이콘 단지코드 변경 이벤트 처리 */
+    $("body").on("change", "#dancode", function(e) {
+      const prev_dancode = $("#prev_dancode").prop("value")
+      const dancode = $("#dancode").prop("value")
+      if (isDigit(dancode) == false) {
+        alert("숫자만 입력이 가능합니다!")
+        $("#dancode").prop("value", prev_dancode)
+        return
+      }
+      let xhr = new XMLHttpRequest()
+      xhr.open('POST', '/change/icon/dancode', true)
+      xhr.setRequestHeader('Content-Type', 'application/json')
+      xhr.send(JSON.stringify({
+        server,
+        username : $("#userId").prop("innerText"),
+        from : prev_dancode,
+        to : dancode
+      }))
+      xhr.addEventListener('load', function(res) {
+        let responseText = JSON.parse(xhr.responseText)
+        const from = responseText.from
+        const to = responseText.to
+        $("#dancode").prop("value", to)
+        $("#prev_dancode").prop("value", to)
+        alert(responseText.message)
+        make_breakLine(from, to)
+      })
+    })
+    
     // 새창 이벤트 처리
     $("a").click(function(e) {
       e.preventDefault()
@@ -86,22 +137,4 @@ script(type="text/javascript").
         })
       }
     }, 100)
-
-    $("body").on("change", "#dancode", function(e) {
-      let xhr = new XMLHttpRequest()
-      xhr.open('POST', '/change/dancode', true)
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      const prev_dancode = $("#prev_dancode").prop("value")
-      const dancode = $("#dancode").prop("value")
-      xhr.send(JSON.stringify({
-        server,
-        username : $("#userId").prop("innerText"),
-        from : prev_dancode,
-        to : dancode
-      }))
-      xhr.addEventListener('load', function(res) {
-        let responseText = JSON.parse(xhr.responseText)
-        console.log(responseText)
-      })
-    })
   })

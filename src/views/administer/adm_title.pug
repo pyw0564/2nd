@@ -1,3 +1,8 @@
+script(type='text/javascript').
+  $(document).ready(function() {
+    var type = !{JSON.stringify(type)}
+    $("#" + type).addClass("active")
+  })
 a#api(href="/adm/api") API Table
 a#parameter(href="/adm/parameter") Parameter list
 a#regexp(href="/adm/regexp") Regular Expression list

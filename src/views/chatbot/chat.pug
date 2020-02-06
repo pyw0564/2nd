@@ -9,36 +9,6 @@ html
     -if (login)
       include chat_function.pug
       include chat_event.pug
-      script(type="text/javascript").
-        $(document).ready(function() {
-          /* 로그인 처리 */
-          var login = !{JSON.stringify(login)}
-          var route = !{JSON.stringify(route)}
-          var server = !{JSON.stringify(server)}
-          server_message_function(login)
-
-          /* 소켓 처리  */
-          var information = !{JSON.stringify(information)}
-          var socket = io()
-          socket.emit("login", {
-            server,
-            information
-          })
-          /* 단코드 변경 */
-          socket.on("/change/dancode", function(data) {
-             $("#dancode").prop("value", data.dancode)
-             $("#prev_dancode").prop("value", data.dancode)
-             $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
-          })
-          /* 로그아웃 */
-          socket.on("logout", function(data) {
-            if (data) {
-              console.log("logout")
-              location.href = '/logout'
-            }
-          })
-        })
-
   body
     #chat
       #chat_header

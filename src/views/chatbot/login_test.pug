@@ -1,0 +1,16 @@
+#login_form
+  form(method="post" action="/login/homepage")
+    label
+      | ID:
+      input#userid(type="text" name="userid")
+    br
+    label
+      | PW:
+      input#userpw(type="password" name="userpw")
+    br
+    label
+      | SERVER:
+      input#userserver(type="text" name="userserver")
+    br
+    label
+      input(type="submit" value="로그인")

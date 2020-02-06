@@ -5,7 +5,7 @@ script(type="text/javascript").
   function parsing_ajax(flag) {
     // 입력한 텍스트
     let text = $("#chat_data").text()
-    console.log("입력한 텍스트", text)
+    console.log("parsing_ajax 입력한 텍스트", text)
 
     // 숫자로 API 처리
     if (isDigit(text)) {
@@ -126,9 +126,9 @@ script(type="text/javascript").
       $("#inforamtion_body").html(str)
       return
     }
-    if (flag == 'HOME' || flag == 'UNKNOWN') {
+    if (flag == 'HOME' || flag == 'UNKNOWN')
       return
-    }
+        
     if (information) str += `<div id='information_message'>${information.API_information.display_name}</div>`
     str += `<table id='infomation_table'>`
     for (let item in information) {
@@ -182,6 +182,7 @@ script(type="text/javascript").
   function isDigit(query) {
     if (query == null || query == "") return false
     for (let i in query) {
+      if (query[i] == " ") return false
       if (0 <= Number(query[i]) && Number(query[i]) <= 9) continue
       else return false
     }
@@ -193,7 +194,35 @@ script(type="text/javascript").
     var offset = $("#chat_content .msg").last().offset()
     $("#chat_body").scrollTop(offset.top * 10000)
   }
-
+  
+  // 로그아웃 함수
+  function logout_function() {
+      let xhr = new XMLHttpRequest()
+      console.log(route, server)
+      xhr.open('POST', '/logout/session', true)
+      xhr.setRequestHeader('Content-Type', 'application/json')
+      xhr.send(JSON.stringify({
+        route, 
+        server
+      }))
+      xhr.addEventListener('load', function(e) {
+        let res = JSON.parse(xhr.responseText)
+        alert(res.responseText)
+        location.href = '/'
+      })
+  }
+  
+  // 단지코드 변경 시 브레이크 라인
+  function make_breakLine(from, to) {
+    $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+    $("#chat_content").append(`
+      <div class='msg' style='padding:5px 0; text-align:center;'>
+        단지코드가 ${from}에서 ${to}로 변경되었습니다
+      </div></div>`)
+    $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+    scroll_bottom()
+  }
+  
   // ?
   function extractDomain(url) {
     var domain;

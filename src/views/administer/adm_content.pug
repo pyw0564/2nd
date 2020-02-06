@@ -4,6 +4,11 @@ script(type="text/javascript").
   console.log(object, type)
   
   $(document).ready(function() {
+    // all click
+    $("#selectAll").click(function () {
+      $(".select").prop("checked", $(this).prop("checked"))
+    })
+    
     // update
     $(".update").click(function() {
       $(".selected").removeClass("selected")

@@ -1,3 +1,8 @@
 #chat_content
-  -if (!login)
-    include login.pug
+  -if (!login) {
+    -if (test) {
+      include login_test.pug
+    -} else {
+      include login.pug
+    -}
+  -}
