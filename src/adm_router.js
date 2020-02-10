@@ -16,60 +16,20 @@ router.get('/', async function(req, res) {
 })
 
 router.get("/view", function(req, res) {
-  console.log(req)
-  console.log(req.query)
-  return res.send(`
-    <!DOCTYPE html>
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>인쇄 미리보기</title>
-        <meta name="viewport" content="width=defice-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
-        <meta charset="utf-8">
-        <script src="https://rd7.bankdata.co.kr/ReportingServer/html5/js/jquery-1.11.0.min.js"></script>
-        <script src="https://rd7.bankdata.co.kr/ReportingServer/html5/js/crownix-viewer.min.js"></script>
-        <link rel="stylesheet" type="text/css" href="https://rd7.bankdata.co.kr/ReportingServer/html5/css/crownix-viewer.min.css">
-      </head>
-      <body style="margin:0px; padding:0px;">
-        <div id="crownix-viewer" style="position:absolute;width:100%;height:100%;"></div>
-        <script>
-          window.onload = function(){
-            var rptData = '';
-            var rptParam = '';
-            if (opener == undefined || opener.document.getElementById('hdnPrintData') == null) {
-              alert('인쇄할 자료가 없습니다.');
-              self.close();
-            } else {
-              rptData = opener.document.getElementById('hdnPrintData').value;
-              if (opener.document.getElementById('hdnPrintParam') != null &&
-                opener.document.getElementById('hdnPrintParam').value != '') {
-                rptParam = '/rv ' + opener.document.getElementById('hdnPrintParam').value + ' ';
-              }
-              rptParam += '/rnl [\`]'; //줄바꿈문자
-            }
-            var Util = m2soft.crownix.Util;
-            //var rptFile = Util.getUrlVar('rptfile');
-            var rptFile = "${req.query.rptfile}";
-            var viewer = new m2soft.crownix.Viewer('https://rd7.bankdata.co.kr/ReportingServer/service', 'crownix-viewer');
-
-            viewer.setRData(rptData);
-            viewer.openFile(rptFile, rptParam, { timeout: 600, pdfReaderNotFoundMessage: 'Adobe Reader를 찾을 수 없습니다.' });
-          };
-        </script>
-      </body>
-    </html>
-
-
-    `)
+  return res.render("view", {
+    rptfile : req.query.rptfile
+  })
 })
 
 // 테이블 메인
 router.get('/:tableName', async function(req, res) {
   try {
     const tableName = req.params.tableName
-    let queryResult = await sqlQuery(`SELECT * FROM ${tableName}`)
+    let query = `SELECT * FROM ${tableName}`
+    if (tableName == "_log")
+      query += ` ORDER BY _time DESC`
+    let queryResult = await sqlQuery(query)
     let columns = await sqlQuery(`SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '${tableName}'`)
-
     return res.render("./administer/adm", {
       type: tableName,
       object: queryResult,
@@ -126,7 +86,7 @@ router.post('/update/:tableName', async function(req, res) {
     for (let item in req.body) {
       if (item.substr(0, 5) == "prev_") continue
       if (idx++) query += "and "
-      let value = req.body["prev_"+item]
+      let value = req.body["prev_" + item]
       if (value.match(/'/)) value = await replace_quotes(value)
       query += `${item}='${value}' `
     }

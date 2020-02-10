@@ -10,12 +10,14 @@ GO
 select * from Api;
 select * from Parameter;
 select * from Regexp;
-select * from _Log;
+select * from _Log ORDER BY _time;
 select * from Recommend
 select * from Response
 select * from _Log ORDER BY _time DESC;
 UPDATE response SET flag='HOME', _option='', response_text='메인 페이지', _order='0', style='color:red;' WHERE flag='HOME' and _option='' and response_text='메인 페이지' and _order='0'
 DELETE FROM response WHERE style is null
+INSERT INTO _Log(_time, dancode, id, query)
+    VALUES('2020-02-10 15:24:30.366','1413','챗봇테스터001','2. 세대정보조회')
 
 /* 작업 */
 /*

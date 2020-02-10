@@ -53,30 +53,27 @@ script(type="text/javascript").
   })
 
 #adm_sub_page
-  -if (type != '_log') {
-    form#adm_form(method="post", action="/adm/insert/"+type)
-      #variables
-        -for (let i in columns) {
-          -var item = columns[i].COLUMN_NAME
-          label
-            =item
-            | :
-            input(id="input_"+item class='adm_input' type="text" name=item)
-          br
-        -}
+  form#adm_form(method="post", action="/adm/insert/"+type)
+    #variables
+      -for (let i in columns) {
+        -var item = columns[i].COLUMN_NAME
         label
-        -for (let i in columns) {
-          -var item = columns[i].COLUMN_NAME
-          input(id="prev_"+item type="hidden" name="prev_"+item value="")
-        -}
-          input#submit(type="submit" value="등록")
-          input#reset(type="reset" value="취소")
-
-      -if (type == 'regexp') {
-        include adm_regexp.pug
+          =item
+          | :
+          input(id="input_"+item class='adm_input' type="text" name=item)
+        br
       -}
-  -}
+      label
+      -for (let i in columns) {
+        -var item = columns[i].COLUMN_NAME
+        input(id="prev_"+item type="hidden" name="prev_"+item value="")
+      -}
+        input#submit(type="submit" value="등록")
+        input#reset(type="reset" value="취소")
 
+    -if (type == 'regexp') {
+      include adm_regexp.pug
+    -}
   table#adm_table(border="1")
     thead
       tr

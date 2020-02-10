@@ -31,7 +31,8 @@
   div
     -if (login) {
       | 세션 만료: 
-      span#login_time
+      input#session_time(type="text" value=60)
+      | 분
     -} else {
       | 서버 동작 중: 
       span#login_time

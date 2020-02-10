@@ -18,68 +18,56 @@ var sqlQuery = read_database.sqlQuery
 */
 
 async function init(query_flag, query, user, server) {
-  let information = user.information // 파싱한 정보 객체
-  let user_flag = user.flag // 정보 유지를 위한 플래그
-  let continue_flag = user.continue_flag
   // 파싱 플래그가 아니면 따로 처리한다
-  if (query_flag != "PARSE") {
+  if (query_flag != "PARSE")
     return await flag_function(query_flag, user, server)
-  }
 
   // 쿼리 객체화
   query = {
     q: " " + query + " "
   }
 
-  // 취소 CLEAR 처리
-  // console.log(Cancel)
   await sqlQuery("")
-  console.log(user)
+  // 취소 CLEAR 처리
   for (let i in Cancel) {
     let record = Cancel[i]
-    if (await query.q.match(new RegExp(record.regexp, record._option))) {
+    if (query.q.match(new RegExp(record.regexp, record._option)))
       return await flag_function("CANCEL", user, server)
-    }
   }
+
+  let api_information = user.api_information // 정보 유지를 위한 플래그
   // 플래그 처리
-  if (user_flag) {
-    console.log("FLAG가 유지되고 있습니다", user_flag)
-    information = await find_parameters(user_flag.api_name, query, user)
-    user.information = information
+  if (api_information) {
+    console.log("FLAG가 유지되고 있습니다")
+    user.information = await find_parameters(api_information.api_name, query, user)
     return await flag_function("RUN", user, server)
   }
 
   // continue 처리
-  continue_flag = false
-  user.continue_flag = continue_flag
+  let continue_flag = false
   for (let i in Continue) {
     let record = Continue[i]
-    if (await query.q.match(new RegExp(record.regexp, record._option)))
+    if (query.q.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
-    user.continue_flag = continue_flag
   }
   // continue 없으면 정보 초기화
-  if (!continue_flag) {
-    information = {}
-    user.information = information
+  if (continue_flag == false) {
+    user.continue_flag = false
+    user.information = {}
   }
 
   // 파싱 실행
-  console.log("현재 쿼리상태 /parsing 65", query)
-  information = await find_api(query, user, server)
-  user.information = information
-  if (Object.keys(information).length === 0) {
-    console.log("UNKOWN 알수없어요. ")
+  console.log("현재 쿼리상태 /parsing ----->", query)
+  user.information = await find_api(query, user, server)
+  if (Object.keys(user.information).length === 0)
     return await flag_function("UNKNOWN", user, server)
-  }
-  console.log("RUN 상태입니다.")
+
   return await flag_function("RUN", user, server)
 }
 
 // 1step -> 어떤 API인지 골라내기
 async function find_api(query, user, server) {
-  let information = user.information // 파싱한 정보 객체
-  let user_flag = user.flag // 정보 유지를 위한 플래그
+  let api_information = user.api_information
   let continue_flag = user.continue_flag
   for (let item in Api[server]) {
     let record = Api[server][item]
@@ -87,31 +75,24 @@ async function find_api(query, user, server) {
     let parameter_type = record.parameter_type
     let display_name = record.display_name
     let response = record.response
-    if (Regexpr[item] === undefined) continue
+    if (Regexpr[item] === undefined) {
+      console.log(`${item}에 맞는 정규표현식이 존재하지 않습니다`)
+      continue
+    }
 
     for (let i = 0; i < Regexpr[item].length; i++) {
       let record = Regexpr[item][i]
       let regexp = new RegExp(record.regexp, record._option)
-      let result = await query.q.match(regexp)
+      let result = query.q.match(regexp)
       if (result) {
-        user_flag = {
-          api_name: api_name,
-          display_name: display_name,
-          API_information: Api[server][item]
-        }
-        user.flag = user_flag // 정보 유지를 위한 플래그
-        let ret = await find_parameters(api_name, query, user)
-        return ret
+        user.api_information = Api[server][item] // 정보 유지를 위한 플래그
+        return await find_parameters(api_name, query, user)
       }
     }
   }
   if (continue_flag) {
-    let api_name = information.API_information.api_name
-    let display_name_temp = information.API_information.display_name
-    let ret = await find_parameters(api_name, query, user)
-    ret.API_information = Api[api_name]
-    // ret.message = display_name_temp
-    return ret
+    user.api_information = Api[server][continue_flag] // 정보 유지를 위한 플래그
+    return await find_parameters(continue_flag, query, user)
   }
   return {}
 }
@@ -119,25 +100,18 @@ async function find_api(query, user, server) {
 // 2step -> 필요한 parameter 마다 파싱
 async function find_parameters(api_name, query, user) {
   let information = user.information // 파싱한 정보 객체
-  let user_flag = user.flag // 정보 유지를 위한 플래그
+  let api_information = user.api_information // 정보 유지를 위한 플래그
   let parameters = Parameter[api_name]
-  let ret = {}
   // api_name에 맞지 않는 파라미터 삭제 O(N^2)
   for (let item in information) {
     let delete_flag = true
-    for (let i = 0; i < parameters.length; i++) {
-      let record = parameters[i]
-      let parameter = record.parameter
-      if (item == parameter) delete_flag = false
-    }
+    for (let i = 0; i < parameters.length; i++)
+      if (item == parameters[i].parameter) delete_flag = false
     if (delete_flag) delete information[item]
   }
   user.information = information // 파싱한 정보 객체
-  if (user_flag) {
-    ret = information
-    ret.API_information = user_flag.API_information
-    // ret.message = user_flag.display_name
-  }
+  let ret = information
+
   for (let i = 0; i < parameters.length; i++) {
     let record = parameters[i]
     let parameter = record.parameter
@@ -193,21 +167,23 @@ async function parsing(regs, query) {
 
 async function flag_function(flag, user, server) {
   console.log("현재 플래그 입니다!", flag)
-  let information = user.information // 파싱한 정보 객체
+  let api_information = user.api_information
+  let information = user.information
   let recommend = []
+  let message = ""
   let return_object = {
     flag,
+    api_information,
     information,
-    recommend
+    recommend,
+    message
   }
 
-  information.message = ""
   if (flag == "RUN") {
     if (user.start_flag == false) { // API 처음 시작할때 메시지 출력
       user.start_flag = true
-      information.message += await make_html("START", information)
+      return_object.message = await make_html("START", api_information.api_name)
     }
-
     let necessary_count = 0
     let match_count = 0
     for (let item in information) {
@@ -229,11 +205,10 @@ async function flag_function(flag, user, server) {
     // API 필요 파라미터가 완료 되었음
     if (necessary_count > 0 && necessary_count == match_count) {
       return_object.flag = "END"
-      information.message += await make_html("END", information)
+      return_object.message += await make_html("END", api_information.api_name)
       user.start_flag = false
-      user.flag = null
-      user.information = information
-      return_object.information = information
+      user.continue_flag = api_information.api_name
+      user.api_information = null
       return return_object
     }
 
@@ -255,7 +230,7 @@ async function flag_function(flag, user, server) {
       }
     }
     return_object.necessary_array = necessary_array
-    information.message += await make_html("RUN", information, necessary_array, recommend)
+    return_object.message += await make_html("RUN", api_information.api_name, necessary_array, recommend)
     user.information = information
     return_object.information = information
     return return_object
@@ -269,32 +244,17 @@ async function flag_function(flag, user, server) {
       show: Api[server][item].show
     })
   }
+  return_object.flag = flag
   if (flag == "LOGIN") {
-    information.flag = "LOGIN"
-    information.message = await make_html("LOGIN")
-    information.message += await make_html("HOME", recommend)
-  } else if (flag == "ESC") {
+    return_object.message = await make_html(flag)
+  } else if (flag == "ESC" || flag == "CANCEL" || flag == "UNKNOWN") {
     information = {}
-    information.flag = "ESC"
-    information.message = await make_html("ESC")
-    information.message += await make_html("HOME", recommend)
-  } else if (flag == "CANCEL") {
-    information = {}
-    information.flag = "CANCEL"
-    information.message = await make_html("CANCEL")
-    information.message += await make_html("HOME", recommend)
-  } else if (flag == "UNKNOWN") {
-    information = {}
-    information.flag = "UNKNOWN"
-    information.message = await make_html("UNKNOWN")
-    information.message += await make_html("HOME", recommend)
-  } else if (flag == "HOME") {
-    information.flag = "HOME"
-    information.message = await make_html("HOME", recommend)
+    return_object.message = await make_html(flag)
   }
+  return_object.message += await make_html("HOME", recommend)
   user.start_flag = false
-  user.flag = null
   user.information = information
+  user.api_information = null
   return_object.information = information
   return return_object
 }
@@ -324,44 +284,30 @@ async function except_parameter(parameter, query) {
   return null
 }
 
-async function make_html(flag, recommend, necessary_array, need) {
+async function make_html(flag, api_name, necessary_array, need) {
   let str = ""
-  // API 시작
-  if (flag == "START") {
-    let information = recommend
-    let api_name = information.API_information.api_name
+  // API 시작, 진행, 종료
+  if (flag == "START" || flag == "RUN" || flag == "END") {
     let response_array
     if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
-    else response_array = Response[api_name].START
-    str += await make_response_text(response_array)
-    return await server_message(str)
-  }
-  // API 진행중
-  if (flag == "RUN") {
-    let information = recommend
-    let api_name = information.API_information.api_name
-    let response_array
-    if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
-    else response_array = Response[api_name].RUN
-    console.log("필요항목", need)
+    else response_array = Response[api_name][flag]
     str += await make_response_text(response_array, need)
 
     if (necessary_array) {
       let tmp
       if (necessary_array.Y.length && necessary_array.N.length) {
-        if (Response[api_name] == null || Response[api_name] == undefined) temp = []
+        if (Response[api_name] == null || Response[api_name] == undefined) tmp = []
         else tmp = Response[api_name].ALL
-        str += await make_response_text(tmp)
+        str += await make_response_text(tmp, need)
       } else if (necessary_array.Y.length) {
-        if (Response[api_name] == null || Response[api_name] == undefined) temp = []
+        if (Response[api_name] == null || Response[api_name] == undefined) tmp = []
         else tmp = Response[api_name].BUTTON
-        str += await make_response_text(tmp)
+        str += await make_response_text(tmp, need)
       } else if (necessary_array.N.length) {
-        if (Response[api_name] == null || Response[api_name] == undefined) temp = []
+        if (Response[api_name] == null || Response[api_name] == undefined) tmp = []
         else tmp = Response[api_name].TEXT
-        str += await make_response_text(tmp)
+        str += await make_response_text(tmp, need)
       }
-
       if (necessary_array.N.length) {
         let idx = 0
         str += `<div> ex) `
@@ -376,32 +322,21 @@ async function make_html(flag, recommend, necessary_array, need) {
     }
     return await server_message(str)
   }
-  // API 종료
-  if (flag == "END") {
-    let information = recommend
-    let api_name = information.API_information.api_name
-    let response_array
-    if (Response[api_name] == null || Response[api_name] == undefined) response_array = []
-    else response_array = Response[api_name].END
-    str += await make_response_text(response_array)
-    return await server_message(str)
-  }
 
   // 그 외
   let response_array = Response[flag]
-  if (response_array == null || response_array.length == 0) {
-    str += `${flag}에서 response가 존재하지 않습니다`
-  }
+  if (response_array == null || response_array.length == 0)
+    str += `${flag}에서 Response가 존재하지 않습니다`
 
   // 텍스트 우선 처리
   str += await make_response_text(response_array)
-  // 추천 API
+  // 추천 API들
+  let recommend = api_name
   if (recommend) {
     for (let idx in recommend) {
       let next = Number(idx) + 1
-      if (recommend[idx].show == 'Y') {
+      if (recommend[idx].show == 'Y')
         str += `<div><button id='API_${next}' class='recommend'> ${next}. ${recommend[idx].display_name}</button></div>`
-      }
     }
   }
   return await server_message(str)
@@ -415,11 +350,9 @@ async function make_response_text(response_array, need) {
     let i = 0
     for (let index in need) {
       if (i++) need_str += ", "
-      let display_name = need[index].display_name
-      need_str += display_name
+      need_str += need[index].display_name
     }
   }
-  // console.log(need_str)
   for (let i in response_array) {
     let response_text = response_array[i].response_text
     let style = response_array[i].style
