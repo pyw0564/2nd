@@ -27,11 +27,10 @@ async function init(query_flag, query, user, server) {
     q: " " + query + " "
   }
 
-  await sqlQuery("")
   // 취소 CLEAR 처리
   for (let i in Cancel) {
     let record = Cancel[i]
-    if (query.q.match(new RegExp(record.regexp, record._option)))
+    if (await query.q.match(new RegExp(record.regexp, record._option)))
       return await flag_function("CANCEL", user, server)
   }
 
@@ -47,7 +46,7 @@ async function init(query_flag, query, user, server) {
   let continue_flag = false
   for (let i in Continue) {
     let record = Continue[i]
-    if (query.q.match(new RegExp(record.regexp, record._option)))
+    if (await query.q.match(new RegExp(record.regexp, record._option)))
       continue_flag = true
   }
   // continue 없으면 정보 초기화
@@ -59,8 +58,9 @@ async function init(query_flag, query, user, server) {
   // 파싱 실행
   console.log("현재 쿼리상태 /parsing ----->", query)
   user.information = await find_api(query, user, server)
-  if (Object.keys(user.information).length === 0)
+  if (await Object.keys(user.information).length === 0) {
     return await flag_function("UNKNOWN", user, server)
+  }
 
   return await flag_function("RUN", user, server)
 }
@@ -83,7 +83,7 @@ async function find_api(query, user, server) {
     for (let i = 0; i < Regexpr[item].length; i++) {
       let record = Regexpr[item][i]
       let regexp = new RegExp(record.regexp, record._option)
-      let result = query.q.match(regexp)
+      let result = await query.q.match(regexp)
       if (result) {
         user.api_information = Api[server][item] // 정보 유지를 위한 플래그
         return await find_parameters(api_name, query, user)
@@ -146,7 +146,7 @@ async function parsing(regs, query) {
   let ret = []
   for (let i = 0; i < regs.length; i++) {
     let reg = regs[i]
-    let parsing_array = query.q.match(new RegExp(reg.regexp, reg._option))
+    let parsing_array = await query.q.match(new RegExp(reg.regexp, reg._option))
     if (parsing_array == null) continue
 
     for (let j = 0; j < parsing_array.length; j++) {
@@ -154,8 +154,8 @@ async function parsing(regs, query) {
       let return_value = (reg.return_value === null || reg.return_value === "") ?
         parsing_value.substr(reg.start, reg._length) :
         reg.return_value;
-      query.q = query.q.replace(parsing_value, "")
-      ret.push({
+      query.q = await query.q.replace(parsing_value, "")
+      await ret.push({
         parsing_value: parsing_value,
         return_value: return_value
       })
@@ -195,7 +195,7 @@ async function flag_function(flag, user, server) {
         if (record.result) {
           ++match_count
         } else {
-          recommend.push({
+          await recommend.push({
             display_name: record.display_name,
             parameter_type: item
           })
@@ -222,9 +222,9 @@ async function flag_function(flag, user, server) {
       if (Recommend[parameter_type]) {
         for (let i in Recommend[parameter_type]) {
           if (Recommend[parameter_type][i].button == 'Y') {
-            necessary_array.Y.push(Recommend[parameter_type][i].word)
+            await necessary_array.Y.push(Recommend[parameter_type][i].word)
           } else {
-            necessary_array.N.push(Recommend[parameter_type][i].word)
+            await necessary_array.N.push(Recommend[parameter_type][i].word)
           }
         }
       }
@@ -238,7 +238,7 @@ async function flag_function(flag, user, server) {
 
   // 정보 유지를 위한 플래그
   for (let item in Api[server]) {
-    recommend.push({
+    await recommend.push({
       display_name: Api[server][item].display_name,
       parameter_type: item,
       show: Api[server][item].show
@@ -271,7 +271,7 @@ async function except_parameter(parameter, query) {
         if (month_ret[j].return_value.length == 1) {
           month_ret[j].return_value = '0' + month_ret[j].return_value
         }
-        ret.push({
+        await ret.push({
           parsing_value: year_ret[i].parsing_value + month_ret[j].parsing_value,
           return_value: year_ret[i].return_value + month_ret[j].return_value
         })
@@ -334,7 +334,7 @@ async function make_html(flag, api_name, necessary_array, need) {
   let recommend = api_name
   if (recommend) {
     for (let idx in recommend) {
-      let next = Number(idx) + 1
+      let next = await Number(idx) + 1
       if (recommend[idx].show == 'Y')
         str += `<div><button id='API_${next}' class='recommend'> ${next}. ${recommend[idx].display_name}</button></div>`
     }
@@ -361,7 +361,7 @@ async function make_response_text(response_array, need) {
       str += ` style='${style}'`
     str += `>${response_text}</div>`
   }
-  str = str.replace("{need}", need_str)
+  str = await str.replace("{need}", need_str)
   return str
 }
 

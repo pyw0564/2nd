@@ -43,13 +43,13 @@ module.exports = function() {
   // 동기화 SQL 쿼리
   async function sqlQuery(query) {
     console.log(query)
-    return new sql.ConnectionPool(sqlConfig).connect().then(pool => {
-      return pool.request().query(query)
+    return new sql.ConnectionPool(sqlConfig).connect().then(async pool => {
+      return await pool.request().query(query)
     }).then(async result => {
       await sql.close()
       return result.recordset
     }).catch(async err => {
-      console.log(err)
+      await console.log(err)
       await sql.close()
       throw err
     })

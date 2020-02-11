@@ -56,19 +56,19 @@ router.post('/login/:route', async function(req, res) {
   const route = req.params.route
 
   if (id == "" || id == null || id == undefined)
-    return res.send(alertAndRedirect("아이디를 적어주세요", "/"))
+    return res.send(await alertAndRedirect("아이디를 적어주세요", "/"))
   if (pw == "" || pw == null || pw == undefined)
-    return res.send(alertAndRedirect("비밀번호를 적어주세요", "/"))
+    return res.send(await alertAndRedirect("비밀번호를 적어주세요", "/"))
   if (server == "" || server == null || server == undefined)
-    return res.send(alertAndRedirect("서버를 적어주세요", "/"))
+    return res.send(await alertAndRedirect("서버를 적어주세요", "/"))
   if (route != "icon" && route != "homepage")
-    return res.send(alertAndRedirect("잘못된 경로 입니다", "/"))
+    return res.send(await alertAndRedirect("잘못된 경로 입니다", "/"))
 
   // 로그인 api 사용
   const auth = await imc.authorize(id, pw)
   // 로그인 실패
   if (auth.response_code != "OK")
-    return res.send(alertAndRedirect("아이디 또는 비밀번호가 틀립니다.", "/"))
+    return res.send(await alertAndRedirect("아이디 또는 비밀번호가 틀립니다.", "/"))
 
   console.log("로그인 통신 결과", auth)
   // 로그인 성공
@@ -88,7 +88,7 @@ router.post('/login/:route', async function(req, res) {
     req.session[route] = {}
   req.session[route][server] = session
 
-  return res.redirect(`/chat/${route}/${server}`)
+  return await res.redirect(`/chat/${route}/${server}`)
 })
 
 // 챗봇 화면
@@ -96,7 +96,7 @@ router.get('/chat/:route/:server', async function(req, res) {
   const route = req.params.route
   const server = req.params.server
   if ((route != "icon" && route != "homepage") || req.session[route] == null || req.session[route][server] == null)
-    return res.send(alertAndRedirect("잘못된 경로 입니다", "/"))
+    return await res.send(await alertAndRedirect("잘못된 경로 입니다", "/"))
 
   console.log("현재 세션", req.session)
   // 새로 고침 시 기존데이터 삭제
@@ -111,13 +111,21 @@ router.get('/chat/:route/:server', async function(req, res) {
   }
 
   const currSession = req.session[route][server]
+  let sessionTime = await sqlQuery(`SELECT time FROM session WHERE route='${route}' and server='${server}' and username='${username}'`)
+  if (sessionTime.length) {
+    sessionTime = sessionTime[0].time
+  } else {
+    sessionTime = 600
+    await sqlQuery(`INSERT INTO Session(route, server, username, time) VALUES('${route}','${server}','${username}','${sessionTime}')`)
+  }
   // 로그인 활성화
   if (currSession.dancode) {
     const login = await flag_function("LOGIN", currSession, server)
-    return res.render('./chatbot/chat', {
+    return await res.render('./chatbot/chat', {
       login,
       route,
       server,
+      sessionTime,
       information: currSession, // 소켓 이용
       dancode: currSession.dancode,
       username: currSession.username,
@@ -125,7 +133,7 @@ router.get('/chat/:route/:server', async function(req, res) {
     })
   } else {
     // 로그인 필요
-    return res.send(alertAndRedirect("로그인이 필요합니다.", "/"))
+    return await res.send(await alertAndRedirect("로그인이 필요합니다.", "/"))
   }
 })
 
@@ -138,15 +146,16 @@ router.post('/parsing', async function(req, res) {
   const text = req.body.text
   const dancode = req.session[route][server].dancode
   const username = req.session[route][server].username
-  const time = moment().format('YYYY-MM-DD HH:mm:ss.SSS')
+  const time = await moment().format('YYYY-MM-DD HH:mm:ss.SSS')
   // if (text.length) {
   //   await sqlQuery(`
   //     INSERT INTO _Log(_time, dancode, id, query)
   //     VALUES('${time}','${dancode}','${username}','${await replace_quotes(text)}')`)
   // }
+  await sqlQuery("")
   const parsing_object = await parsing(flag, text, req.session[route][server], server)
   // console.log("/parsing 라우터 결과", req.session[route][server])
-  return res.json(parsing_object)
+  return await res.json(parsing_object)
 })
 
 // api 통신
@@ -168,7 +177,7 @@ router.post('/chat/response', async function(req, res) {
       delete data[item]
       continue
     }
-    if (Array.isArray(data[item].result)) { //만약 배열이면 카운트 측정
+    if (await Array.isArray(data[item].result)) { //만약 배열이면 카운트 측정
       index_object[item] = {
         index: 0,
         length: data[item].result.length
@@ -178,17 +187,17 @@ router.post('/chat/response', async function(req, res) {
     }
   }
 
-  let stringify_data = JSON.stringify(data)
+  let stringify_data = await JSON.stringify(data)
 
   /* GET METHOD */
   let urlArray = []
   if (rest_method == 'get') {
-    let url_parameters = url.split('/')
+    let url_parameters = await url.split('/')
     for (let i in url_parameters) {
       let url_parameter = url_parameters[i]
       let length = url_parameter.length
       if (url_parameter[0] == '{' && url_parameter[length - 1] == '}')
-        urlArray.push(url_parameter)
+        await urlArray.push(url_parameter)
     }
   }
   let result = []
@@ -197,7 +206,7 @@ router.post('/chat/response', async function(req, res) {
   for (let i = 0; i < max_index; i++) {
     let json_object = {}
     for (let item in data) {
-      if (Array.isArray(data[item].result)) { // 인덱스 카운트 객체를 사용하여 하나씩 진행
+      if (await Array.isArray(data[item].result)) { // 인덱스 카운트 객체를 사용하여 하나씩 진행
         let index_item = index_object[item]
         if (data[item].result[index_item.index])
           json_object[item] = data[item].result[index_item.index].return_value
@@ -216,7 +225,7 @@ router.post('/chat/response', async function(req, res) {
       let get_url = url
       for (let j = 0; j < urlArray.length; j++) {
         let parameter = urlArray[j]
-        get_url = get_url.replace(parameter, json_object[parameter.substr(1, parameter.length - 2)])
+        get_url = await get_url.replace(parameter, json_object[await parameter.substr(1, parameter.length - 2)])
       }
       rest_api_result = await imc.rest_api_function(json_object, Parameter[api_name], get_url, 'get')
     }
@@ -224,12 +233,12 @@ router.post('/chat/response', async function(req, res) {
     if (rest_api_result.response_code == 'OK')
       resultFlag = true
     // 1개의 결과 값일때 배열로 오지 않음, 배열로 전환 함
-    if (!Array.isArray(rest_api_result.result)) {
+    if (await !Array.isArray(rest_api_result.result)) {
       rest_api_result.result = [rest_api_result.result]
     }
     rest_api_result.keyValue = json_object
     // 결과값 배열에 저장
-    result.push(rest_api_result)
+    await result.push(rest_api_result)
   }
   // 최종 결과값 세션에 저장
   req.session[route][server].api_count += 1
@@ -243,10 +252,10 @@ router.post('/chat/response', async function(req, res) {
     str += "' target='_blank'>"
     str += await make_response_text(Response.LINK)
     str += "</a>"
-    return res.json(await server_message(str))
+    return await res.json(await server_message(str))
   } else {
     str = await make_response_text(Response.ERROR)
-    return res.json(await server_message(str))
+    return await res.json(await server_message(str))
   }
 })
 
@@ -256,16 +265,16 @@ router.get('/chat/:route/:server/response/:api_name', async function(req, res) {
   const server = req.params.server
   const information = req.session[route][server].information
   const api_name = req.params.api_name
-  let result = req.session[route][server].api_result[JSON.parse(req.query.data)] // 세션에 있던거 불러옴
+  let result = req.session[route][server].api_result[await JSON.parse(req.query.data)] // 세션에 있던거 불러옴
   /* result.length 만큼 반복 */
   let str = ""
-  let keys = Object.keys(result[0].result[0])
+  let keys = await Object.keys(result[0].result[0])
   for (let i = 0; i < result.length; i++) {
     let responseText = Api[server][api_name].response_text
     str += "<h3>"
     for (let item in information) {
       let prop = information[item]
-      if (prop.result && Array.isArray(prop.result)) {
+      if (prop.result && await Array.isArray(prop.result)) {
         let index = i < prop.result.length - 1 ? i : prop.result.length - 1
         let value = prop.result[index].parsing_value
         // default는 parsing_value 사용 ex) 관리비 입력시 1 (X) 관리비 (O)
@@ -273,7 +282,7 @@ router.get('/chat/:route/:server/response/:api_name', async function(req, res) {
         if (Regexpr[item][0].return_value == '' || Regexpr[item][0].return_value == null) {
           value = prop.result[index].return_value
         }
-        responseText = responseText.replace(`{${item}}`, value)
+        responseText = await responseText.replace(`{${item}}`, value)
       }
     }
     str += responseText
@@ -304,11 +313,11 @@ router.get('/chat/:route/:server/response/:api_name', async function(req, res) {
     }
     str += "</table>"
   }
-  return res.send(str)
+  return await res.send(str)
 })
 
 // 알림 후 리다이렉트
-function alertAndRedirect(text, link) {
+async function alertAndRedirect(text, link) {
   return `<script>
             alert("${text}")
             location.href="${link}"
@@ -317,7 +326,7 @@ function alertAndRedirect(text, link) {
 
 // 따옴표 처리
 async function replace_quotes(text) {
-  return text.replace(/'/gi, "''")
+  return await text.replace(/'/gi, "''")
 }
 
 module.exports = router

@@ -11,7 +11,7 @@ var sessionData = require('./session.data')
 const io = require('./socketMgt').getIO()
 
 var Response = require('./../../read_database').Response
-
+var sqlQuery = require('./../../read_database').sqlQuery
 const bodyParser = require('body-parser')
 router.use(bodyParser.urlencoded({
   extended: false
@@ -132,6 +132,32 @@ router.post('/change/dancode', async function(req, res) {
         message: `보내주신 단지코드 ${from}가 서버와 일치하지 않습니다. 서버에서 단지코드는 ${dancode} 입니다.`
       })
     }
+  } catch (e) {
+    console.log(e)
+    return res.json({
+      status: 500,
+      message: `예상치 못한 오류가 발생하였습니다.`
+    })
+  }
+})
+
+// 세선 시간 변경
+router.post('/change/session_time', async function(req, res) {
+  try {
+    const route = req.body.route
+    const server = req.body.server
+    const username = req.body.username
+    const before = req.body.before // 이전 세션 시간
+    const after = req.body.after // 바꿀 세션 시간
+    if (after < 1) throw after 
+    await sqlQuery(`UPDATE Session SET time=${after}
+      where route='${route}' and server='${server}' and username='${username}'`)
+    return res.json({
+      status : 200,
+      before,
+      after,
+      message: `세션 시간이 ${before}분에서 ${after}분으로 변경되었습니다`
+    })
   } catch (e) {
     console.log(e)
     return res.json({

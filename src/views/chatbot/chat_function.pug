@@ -2,22 +2,23 @@ script(type="text/javascript").
   var route = !{JSON.stringify(route)}
   var server = !{JSON.stringify(server)}
   // 1. 파싱 보여주는 함수
-  function parsing_ajax(flag) {
+  async function parsing_ajax(flag) {
     // 입력한 텍스트
+    sessionTime_temp = sessionTime
     let text = $("#chat_data").text()
     console.log("parsing_ajax 입력한 텍스트", text)
 
     // 숫자로 API 처리
-    if (isDigit(text)) {
+    if (await isDigit(text)) {
       if ($(`#API_${text}`).text()) {
         $("#chat_data").text($(`#API_${text}`).text())
-        return parsing_ajax("PARSE")
+        return await parsing_ajax("PARSE")
       }
     }
 
     // 만약 FLAG가 PARSE이면 클라이언트 메시지 처리 및 로그
     if (flag == "PARSE") {
-      client_message()
+      await client_message()
     }
 
     // AJAX 처리
@@ -31,31 +32,31 @@ script(type="text/javascript").
       text
     }))
 
-    xhr.addEventListener("load", function() {
+    xhr.addEventListener("load", async function() {
       // 받은 메시지로 다음 함수 진행
       let responseText = JSON.parse(xhr.responseText)
-      server_message_function(responseText)
+      await server_message_function(responseText)
     })
   }
 
   // 2. ajax server_message 함수
-  function server_message_function(object) {
+  async function server_message_function(object) {
     let flag = object.flag
     let information = object.information
     let api_information = object.api_information
     let message = object.message
     let str = ""
     // 정보보기 함수 처리
-    information_function(object)
+    await information_function(object)
     // API 완료
-    server_message(message)
+    await server_message(message)
 
     if (flag == "END") // 만약 API 통신이 끝났다면 3단계로
-      return rest_api_ajax(information, api_information)
+      return await rest_api_ajax(information, api_information)
   }
 
   // 3. rest api 통신 함수
-  function rest_api_ajax(information, api_information) {
+  async function rest_api_ajax(information, api_information) {
     var url = `/chat/response`
     var xhr = new XMLHttpRequest()
     xhr.open('POST', url, true)
@@ -66,15 +67,15 @@ script(type="text/javascript").
       information,
       api_information
     }))
-    xhr.addEventListener('load', function(evt) {
+    xhr.addEventListener('load', async function(evt) {
       let res = JSON.parse(evt.currentTarget.response)
-      server_message(res)
-      parsing_ajax("HOME")
+      await server_message(res)
+      await parsing_ajax("HOME")
     })
   }
 
   // 클라이언트 메시지 보여주는 함수
-  function client_message() {
+  async function client_message() {
     let text = $("#chat_data").text()
     let name = $("#userId").text()
     let msg = ""
@@ -82,7 +83,7 @@ script(type="text/javascript").
     msg = "<div class='msg'>"
     msg += "<div class='user' style='text-align:right;'>" + name + "</div>"
     msg += "<div class='content' style='justify-content:flex-end;'>"
-    msg += "<div class='time'>" + getTime() + "</div>"
+    msg += "<div class='time'>" + await getTime() + "</div>"
     msg += "<div class='data me'>" + text + "</div>"
     msg += "</div>"
     msg += "</div>"
@@ -94,23 +95,23 @@ script(type="text/javascript").
     msg += "<div class='user'>System</div>"
     msg += "<div class='content'>"
     msg += "<div class='data notme'>" + str + "</div>"
-    msg += "<div class='time'>" + getTime() + "</div>"
+    msg += "<div class='time'>" + await getTime() + "</div>"
     msg += "</div>"
     msg += "</div>"
     $("#chat_content").append(msg)
 
-    scroll_bottom()
+    await scroll_bottom()
   }
 
   // 서버 메시지 보여주는 함수
-  function server_message(msg) {
+  async function server_message(msg) {
     $(".load").remove()
     $("#chat_content").append(msg)
-    scroll_bottom()
+    await scroll_bottom()
   }
 
   // 정보보기 담당 함수
-  function information_function(object) {
+  async function information_function(object) {
     console.log(object)
     let flag = object.flag
     let recommend = object.recommend
@@ -139,7 +140,7 @@ script(type="text/javascript").
           if (record.result) {
             str += `<td class='necessary'>${record.display_name}`
             str += `<td class='necessary'>`
-            if (Array.isArray(record.result)) {
+            if (await Array.isArray(record.result)) {
               for (let i in record.result)
                 str += record.result[i].parsing_value + " "
             } else {
@@ -159,15 +160,15 @@ script(type="text/javascript").
   }
 
   // 시간 받아오기 함수
-  function getTime() {
+  async function getTime() {
     var currentTime = new Date()
-    return (currentTime.getHours() < 10 ? '0' + currentTime.getHours() : currentTime.getHours()) + ":" +
-      (currentTime.getMinutes() < 10 ? '0' + currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
-      (currentTime.getSeconds() < 10 ? '0' + currentTime.getSeconds() : currentTime.getSeconds())
+    return (await currentTime.getHours() < 10 ? '0' + await currentTime.getHours() : currentTime.getHours()) + ":" +
+      (await currentTime.getMinutes() < 10 ? '0' + await currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
+      (await currentTime.getSeconds() < 10 ? '0' + await currentTime.getSeconds() : currentTime.getSeconds())
   }
 
   // 문자열이 정수로만 이루어 져있는가?
-  function isDigit(query) {
+  async function isDigit(query) {
     if (query == null || query == "") return false
     for (let i in query) {
       if (query[i] == " ") return false
@@ -178,13 +179,13 @@ script(type="text/javascript").
   }
 
   // 스크롤 내리기
-  function scroll_bottom() {
+  async function scroll_bottom() {
     var offset = $("#chat_content .msg").last().offset()
     $("#chat_body").scrollTop(offset.top * 10000)
   }
   
   // 로그아웃 함수
-  function logout_function() {
+  async function logout_function() {
       let xhr = new XMLHttpRequest()
       xhr.open('POST', '/logout/session', true)
       xhr.setRequestHeader('Content-Type', 'application/json')
@@ -200,18 +201,18 @@ script(type="text/javascript").
   }
   
   // 단지코드 변경 시 브레이크 라인
-  function make_breakLine(from, to) {
+  async function make_breakLine(from, to) {
     $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
     $("#chat_content").append(`
       <div class='msg' style='padding:5px 0; text-align:center;'>
         단지코드가 ${from}에서 ${to}로 변경되었습니다
       </div></div>`)
     $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
-    scroll_bottom()
+    await scroll_bottom()
   }
   
-  // ?
-  function extractDomain(url) {
+  // ??
+  async function extractDomain(url) {
     var domain;
     //find & remove protocol (http, ftp, etc.) and get domain
     if (url.indexOf("://") > -1) {

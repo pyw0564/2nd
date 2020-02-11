@@ -1,11 +1,18 @@
 script(type="text/javascript").
-  $(document).ready(function() {
+  const second = 1000
+  const minute = second * 60
+  var sessionTime
+  var sessionTime_temp 
+  
+  $(document).ready(async function() {
       /* 로그인 처리 */
     var login = !{JSON.stringify(login)}
     var route = !{JSON.stringify(route)}
     var server = !{JSON.stringify(server)}
     var username = !{JSON.stringify(username)}
-    server_message_function(login)
+    sessionTime = !{JSON.stringify(sessionTime)} * minute
+    sessionTime_temp = sessionTime
+    await server_message_function(login)
 
     /* 소켓 처리  */
     var information = !{JSON.stringify(information)}
@@ -17,25 +24,25 @@ script(type="text/javascript").
         information
       })
       /* 단코드 변경 */
-      socket.on("/change/dancode", function(data) {
+      socket.on("/change/dancode", async function(data) {
         $("#dancode").prop("innerText", "["+data.to+"]")
-        make_breakLine(data.from, data.to)
+        await make_breakLine(data.from, data.to)
       })
       
       /* 로그아웃 */
-      socket.on("logout", function(data) {
-        logout_function()
+      socket.on("logout", async function(data) {
+        await logout_function()
       })
     }
     
     /* 로그아웃 버튼 이벤트 */
-    $("#logout").click(function(e) {
-      logout_function()
+    $("#logout").click(async function(e) {
+      await logout_function()
     })
     
     /* 정보보기 버튼 이벤트 */
     var information_flag = false
-    $("#information_button").click(function(e) {
+    $("#information_button").click(async function(e) {
       information_flag = !information_flag
       if (information_flag) {
         $("#information_button").css("background-color", "blue")
@@ -49,30 +56,30 @@ script(type="text/javascript").
     })
 
     /* 추천어 버튼 이벤트 처리 */
-    $("body").on('click', '.recommend', function(e) {
+    $("body").on('click', '.recommend', async function(e) {
       $("#chat_data").text(e.target.innerText)
-      parsing_ajax("PARSE")
+      await parsing_ajax("PARSE")
     })
 
     /* 마우스 이벤트 처리 */
     var buffer = [""]
     var idx = 0
-    $("#chat_submit_btn").on("click", function() {
+    $("#chat_submit_btn").on("click", async function() {
       idx = 0
       buffer.splice(1, 0, $("#chat_data").text())
-      parsing_ajax("PARSE")
+      await parsing_ajax("PARSE")
     })
 
     /* 키보드 이벤트 처리 */
-    $("#chat_data").keydown(function(e) {
+    $("#chat_data").keydown(async function(e) {
       if (e.which == 27) { // ESC KEY
         idx = 0
         $("#chat_data").text("")
-        parsing_ajax("ESC")
+        await parsing_ajax("ESC")
       } else if (e.which == 13) { // ENTER KEY
         idx = 0
         buffer.splice(1, 0, $("#chat_data").text())
-        parsing_ajax("PARSE")
+        await parsing_ajax("PARSE")
       } else if (e.which == 38) { // UP KEY
         if (idx == buffer.length) return
         let currMsg = buffer[++idx]
@@ -86,7 +93,7 @@ script(type="text/javascript").
     })
 
     /* 아이콘 단지코드 변경 이벤트 처리 */
-    $("body").on("change", "#dancode", function(e) {
+    $("body").on("change", "#dancode", async function(e) {
       const prev_dancode = $("#prev_dancode").prop("value")
       const dancode = $("#dancode").prop("value")
       if (isDigit(dancode) == false) {
@@ -103,27 +110,75 @@ script(type="text/javascript").
         from : prev_dancode,
         to : dancode
       }))
-      xhr.addEventListener('load', function(res) {
+      xhr.addEventListener('load', async function(res) {
         let responseText = JSON.parse(xhr.responseText)
         const from = responseText.from
         const to = responseText.to
         $("#dancode").prop("value", to)
         $("#prev_dancode").prop("value", to)
         alert(responseText.message)
-        make_breakLine(from, to)
+        await make_breakLine(from, to)
       })
     })
+      
+    // 세션 인터벌
+    var sessionInteval = setInterval(async function() {
+      sessionTime_temp -= second
+      console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
+      if ($("#session_time").is(":focus") == false)
+        $("#session_time").prop("value", parseInt(sessionTime_temp / minute))
+      if (sessionTime_temp <= 0) {
+        clearInterval(sessionInteval)
+        $("#logout").click()
+      }
+    }, second)
     
+    /* 세션 처리 */
+    $("body").on("change", "#session_time", async function(e) {
+      const session_time = $("#session_time").prop("value")
+      const prev_session_time = $("#prev_session_time").prop("value")
+      if (isDigit(session_time) == false) {
+        alert("숫자만 입력이 가능합니다!")
+        $("#prev_session_time").prop("value", prev_dancode)
+        return
+      }
+      let xhr = new XMLHttpRequest()
+      xhr.open('POST', `/change/session_time`, true)
+      xhr.setRequestHeader('Content-Type', 'application/json')
+      xhr.send(JSON.stringify({
+        route,
+        server,
+        username,
+        before : prev_session_time,
+        after : session_time
+      }))
+      xhr.addEventListener('load', async function(res) {
+        let responseText = JSON.parse(xhr.responseText)
+        const status = responseText.status
+        if(status == 500) {
+          alert(responseText.message)
+        } else {
+          const before = responseText.before
+          const after = responseText.after
+          $("#session_time").prop("value", after)
+          $("#prev_session_time").prop("value", after)
+          sessionTime = minute * after 
+          sessionTime_temp = sessionTime
+          alert(responseText.message)
+        }
+      })
+    })
+
     // 새창 이벤트 처리
-    $("a").click(function(e) {
+    $("a").click(async function(e) {
       e.preventDefault()
       window.open($(this).attr("href"), 'aa')
     })
 
     // ??
-    setInterval(function() {
+    setInterval(async function() {
       if ($(".loading")) {
-        $(".loading").each(function() {
+        $(".loading").each(async function() {
           var deg = (($(this).data("rotate") || 0) + 30) % 360
           var rotate = "rotate(" + deg + "deg)"
           $(this).data("rotate", deg)
