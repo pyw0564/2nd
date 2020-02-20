@@ -8,7 +8,7 @@ script(type="text/javascript").
       /* 로그인 처리 */
     var login = !{JSON.stringify(login)}
     var route = !{JSON.stringify(route)}
-    var server = !{JSON.stringify(server)}
+    var service = !{JSON.stringify(service)}
     var username = !{JSON.stringify(username)}
     sessionTime = !{JSON.stringify(sessionTime)} * minute
     sessionTime_temp = sessionTime
@@ -20,7 +20,7 @@ script(type="text/javascript").
     if (route == "homepage") {
       /* 로그인 소켓 저장 처리 */
       socket.emit("login", {
-        server,
+        service,
         information
       })
       /* 단코드 변경 */
@@ -105,19 +105,21 @@ script(type="text/javascript").
       xhr.open('POST', '/change/icon/dancode', true)
       xhr.setRequestHeader('Content-Type', 'application/json')
       xhr.send(JSON.stringify({
-        server,
-        username : $("#userId").prop("innerText"),
         from : prev_dancode,
-        to : dancode
+        to : dancode,
+        service
       }))
       xhr.addEventListener('load', async function(res) {
-        let responseText = JSON.parse(xhr.responseText)
-        const from = responseText.from
-        const to = responseText.to
-        $("#dancode").prop("value", to)
-        $("#prev_dancode").prop("value", to)
-        alert(responseText.message)
-        await make_breakLine(from, to)
+        const {from, to, status, message} = JSON.parse(xhr.responseText)
+        if (status == 403 || status == 500) {
+          alert(message)
+          $("#dancode").prop("value", from)
+          $("#prev_dancode").prop("value", from)
+        } else {
+          $("#dancode").prop("value", to)
+          $("#prev_dancode").prop("value", to)
+          await make_breakLine(from, to)
+        }
       })
     })
       
@@ -125,49 +127,12 @@ script(type="text/javascript").
     var sessionInteval = setInterval(async function() {
       sessionTime_temp -= second
       console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
-      if ($("#session_time").is(":focus") == false)
-        $("#session_time").prop("value", parseInt(sessionTime_temp / minute))
+      $("#session_time").prop("innerText", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
       if (sessionTime_temp <= 0) {
         clearInterval(sessionInteval)
-        $("#logout").click()
+        await logout_function()
       }
     }, second)
-    
-    /* 세션 처리 */
-    $("body").on("change", "#session_time", async function(e) {
-      const session_time = $("#session_time").prop("value")
-      const prev_session_time = $("#prev_session_time").prop("value")
-      if (isDigit(session_time) == false) {
-        alert("숫자만 입력이 가능합니다!")
-        $("#prev_session_time").prop("value", prev_dancode)
-        return
-      }
-      let xhr = new XMLHttpRequest()
-      xhr.open('POST', `/change/session_time`, true)
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify({
-        route,
-        server,
-        username,
-        before : prev_session_time,
-        after : session_time
-      }))
-      xhr.addEventListener('load', async function(res) {
-        let responseText = JSON.parse(xhr.responseText)
-        const status = responseText.status
-        if(status == 500) {
-          alert(responseText.message)
-        } else {
-          const before = responseText.before
-          const after = responseText.after
-          $("#session_time").prop("value", after)
-          $("#prev_session_time").prop("value", after)
-          sessionTime = minute * after 
-          sessionTime_temp = sessionTime
-          alert(responseText.message)
-        }
-      })
-    })
 
     // 새창 이벤트 처리
     $("a").click(async function(e) {

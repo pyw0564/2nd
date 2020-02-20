@@ -22,10 +22,13 @@ module.exports = function() {
   }
 
   var Api = {}
+  var Api_auth = {}
   var Parameter = {}
   var Regexpr = {}
   var Recommend = {}
   var Response = {}
+  var Session = {}
+  var Service = []
   var Cancel = []
   var Continue = []
 
@@ -60,9 +63,23 @@ module.exports = function() {
     let records = await sqlQuery('SELECT * FROM Api')
     for (let i = 0; i < records.length; i++) {
       let record = records[i]
-      if (Api[record.server] === undefined) Api[record.server] = {}
-      Api[record.server][record.api_name] = record
+      if (Api[record.service] === undefined) Api[record.service] = {}
+      Api[record.service][record.api_name] = record
     }
+  }
+
+  // api_auth읽기
+  // api 읽기
+  async function read_api_auth() {
+    let records = await sqlQuery('SELECT * FROM api_authorization')
+    for (let i = 0; i < records.length; i++) {
+      let record = records[i]
+      let service = record.service
+      let api_name = record.api_name
+      if (Api_auth[service] === undefined) Api_auth[service] = {}
+      Api_auth[service][api_name] = record
+    }
+    console.log(Api_auth)
   }
 
   // parameter 읽기
@@ -145,12 +162,31 @@ module.exports = function() {
       Continue.push(result[i])
   }
 
+  async function read_service() {
+    let result = await sqlQuery("SELECT * FROM Service ORDER BY _order")
+    for (let i in result)
+      Service.push(result[i])
+  }
+
+  async function read_session() {
+    let result = await sqlQuery("SELECT * FROM Session")
+    for (let i in result) {
+      let record = result[i]
+      if (Session[record.route] === undefined)
+        Session[record.route] = {}
+      Session[record.route][record.service] = record.time
+    }
+    console.log(Session)
+  }
+
+
   // 통합 읽기
   async function read_DB() {
     await initialize()
     await console.log("READ DB 중입니다 . . .")
     await read_api()
     // console.log('Api 읽기완료', Api)
+    await read_api_auth()
     await read_parameter()
     // console.log('Parameter 읽기완료', Parameter)
     await read_regexp()
@@ -160,16 +196,23 @@ module.exports = function() {
     await read_response()
     // console.log('Response 읽기완료', Response)
     await read_cancel_continue()
+    // console.log('cancle, continue 읽기완료', Cancle, Continue)
+    await read_service()
+    // console.log('Service 읽기완료', Service)
+    await read_session()
     await console.log("READ DB 종료 되었습니다.")
   }
 
   return {
     Api,
+    Api_auth,
     Parameter,
     Regexpr,
     Recommend,
     Response,
     Cancel,
+    Service,
+    Session,
     Continue,
     sqlQuery,
     read_DB

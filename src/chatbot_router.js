@@ -10,6 +10,8 @@ var Parameter = read_database.Parameter
 var Regexpr = read_database.Regexpr
 var Recommend = read_database.Recommend
 var Response = read_database.Response
+var Service = read_database.Service
+var Session = read_database.Session
 var sqlQuery = read_database.sqlQuery
 
 var parsing_moudle = require('./parsing')
@@ -29,9 +31,11 @@ router.use(bodyParser.json())
 
 // 메인
 router.get('/', function(req, res) {
+  if (req.session.icon == null)
+    req.session.icon = {}
   console.log("로그인 정보", req.session)
-  // 세션 유지 처리
   return res.render("./chatbot/chat", {
+    Service,
     login: false,
     test: false
   })
@@ -39,9 +43,11 @@ router.get('/', function(req, res) {
 
 // 메인테스트
 router.get('/test', function(req, res) {
+  if (req.session.homepage == null)
+    req.session.homepage = {}
   console.log("로그인 정보", req.session)
-  // 세션 유지 처리
   return res.render("./chatbot/chat", {
+    Service,
     login: false,
     test: true
   })
@@ -52,30 +58,41 @@ router.post('/login/:route', async function(req, res) {
   // 세션 유지 처리
   const id = req.body.id
   const pw = req.body.password
-  const server = req.body.server
+  const service = req.body.service
+  const dancode = req.body.dancode
   const route = req.params.route
 
-  if (id == "" || id == null || id == undefined)
-    return res.send(await alertAndRedirect("아이디를 적어주세요", "/"))
-  if (pw == "" || pw == null || pw == undefined)
-    return res.send(await alertAndRedirect("비밀번호를 적어주세요", "/"))
-  if (server == "" || server == null || server == undefined)
-    return res.send(await alertAndRedirect("서버를 적어주세요", "/"))
+  // 비어있는 값 있으면 에러
+  for (let item in req.body) {
+    let value = req.body[item]
+    if (value == "" || value == null || value == undefined)
+      return res.send(await alertAndRedirect(`${item} 값을 적어주세요!`, "/"))
+  }
+
+  // 단독실행, 연동실행만 허용
   if (route != "icon" && route != "homepage")
-    return res.send(await alertAndRedirect("잘못된 경로 입니다", "/"))
+    return res.send(await alertAndRedirect("잘못된 경로입니다", "/"))
 
   // 로그인 api 사용
-  const auth = await imc.authorize(id, pw)
+  const auth = await imc.authorize({
+    id,
+    pw,
+    dancode,
+    service
+  })
+  console.log("로그인 통신 결과", auth)
+
   // 로그인 실패
   if (auth.response_code != "OK")
-    return res.send(await alertAndRedirect("아이디 또는 비밀번호가 틀립니다.", "/"))
+    return res.send(await alertAndRedirect("입력하신 정보가 부정확합니다", "/"))
 
-  console.log("로그인 통신 결과", auth)
-  // 로그인 성공
+  // 로그인 성공, 세션 객체 생성
   const session = {
-    dancode: auth.result[0].dancode,
-    username: auth.result[0].username,
-    usergubun: auth.result[0].usergubun,
+    id: id,
+    username: auth.result[0].username ? auth.result[0].username : null,
+    dancode: auth.result[0].dancode ? auth.result[0].dancode : dancode,
+    danjiname: auth.result[0].danjiname ? auth.result[0].danjiname : null,
+    usergubun: auth.result[0].usergubun ? auth.result[0].usergubun : "nothing",
     information: {}, // 파싱한 정보 객체
     continue_flag: false, // 이전 정보를 유지하는 플래그
     start_flag: false, // START option 플래그
@@ -84,55 +101,50 @@ router.post('/login/:route', async function(req, res) {
     api_count: 0 // API 결과값 카운트
   }
 
-  if (req.session[route] == null)
-    req.session[route] = {}
-  req.session[route][server] = session
-
-  return await res.redirect(`/chat/${route}/${server}`)
+  req.session[route][service] = session
+  return await res.redirect(`/chat/${route}/${service}`)
 })
 
 // 챗봇 화면
-router.get('/chat/:route/:server', async function(req, res) {
+router.get('/chat/:route/:service', async function(req, res) {
   const route = req.params.route
-  const server = req.params.server
-  if ((route != "icon" && route != "homepage") || req.session[route] == null || req.session[route][server] == null)
-    return await res.send(await alertAndRedirect("잘못된 경로 입니다", "/"))
+  const service = req.params.service
+  if ((route != "icon" && route != "homepage") || req.session[route] == null || req.session[route][service] == null)
+    return await res.send(await alertAndRedirect("잘못된 경로 입니다"))
 
   console.log("현재 세션", req.session)
-  // 새로 고침 시 기존데이터 삭제
-  req.session[route][server].api_result = {}
-  req.session[route][server].api_count = 0
-  const sessionID = req.session.id
-  const username = req.session[route][server].username
+  // 새로 고침 시 기존데이터 삭제 (api_result, api_count)
+  req.session[route][service].api_result = {}
+  req.session[route][service].api_count = 0
+
+  const username = req.session[route][service].username
+  // 만약 연동이라면 세션아이디를 저장한다(동기화를 위해)
   if (route == "homepage") {
-    if (sessionData[server] == null) sessionData[server] = {}
-    if (sessionData[server][username] == null) sessionData[server][username] = {}
-    sessionData[server][username].sessionID = sessionID
+    if (sessionData[service] == null) sessionData[service] = {}
+    if (sessionData[service][username] == null) sessionData[service][username] = {}
+    sessionData[service][username].sessionID = req.session.id
   }
 
-  const currSession = req.session[route][server]
-  let sessionTime = await sqlQuery(`SELECT time FROM session WHERE route='${route}' and server='${server}' and username='${username}'`)
-  if (sessionTime.length) {
-    sessionTime = sessionTime[0].time
-  } else {
-    sessionTime = 600
-    await sqlQuery(`INSERT INTO Session(route, server, username, time) VALUES('${route}','${server}','${username}','${sessionTime}')`)
-  }
+  // 세션 시간
+  const currSession = req.session[route][service]
+  const sessionTime = Session[route] && Session[route][service] ? Session[route][service] : 600
+
   // 로그인 활성화
   if (currSession.dancode) {
-    const login = await flag_function("LOGIN", currSession, server)
+    const login = await flag_function("LOGIN", currSession, service)
     return await res.render('./chatbot/chat', {
       login,
       route,
-      server,
+      service,
       sessionTime,
+      Service,
       information: currSession, // 소켓 이용
       dancode: currSession.dancode,
       username: currSession.username,
+      danjiname: currSession.danjiname,
       usergubun: currSession.usergubun
     })
   } else {
-    // 로그인 필요
     return await res.send(await alertAndRedirect("로그인이 필요합니다.", "/"))
   }
 })
@@ -141,27 +153,27 @@ router.get('/chat/:route/:server', async function(req, res) {
 router.post('/parsing', async function(req, res) {
   // console.log("현재 세션", req.session)
   const route = req.body.route
-  const server = req.body.server
+  const service = req.body.service
   const flag = req.body.flag
   const text = req.body.text
-  const dancode = req.session[route][server].dancode
-  const username = req.session[route][server].username
+  const dancode = req.session[route][service].dancode
+  const username = req.session[route][service].username
   const time = await moment().format('YYYY-MM-DD HH:mm:ss.SSS')
   // if (text.length) {
   //   await sqlQuery(`
   //     INSERT INTO _Log(_time, dancode, id, query)
   //     VALUES('${time}','${dancode}','${username}','${await replace_quotes(text)}')`)
   // }
-  await sqlQuery("")
-  const parsing_object = await parsing(flag, text, req.session[route][server], server)
-  // console.log("/parsing 라우터 결과", req.session[route][server])
+  await sqlQuery("") // ...??
+  const parsing_object = await parsing(flag, text, req.session[route][service], service)
+  // console.log("/parsing 라우터 결과", req.session[route][service])
   return await res.json(parsing_object)
 })
 
 // api 통신
 router.post('/chat/response', async function(req, res) {
   const route = req.body.route
-  const server = req.body.server
+  const service = req.body.service
   let api_information = req.body.api_information
   let data = req.body.information
   let url = api_information.url
@@ -241,14 +253,14 @@ router.post('/chat/response', async function(req, res) {
     await result.push(rest_api_result)
   }
   // 최종 결과값 세션에 저장
-  req.session[route][server].api_count += 1
-  let count = req.session[route][server].api_count
-  req.session[route][server].api_result[count] = result
+  req.session[route][service].api_count += 1
+  let count = req.session[route][service].api_count
+  req.session[route][service].api_result[count] = result
   // console.log("REST API 통신완료 하였으며, 결과값은", result)
 
   if (resultFlag) {
     str = "<a class='new_window' href='"
-    str += `/chat/${route}/${server}/response/${api_name}?data=${count}`
+    str += `/chat/${route}/${service}/response/${api_name}?data=${count}`
     str += "' target='_blank'>"
     str += await make_response_text(Response.LINK)
     str += "</a>"
@@ -260,17 +272,17 @@ router.post('/chat/response', async function(req, res) {
 })
 
 // api 새창
-router.get('/chat/:route/:server/response/:api_name', async function(req, res) {
+router.get('/chat/:route/:service/response/:api_name', async function(req, res) {
   const route = req.params.route
-  const server = req.params.server
-  const information = req.session[route][server].information
+  const service = req.params.service
+  const information = req.session[route][service].information
   const api_name = req.params.api_name
-  let result = req.session[route][server].api_result[await JSON.parse(req.query.data)] // 세션에 있던거 불러옴
+  let result = req.session[route][service].api_result[await JSON.parse(req.query.data)] // 세션에 있던거 불러옴
   /* result.length 만큼 반복 */
   let str = ""
   let keys = await Object.keys(result[0].result[0])
   for (let i = 0; i < result.length; i++) {
-    let responseText = Api[server][api_name].response_text
+    let responseText = Api[service][api_name].response_text
     str += "<h3>"
     for (let item in information) {
       let prop = information[item]
@@ -318,10 +330,11 @@ router.get('/chat/:route/:server/response/:api_name', async function(req, res) {
 
 // 알림 후 리다이렉트
 async function alertAndRedirect(text, link) {
-  return `<script>
-            alert("${text}")
-            location.href="${link}"
-          </script>`
+  let str = `<script> alert("${text}");`
+  if (link)
+    str += `location.href="${link}";`
+  str += `</script>`
+  return str
 }
 
 // 따옴표 처리

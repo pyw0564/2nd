@@ -11,33 +11,50 @@ module.exports = function() {
       }
     }
   }
+
   async function post(url, data, head) {
     console.log('URL', process.env.url + "/" + process.env.agencycode + url)
     return (await axios.post(process.env.url + "/" + process.env.agencycode + url, data, head)).data
   }
+
   async function get(url, data, head) {
     console.log('URL', process.env.url + "/" + process.env.agencycode + url)
     return (await axios.get(process.env.url + "/" + process.env.agencycode + url, head)).data
   }
+
   // 사용자인증
-  async function authorize(id, pw) {
+  async function authorize(object) {
+    const {id, pw, dancode, service} = object
     if (id == undefined || pw == undefined) {
-      console.log("imc authorize: id or pw equal undefined")
+      console.log("imc authorize: id or pw is undefined")
       return
     }
-    let token = cryptor.getToken(id, pw)
+    let token = cryptor.getToken(object)
     let XAuth = cryptor.getXAuth({
-      token: token
+      token
     })
-
     let head = getHeaders(XAuth);
     let data = {
       ssotoken: token
     }
-
     return await post("/chatbot/auth/authorize", data, head)
   }
 
+  // 단지코드 변경
+  async function change_dancode(object) {
+    const {id, dancode, service} = object
+    let token = cryptor.getToken(object)
+    let XAuth = cryptor.getXAuth({
+      token
+    })
+    let head = getHeaders(XAuth);
+    let data = {
+      ssotoken: token
+    }
+    return await post("/chatbot/auth/danchange", data, head)
+  }
+
+  // rest api 함수
   async function rest_api_function(data, order, url, method) {
     if (data == undefined) {
       console.log(`imc ${url} : data undefined`)
@@ -54,7 +71,7 @@ module.exports = function() {
 
   return {
     authorize,
-    rest_api_function
+    rest_api_function,
+    change_dancode
   }
-
 }();

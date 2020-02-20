@@ -86,14 +86,24 @@ a:visited {
 }
 
 #adm_page #adm_sub_page table {
+  text-align: center;
+  table-layout: fixed;
   width: 100%;
 }
 
-#adm_page #adm_sub_page table tbody td:first-child {
-  text-align: center;
+#adm_page #adm_sub_page table td.informationList {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
-#adm_page #adm_sub_page table tbody td.buttonList {
+#adm_page #adm_sub_page table td.buttonList {
+  display: flex;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#adm_page #adm_sub_page table tbody td:first-child {
   text-align: center;
 }
 

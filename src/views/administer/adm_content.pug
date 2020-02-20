@@ -91,7 +91,7 @@ script(type="text/javascript").
           td
             input.select(type="checkbox" value=i)
           -for (let item in object[i]) {
-            td(class=item)
+            td.informationList(class=item)
               =object[i][item]
           -}
           td.buttonList

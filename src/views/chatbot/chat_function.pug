@@ -1,6 +1,6 @@
 script(type="text/javascript").
   var route = !{JSON.stringify(route)}
-  var server = !{JSON.stringify(server)}
+  var service = !{JSON.stringify(service)}
   // 1. 파싱 보여주는 함수
   async function parsing_ajax(flag) {
     // 입력한 텍스트
@@ -27,7 +27,7 @@ script(type="text/javascript").
     xhr.setRequestHeader("Content-Type", "application/json")
     xhr.send(JSON.stringify({
       route,
-      server,
+      service,
       flag,
       text
     }))
@@ -63,7 +63,7 @@ script(type="text/javascript").
     xhr.setRequestHeader('Content-Type', 'application/json')
     xhr.send(JSON.stringify({
       route,
-      server,
+      service,
       information,
       api_information
     }))
@@ -181,7 +181,7 @@ script(type="text/javascript").
   // 스크롤 내리기
   async function scroll_bottom() {
     var offset = $("#chat_content .msg").last().offset()
-    $("#chat_body").scrollTop(offset.top * 10000)
+    $("#chat_content").scrollTop(offset.top * 10000)
   }
   
   // 로그아웃 함수
@@ -191,17 +191,29 @@ script(type="text/javascript").
       xhr.setRequestHeader('Content-Type', 'application/json')
       xhr.send(JSON.stringify({
         route, 
-        server
+        service
       }))
-      xhr.addEventListener('load', function(e) {
+      xhr.addEventListener('load', async function(e) {
         let res = JSON.parse(xhr.responseText)
         alert(res.responseText)
-        location.href = '/'
+        if (route == 'icon') {
+          location.href = '/'
+        }
+        else if (route == 'homepage') {
+          $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+          $("#chat_content").append(`
+            <div class='msg' style='padding:5px 0; text-align:center;'>
+              세션이 만료되었습니다. 재접속하세요.
+            </div></div>`)
+          $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+          await scroll_bottom()
+        }
       })
   }
   
   // 단지코드 변경 시 브레이크 라인
   async function make_breakLine(from, to) {
+    sessionTime_temp = sessionTime
     $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
     $("#chat_content").append(`
       <div class='msg' style='padding:5px 0; text-align:center;'>
@@ -209,6 +221,7 @@ script(type="text/javascript").
       </div></div>`)
     $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
     await scroll_bottom()
+    window.close()
   }
   
   // ??

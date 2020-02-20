@@ -3,6 +3,7 @@
 */
 var read_database = require('./read_database')
 var Api = read_database.Api
+var Api_auth = read_database.Api_auth
 var Parameter = read_database.Parameter
 var Regexpr = read_database.Regexpr
 var Recommend = read_database.Recommend
@@ -17,10 +18,10 @@ var sqlQuery = read_database.sqlQuery
 
 */
 
-async function init(query_flag, query, user, server) {
+async function init(query_flag, query, user, service) {
   // 파싱 플래그가 아니면 따로 처리한다
   if (query_flag != "PARSE")
-    return await flag_function(query_flag, user, server)
+    return await flag_function(query_flag, user, service)
 
   // 쿼리 객체화
   query = {
@@ -31,7 +32,7 @@ async function init(query_flag, query, user, server) {
   for (let i in Cancel) {
     let record = Cancel[i]
     if (await query.q.match(new RegExp(record.regexp, record._option)))
-      return await flag_function("CANCEL", user, server)
+      return await flag_function("CANCEL", user, service)
   }
 
   let api_information = user.api_information // 정보 유지를 위한 플래그
@@ -39,7 +40,7 @@ async function init(query_flag, query, user, server) {
   if (api_information) {
     console.log("FLAG가 유지되고 있습니다")
     user.information = await find_parameters(api_information.api_name, query, user)
-    return await flag_function("RUN", user, server)
+    return await flag_function("RUN", user, service)
   }
 
   // continue 처리
@@ -57,20 +58,20 @@ async function init(query_flag, query, user, server) {
 
   // 파싱 실행
   console.log("현재 쿼리상태 /parsing ----->", query)
-  user.information = await find_api(query, user, server)
+  user.information = await find_api(query, user, service)
   if (await Object.keys(user.information).length === 0) {
-    return await flag_function("UNKNOWN", user, server)
+    return await flag_function("UNKNOWN", user, service)
   }
 
-  return await flag_function("RUN", user, server)
+  return await flag_function("RUN", user, service)
 }
 
 // 1step -> 어떤 API인지 골라내기
-async function find_api(query, user, server) {
+async function find_api(query, user, service) {
   let api_information = user.api_information
   let continue_flag = user.continue_flag
-  for (let item in Api[server]) {
-    let record = Api[server][item]
+  for (let item in Api[service]) {
+    let record = Api[service][item]
     let api_name = record.api_name
     let parameter_type = record.parameter_type
     let display_name = record.display_name
@@ -84,14 +85,17 @@ async function find_api(query, user, server) {
       let record = Regexpr[item][i]
       let regexp = new RegExp(record.regexp, record._option)
       let result = await query.q.match(regexp)
-      if (result) {
-        user.api_information = Api[server][item] // 정보 유지를 위한 플래그
-        return await find_parameters(api_name, query, user)
+      let usergubun = user.usergubun
+      if (Api_auth[service] && Api_auth[service][api_name] && Api_auth[service][api_name][usergubun] == 'Y') {
+        if (result) {
+          user.api_information = Api[service][item] // 정보 유지를 위한 플래그
+          return await find_parameters(api_name, query, user)
+        }
       }
     }
   }
   if (continue_flag) {
-    user.api_information = Api[server][continue_flag] // 정보 유지를 위한 플래그
+    user.api_information = Api[service][continue_flag] // 정보 유지를 위한 플래그
     return await find_parameters(continue_flag, query, user)
   }
   return {}
@@ -165,7 +169,7 @@ async function parsing(regs, query) {
   return null
 }
 
-async function flag_function(flag, user, server) {
+async function flag_function(flag, user, service) {
   console.log("현재 플래그 입니다!", flag)
   let api_information = user.api_information
   let information = user.information
@@ -237,12 +241,15 @@ async function flag_function(flag, user, server) {
   }
 
   // 정보 유지를 위한 플래그
-  for (let item in Api[server]) {
-    await recommend.push({
-      display_name: Api[server][item].display_name,
-      parameter_type: item,
-      show: Api[server][item].show
-    })
+  const usergubun = user.usergubun
+  for (let item in Api[service]) {
+    let record = Api[service][item]
+    if (Api_auth[service][record.api_name][usergubun] == 'Y') {
+      await recommend.push({
+        display_name: record.display_name,
+        parameter_type: item
+      })
+    }
   }
   return_object.flag = flag
   if (flag == "LOGIN") {
@@ -335,8 +342,7 @@ async function make_html(flag, api_name, necessary_array, need) {
   if (recommend) {
     for (let idx in recommend) {
       let next = await Number(idx) + 1
-      if (recommend[idx].show == 'Y')
-        str += `<div><button id='API_${next}' class='recommend'> ${next}. ${recommend[idx].display_name}</button></div>`
+      str += `<div><button id='API_${next}' class='recommend'> ${next}. ${recommend[idx].display_name}</button></div>`
     }
   }
   return await server_message(str)

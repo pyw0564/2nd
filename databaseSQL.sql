@@ -10,7 +10,8 @@ GO
 select * from Api;
 select * from Parameter;
 select * from Regexp;
-select * from _Log ORDER BY _time;
+select * from _Log ORDER BY _time DESC;
+delete from _Log
 select * from Recommend
 select * from Response
 select * from _Log ORDER BY _time DESC;
@@ -35,6 +36,8 @@ ALTER TABLE Recommend ADD idx int autoincreament;
 ALTER TABLE Parameter DROP CONSTRAINT PK__Paramete__F9C069AA475C8B58
 ALTER TABLE Regexp DROP COLUMN idx
 ALTER TABLE Parameter ADD CONSTRAINT ParameterPK PRIMARY KEY (api_name,parameter)
+ALTER TABLE Api drop COLUMN show
+SP_RENAME 'dbo.Api.server','service','COLUMN'
 drop table Parameter DELETE FROM Parameter WHERE display_name='종료년도'
 */
 
@@ -124,10 +127,36 @@ create table Recommend(
 	button nvarchar(10) NOT NULL,
 	PRIMARY KEY (parameter_type, word)
 )
+
 create table Response(
 	flag nvarchar(100) NOT NULL,
 	_option nvarchar(100) NOT NULL,
 	response_text nvarchar(200) NOT NULL,
 	_order int NOT NULL,
 	PRIMARY KEY (flag, _option, _order) 
+)
+
+create table Session(
+	route nvarchar(100) NOT NULL,
+	service nvarchar(100) NOT NULL,
+	time int NOT NULL,
+	PRIMARY KEY (route, service) 
+)
+create table Service(
+	_order int NOT NULL,
+	name nvarchar(100) NOT NULL
+	PRIMARY KEY (_order, name) 
+)
+
+create table Api_authorization(
+	server nvarchar(100) NOT NULL,
+	display_name nvarchar(100) NOT NULL,
+	api_name nvarchar(100) NOT NULL,
+	parameter_type nvarchar(100) NOT NULL,
+	url nvarchar(100) NOT NULL,
+	response_text nvarchar(100),
+	response int NOT NULL,
+	rest_method nvarchar(10) NOT NULL,
+	show nvarchar(10) NOT NULL,
+	PRIMARY KEY (server, api_name)
 )
