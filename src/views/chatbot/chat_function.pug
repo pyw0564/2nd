@@ -35,7 +35,7 @@ script(type="text/javascript").
     xhr.addEventListener("load", async function() {
       // 받은 메시지로 다음 함수 진행
       let responseText = JSON.parse(xhr.responseText)
-      await server_message_function(responseText)
+      return await server_message_function(responseText)
     })
   }
 
@@ -70,7 +70,7 @@ script(type="text/javascript").
     xhr.addEventListener('load', async function(evt) {
       let res = JSON.parse(evt.currentTarget.response)
       await server_message(res)
-      await parsing_ajax("HOME")
+      return await parsing_ajax("HOME")
     })
   }
 

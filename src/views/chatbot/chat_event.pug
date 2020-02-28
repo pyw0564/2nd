@@ -110,7 +110,7 @@ script(type="text/javascript").
         service
       }))
       xhr.addEventListener('load', async function(res) {
-        const {from, to, status, message} = JSON.parse(xhr.responseText)
+        const { danjiname, from, to, status, message} = JSON.parse(xhr.responseText)
         if (status == 403 || status == 500) {
           alert(message)
           $("#dancode").prop("value", from)
@@ -118,7 +118,10 @@ script(type="text/javascript").
         } else {
           $("#dancode").prop("value", to)
           $("#prev_dancode").prop("value", to)
+          $("#danjiname").prop("innerText", danjiname)
           await make_breakLine(from, to)
+          await parsing_ajax("HOME")
+          await information_function({ flag:"LOGIN" })
         }
       })
     })

@@ -98,7 +98,7 @@ a:visited {
 }
 
 #adm_page #adm_sub_page table td.buttonList {
-  display: flex;
+  display: block;
   white-space: nowrap;
   text-overflow: ellipsis;
 }

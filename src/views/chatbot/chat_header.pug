@@ -24,13 +24,17 @@
 #user_info
   div(style="display:flex;")
     -if (login) {
-      // span#userId
-        // =username
+      -if (username) {
+        span#userId
+          =username
+      -}
       -if (danjiname) {
+        -if (username)
+          | /
         span#danjiname
           =danjiname
       -} else {
-        | 사용자정보없음
+        | /단지정보없음
       -}
     -}
   div

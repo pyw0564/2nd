@@ -25,25 +25,25 @@ router.use(bodyParser.json())
 router.post('/logout', function(req, res) {
   try {
     const service = req.body.service
-    const username = req.body.username
+    const id = req.body.id
     const {
       socketID
-    } = sessionData[service][username]
-    delete sessionData[service][username]
+    } = sessionData[service][id]
+    delete sessionData[service][id]
 
     io.to(socketID).emit('logout', true);
     return res.send({
       service: service,
-      username: username,
+      id: id,
       status: 200,
-      message: `성공적으로 ${username}가 로그아웃 되었습니다.`
+      message: `성공적으로 ${id}가 로그아웃 되었습니다.`
     })
   } catch (err) {
     return res.send({
       service: service,
-      username: username,
+      id: id,
       status: 400,
-      message: `${username}를 세션에서 찾을 수 없습니다.`
+      message: `${id}를 세션에서 찾을 수 없습니다.`
     })
   }
 })
@@ -86,6 +86,7 @@ router.post('/change/icon/dancode', async function(req, res) {
       dancode: to,
       service
     })
+    console.log(result)
     if (result.response_code != "OK") {
       return res.json({
         from,
@@ -94,10 +95,12 @@ router.post('/change/icon/dancode', async function(req, res) {
         message: `${to}로의 단지변경은 허용되지 않습니다`
       })
     } else {
-      req.session.icon[service].dancode = to
+      req.session.icon[service].dancode = result.result[0].dancode
+      req.session.icon[service].danjiname = result.result[0].danjiname
       return res.json({
+        danjiname : req.session.icon[service].danjiname,
         from,
-        to,
+        to : result.result[0].dancode,
         status: 200,
         message: `${from}에서 ${to}로 변경이 완료되었습니다.`
       })
@@ -115,13 +118,13 @@ router.post('/change/icon/dancode', async function(req, res) {
 router.post('/change/dancode', async function(req, res) {
   try {
     const service = req.body.service
-    const username = req.body.username
+    const id = req.body.id
     const from = req.body.from // 이전 단지 번호
     const to = req.body.to // 바꿀 단지 번호
     const {
       sessionID,
       socketID
-    } = sessionData[service][username]
+    } = sessionData[service][id]
     let data = JSON.parse(await getAsync(`sess:${sessionID}`))
     const dancode = data.homepage[service].dancode // 세션 단지코드
     // 현재 단코드와 받은 단코드 비교
@@ -152,39 +155,39 @@ router.post('/change/dancode', async function(req, res) {
 })
 
 // 세선 시간 변경
-router.post('/change/session_time', async function(req, res) {
-  try {
-    const route = req.body.route
-    const service = req.body.service
-    const username = req.body.username
-    const before = req.body.before // 이전 세션 시간
-    const after = req.body.after // 바꿀 세션 시간
-    if (after < 1) throw after
-    await sqlQuery(`UPDATE Session SET time=${after}
-      where route='${route}' and service='${service}' and username='${username}'`)
-    return res.json({
-      status: 200,
-      before,
-      after,
-      message: `세션 시간이 ${before}분에서 ${after}분으로 변경되었습니다`
-    })
-  } catch (e) {
-    console.log(e)
-    return res.json({
-      status: 500,
-      message: `예상치 못한 오류가 발생하였습니다.`
-    })
-  }
-})
+// router.post('/change/session_time', async function(req, res) {
+//   try {
+//     const route = req.body.route
+//     const service = req.body.service
+//     const username = req.body.username
+//     const before = req.body.before // 이전 세션 시간
+//     const after = req.body.after // 바꿀 세션 시간
+//     if (after < 1) throw after
+//     await sqlQuery(`UPDATE Session SET time=${after}
+//       where route='${route}' and service='${service}' and username='${username}'`)
+//     return res.json({
+//       status: 200,
+//       before,
+//       after,
+//       message: `세션 시간이 ${before}분에서 ${after}분으로 변경되었습니다`
+//     })
+//   } catch (e) {
+//     console.log(e)
+//     return res.json({
+//       status: 500,
+//       message: `예상치 못한 오류가 발생하였습니다.`
+//     })
+//   }
+// })
 
 // 소켓
 io.on('connection', function(socket) {
   socket.on('login', function(data) {
     // console.log("소켓", data)
     const service = data.service
-    const username = data.information.username
-    if (sessionData[service][username] == null) sessionData[username] = {}
-    sessionData[service][username].socketID = socket.id
+    const id = data.information.id
+    if (sessionData[service][id] == null) sessionData[service] = {}
+    sessionData[service][id].socketID = socket.id
     // 접속된 모든 클라이언트에게 메시지를 전송한다
     // io.to(socket.id).emit('logout', "HI")
     console.log("소켓", sessionData)

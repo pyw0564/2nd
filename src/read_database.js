@@ -39,8 +39,12 @@ module.exports = function() {
     for (let key in Regexpr) delete Regexpr[key]
     for (let key in Recommend) delete Recommend[key]
     for (let key in Response) delete Response[key]
+    for (let key in Api_auth) delete Api_auth[key]
+    for (let key in Session) delete Session[key]
+
     while (Cancel.length) Cancel.pop()
     while (Continue.length) Continue.pop()
+    while (Service.length) Service.pop()
   }
 
   // 동기화 SQL 쿼리

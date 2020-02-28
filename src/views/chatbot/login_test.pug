@@ -1,28 +1,6 @@
 #login_form
   form(method="post" action="/login/homepage")
     label
-      | ID:
-      input#id(type="text" name="id")
-    br
-    label
-      | PW:
-      input#password(type="password" name="password")
-    br
-    label
-      | DANCODE:
-      input#dancode(type="text" name="dancode")
-    br
-    label
-      | SERVICE:
-      -if (Service) {
-        select#service(name="service")
-          -for (let i in Service) {
-              option(value=Service[i].name)
-                =Service[i].name
-          -}
-      -} else {
-        input#service(type="text" name="service")
-      -}
-    br
-    label
+      | Session:
+      input#ssotoken(type="text" name="ssotoken" value="a2ZyS1F3MGszMm9LZEU5UUVwRG9QR0F1enpkd1ExK1Y1bUI3UUxWaDhJVkdOb2UrNzZNbzJnbm9ocFA2QUJNbDBGdDVrcjlzditWbjF0SjZDZENKQXc9PQ==")
       input(type="submit" value="로그인")

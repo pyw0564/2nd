@@ -1,5 +1,6 @@
 const cryptor = require('./cryptor')
 const axios = require('axios')
+const decryptor = require('./decryptor').json
 
 module.exports = function() {
   function getHeaders(XAuth) {
@@ -24,7 +25,12 @@ module.exports = function() {
 
   // 사용자인증
   async function authorize(object) {
-    const {id, pw, dancode, service} = object
+    const {
+      id,
+      pw,
+      dancode,
+      service
+    } = object
     if (id == undefined || pw == undefined) {
       console.log("imc authorize: id or pw is undefined")
       return
@@ -42,7 +48,11 @@ module.exports = function() {
 
   // 단지코드 변경
   async function change_dancode(object) {
-    const {id, dancode, service} = object
+    const {
+      id,
+      dancode,
+      service
+    } = object
     let token = cryptor.getToken(object)
     let XAuth = cryptor.getXAuth({
       token
@@ -70,6 +80,7 @@ module.exports = function() {
   }
 
   return {
+    decryptor,
     authorize,
     rest_api_function,
     change_dancode
