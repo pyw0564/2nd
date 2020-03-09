@@ -1,6 +1,6 @@
 const cryptor = require('./cryptor')
 const axios = require('axios')
-const decryptor = require('./decryptor').json
+const decryptor = require('./decryptor')
 
 module.exports = function() {
   function getHeaders(XAuth) {

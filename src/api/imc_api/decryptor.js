@@ -3,7 +3,6 @@ const crypto = require('crypto');
 const algo = 'aes-128-cbc';
 const key = process.env.EncryptKey;
 
-
 module.exports = function() {
   function decrypt(ssotoken) {
     let base = debase(ssotoken);
@@ -15,7 +14,7 @@ module.exports = function() {
     return Buffer.from(Buffer.from(data, 'base64').toString(), 'base64');
   }
 
-  function json(ssotoken) {
+  function login(ssotoken) {
     let de = decrypt(ssotoken).toString('utf8');
     let args = de.split('&');
     return {
@@ -27,8 +26,31 @@ module.exports = function() {
       usergubun: args[5]
     }
   }
+
+  function change_dancode(ssotoken) {
+    let de = decrypt(ssotoken).toString('utf8');
+    console.log(de)
+    let args = de.split('&');
+    return {
+      service: args[0],
+      id: args[1],
+      dancode: args[2]
+    }
+  }
+
+  function logout(ssotoken) {
+    let de = decrypt(ssotoken).toString('utf8');
+    let args = de.split('&');
+    console.log(args)
+    return {
+      service: args[0],
+      id: args[1]
+    }
+  }
+
   return {
-    decrypt,
-    json
+    login,
+    change_dancode,
+    logout
   };
 }();

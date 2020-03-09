@@ -158,7 +158,7 @@ async function parsing(regs, query) {
       let return_value = (reg.return_value === null || reg.return_value === "") ?
         parsing_value.substr(reg.start, reg._length) :
         reg.return_value;
-      query.q = await query.q.replace(parsing_value, "")
+      // query.q = await query.q.replace(parsing_value, "")
       await ret.push({
         parsing_value: parsing_value,
         return_value: return_value

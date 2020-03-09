@@ -12,6 +12,7 @@ var sessionData = require('./session.data')
 const io = require('./socketMgt').getIO()
 
 const imc_api = require('./../imc_api')
+const decryptor = imc_api.decryptor
 const change_dancode = imc_api.change_dancode
 var Response = require('./../../read_database').Response
 var sqlQuery = require('./../../read_database').sqlQuery
@@ -24,8 +25,38 @@ router.use(bodyParser.json())
 // 로그아웃 동기화
 router.post('/logout', function(req, res) {
   try {
-    const service = req.body.service
-    const id = req.body.id
+    // let ssotoken = require('./../example')("bankdata", "test");
+    let ssotoken = req.body.ssotoken
+    const {
+      service,
+      id
+    } = decryptor.logout(ssotoken)
+
+    if (service == null || service == undefined) {
+      return res.send({
+        response_code: "E01",
+        message: `ssotoken에 서비스 정보가 없습니다`
+      })
+    }
+    if (id == null || id == undefined) {
+      return res.send({
+        response_code: "E02",
+        message: `ssotoken에 id 정보가 없습니다`
+      })
+    }
+    if (sessionData[service] == null || sessionData[service] == undefined) {
+      return res.send({
+        response_code: "E03",
+        message: `세션에 ${service}라는 서비스정보가 없습니다`
+      })
+    }
+
+    if ((sessionData[service][id] == null) || (sessionData[service][id] == undefined)) {
+      return res.send({
+        response_code: "E04",
+        message: `세션에 ${id}라는 아이디를 찾을 수 없습니다`
+      })
+    }
     const {
       socketID
     } = sessionData[service][id]
@@ -33,17 +64,13 @@ router.post('/logout', function(req, res) {
 
     io.to(socketID).emit('logout', true);
     return res.send({
-      service: service,
-      id: id,
-      status: 200,
-      message: `성공적으로 ${id}가 로그아웃 되었습니다.`
+      response_code: "OK",
+      message: `성공적으로 ${id} 유저가 로그아웃 되었습니다.`
     })
   } catch (err) {
     return res.send({
-      service: service,
-      id: id,
-      status: 400,
-      message: `${id}를 세션에서 찾을 수 없습니다.`
+      response_code: "E05",
+      message: `보내주신 ssotoken 정보가 부정확합니다`
     })
   }
 })
@@ -98,9 +125,9 @@ router.post('/change/icon/dancode', async function(req, res) {
       req.session.icon[service].dancode = result.result[0].dancode
       req.session.icon[service].danjiname = result.result[0].danjiname
       return res.json({
-        danjiname : req.session.icon[service].danjiname,
+        danjiname: req.session.icon[service].danjiname,
         from,
-        to : result.result[0].dancode,
+        to: result.result[0].dancode,
         status: 200,
         message: `${from}에서 ${to}로 변경이 완료되었습니다.`
       })
@@ -117,38 +144,92 @@ router.post('/change/icon/dancode', async function(req, res) {
 // homepage 단지코드 변경
 router.post('/change/dancode', async function(req, res) {
   try {
-    const service = req.body.service
-    const id = req.body.id
-    const from = req.body.from // 이전 단지 번호
-    const to = req.body.to // 바꿀 단지 번호
+    // let ssotoken = require('./../example')("bankdata", "test", "9001");
+    let ssotoken = req.body.ssotoken
+    console.log(ssotoken)
+    const {
+      service,
+      id,
+      dancode
+    } = decryptor.change_dancode(ssotoken)
+
+
+    if (service == null || service == undefined) {
+      return res.send({
+        response_code: "E01",
+        message: `ssotoken에 서비스 정보가 없습니다`
+      })
+    }
+
+    if (id == null || id == undefined) {
+      return res.send({
+        response_code: "E02",
+        message: `ssotoken에 id 정보가 없습니다`
+      })
+    }
+
+    if (dancode == null || dancode == undefined) {
+      return res.send({
+        response_code: "E03",
+        message: `ssotoken에 dancode 정보가 없습니다`
+      })
+    }
+
+    if (sessionData[service] == null || sessionData[service] == undefined) {
+      return res.send({
+        response_code: "E04",
+        message: `세션에 ${service}라는 서비스정보가 없습니다`
+      })
+    }
+
+    if ((sessionData[service][id] == null) || (sessionData[service][id] == undefined)) {
+      return res.send({
+        response_code: "E05",
+        message: `세션에 ${id}라는 아이디를 찾을 수 없습니다`
+      })
+    }
+
     const {
       sessionID,
       socketID
     } = sessionData[service][id]
-    let data = JSON.parse(await getAsync(`sess:${sessionID}`))
-    const dancode = data.homepage[service].dancode // 세션 단지코드
-    // 현재 단코드와 받은 단코드 비교
-    if (from == dancode) {
-      data.homepage[service].dancode = to
-      await client.set(`sess:${sessionID}`, JSON.stringify(data), Redis.print)
-      io.to(socketID).emit('/change/dancode', {
-        from,
-        to
-      })
-      return res.json({
-        status: 200,
-        message: `${from}에서 ${to}로 변경이 완료되었습니다`
-      })
-    } else {
-      return res.json({
-        status: 403,
-        message: `보내주신 단지코드 ${from}가 서버와 일치하지 않습니다. 서버에서 단지코드는 ${dancode} 입니다.`
+
+    if (sessionID == null || sessionID == undefined) {
+      return res.send({
+        response_code: "E06",
+        message: `세션ID가 저장되어 있지 않습니다`
       })
     }
+    if (socketID == null || socketID == undefined) {
+      return res.send({
+        response_code: "E07",
+        message: `소켓ID가 저장되어 있지 않습니다`
+      })
+    }
+
+    let data = JSON.parse(await getAsync(`sess:${sessionID}`))
+    const prev_dancode = data.homepage[service].dancode // 세션 단지코드
+    if (prev_dancode == dancode) {
+      return res.send({
+        response_code: "E08",
+        message: `변경하려는 단지코드가 기존과 같습니다`
+      })
+    }
+    // 현재 단코드와 받은 단코드 비교
+    data.homepage[service].dancode = dancode
+    await client.set(`sess:${sessionID}`, JSON.stringify(data), Redis.print)
+    io.to(socketID).emit('/change/dancode', {
+      from: prev_dancode,
+      to: dancode
+    })
+    return res.json({
+      response_code: "OK",
+      message: `${prev_dancode}에서 ${dancode}로 변경이 완료되었습니다`
+    })
   } catch (e) {
     console.log(e)
     return res.json({
-      status: 500,
+      response_code: "E09",
       message: `예상치 못한 오류가 발생하였습니다.`
     })
   }

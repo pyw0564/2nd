@@ -13,10 +13,12 @@ module.exports = function() {
 
   function makePlainText(args) {
     let now = moment().format('YYYYMMDDHHmmss');
-    let result = now;
+    // let result = now;
+    let result = "";
 
     for (let i = 0; i < args.length; i++) {
-      result += '&' + args[i];
+      if (i) result += '&'
+      result += args[i];
     }
     return result;
   }
