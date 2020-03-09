@@ -91,45 +91,11 @@ script(type="text/javascript").
         $("#chat_data").text(currMsg)
       }
     })
-
-    /* 아이콘 단지코드 변경 이벤트 처리 */
-    $("body").on("change", "#dancode", async function(e) {
-      const prev_dancode = $("#prev_dancode").prop("value")
-      const dancode = $("#dancode").prop("value")
-      if (isDigit(dancode) == false) {
-        alert("숫자만 입력이 가능합니다!")
-        $("#dancode").prop("value", prev_dancode)
-        return
-      }
-      let xhr = new XMLHttpRequest()
-      xhr.open('POST', '/change/icon/dancode', true)
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify({
-        from : prev_dancode,
-        to : dancode,
-        service
-      }))
-      xhr.addEventListener('load', async function(res) {
-        const { danjiname, from, to, status, message} = JSON.parse(xhr.responseText)
-        if (status == 403 || status == 500) {
-          alert(message)
-          $("#dancode").prop("value", from)
-          $("#prev_dancode").prop("value", from)
-        } else {
-          $("#dancode").prop("value", to)
-          $("#prev_dancode").prop("value", to)
-          $("#danjiname").prop("innerText", danjiname)
-          await make_breakLine(from, to)
-          await parsing_ajax("HOME")
-          await information_function({ flag:"LOGIN" })
-        }
-      })
-    })
       
     // 세션 인터벌
     var sessionInteval = setInterval(async function() {
       sessionTime_temp -= second
-      console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
+      //- console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
       $("#session_time").prop("innerText", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
       if (sessionTime_temp <= 0) {
         clearInterval(sessionInteval)
@@ -160,4 +126,68 @@ script(type="text/javascript").
         })
       }
     }, 100)
+    
+    
+    // 단지코드 변경
+    var updateButton = document.getElementById('dancode_view')
+    var favDialog = document.getElementById('favDialog')
+    var dancode = document.getElementById('dancode')
+    var confirmBtn = document.getElementById('confirmBtn')
+
+    // “Update details” button opens the <dialog> modally
+    updateButton.addEventListener('click', function onOpen() {
+      if (typeof favDialog.showModal === "function") {
+        favDialog.showModal()
+        confirmBtn.value = dancode.value
+      } else {
+        alert("The <dialog> API is not supported by this browser")
+      }
+    });
+    // "Favorite animal" input sets the value of the submit button
+    dancode.addEventListener('change', function onSelect(e) {
+      confirmBtn.value = dancode.value
+    });
+    // "Confirm" button of form triggers "close" on dialog because of [method="dialog"]
+    favDialog.addEventListener('close', async function onClose() {
+      const prev_dancode = $("#prev_dancode").prop("value")
+      const dancode = favDialog.returnValue
+      if (dancode == "cancel") {
+        $("#dancode").prop("value", prev_dancode)
+        return 
+      }
+      if (await isDigit(dancode) == false) {
+        alert("숫자만 입력이 가능합니다!")
+        $("#dancode").prop("value", prev_dancode)
+        return
+      }
+      if (prev_dancode == dancode) {
+        alert("기존과 같은 단지코드입니다!")
+        $("#dancode").prop("value", prev_dancode)
+        return
+      }
+      let xhr = new XMLHttpRequest()
+      xhr.open('POST', '/change/icon/dancode', true)
+      xhr.setRequestHeader('Content-Type', 'application/json')
+      xhr.send(JSON.stringify({
+        from : prev_dancode,
+        to : dancode,
+        service
+      }))
+      xhr.addEventListener('load', async function(res) {
+        const { danjiname, from, to, status, message} = JSON.parse(xhr.responseText)
+        if (status == 403 || status == 500) {
+          alert(message)
+          $("#dancode").prop("value", from)
+          $("#prev_dancode").prop("value", from)
+        } else {
+          $("#dancode_view").prop("innerText", '['+to+']')
+          $("#dancode").prop("value", to)
+          $("#prev_dancode").prop("value", to)
+          $("#danjiname").prop("innerText", danjiname)
+          await make_breakLine(from, to)
+          await parsing_ajax("HOME")
+          await information_function({ flag:"LOGIN" })
+        }
+      })
+    });
   })

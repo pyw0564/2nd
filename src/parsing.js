@@ -280,7 +280,9 @@ async function except_parameter(parameter, query) {
         }
         await ret.push({
           parsing_value: year_ret[i].parsing_value + month_ret[j].parsing_value,
-          return_value: year_ret[i].return_value + month_ret[j].return_value
+          return_value: year_ret[i].return_value + month_ret[j].return_value,
+          yyyy : year_ret[i].return_value,
+          mm : month_ret[j].return_value
         })
       }
     }

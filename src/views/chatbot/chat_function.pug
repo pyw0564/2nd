@@ -203,7 +203,7 @@ script(type="text/javascript").
           $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
           $("#chat_content").append(`
             <div class='msg' style='padding:5px 0; text-align:center;'>
-              세션이 만료되었습니다. 재접속하세요.
+              로그아웃되었습니다. 재접속하세요.
             </div></div>`)
           $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
           await scroll_bottom()
@@ -221,7 +221,6 @@ script(type="text/javascript").
       </div></div>`)
     $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
     await scroll_bottom()
-    window.close()
   }
   
   // ??

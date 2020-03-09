@@ -35,13 +35,13 @@ router.post('/logout', function(req, res) {
     if (service == null || service == undefined) {
       return res.send({
         response_code: "E01",
-        message: `ssotoken에 서비스 정보가 없습니다`
+        message: `토큰에 서비스 정보가 없습니다`
       })
     }
     if (id == null || id == undefined) {
       return res.send({
         response_code: "E02",
-        message: `ssotoken에 id 정보가 없습니다`
+        message: `토큰에 id 정보가 없습니다`
       })
     }
     if (sessionData[service] == null || sessionData[service] == undefined) {
@@ -70,7 +70,7 @@ router.post('/logout', function(req, res) {
   } catch (err) {
     return res.send({
       response_code: "E05",
-      message: `보내주신 ssotoken 정보가 부정확합니다`
+      message: `보내주신 토큰 정보가 부정확합니다`
     })
   }
 })
@@ -157,21 +157,21 @@ router.post('/change/dancode', async function(req, res) {
     if (service == null || service == undefined) {
       return res.send({
         response_code: "E01",
-        message: `ssotoken에 서비스 정보가 없습니다`
+        message: `토큰에 서비스 정보가 없습니다`
       })
     }
 
     if (id == null || id == undefined) {
       return res.send({
         response_code: "E02",
-        message: `ssotoken에 id 정보가 없습니다`
+        message: `토큰에 id 정보가 없습니다`
       })
     }
 
     if (dancode == null || dancode == undefined) {
       return res.send({
         response_code: "E03",
-        message: `ssotoken에 dancode 정보가 없습니다`
+        message: `토큰에 dancode 정보가 없습니다`
       })
     }
 
@@ -267,7 +267,8 @@ io.on('connection', function(socket) {
     // console.log("소켓", data)
     const service = data.service
     const id = data.information.id
-    if (sessionData[service][id] == null) sessionData[service] = {}
+    if (sessionData[service] == null) sessionData[service] = {}
+    if (sessionData[service][id] == null) sessionData[service][id] = {}
     sessionData[service][id].socketID = socket.id
     // 접속된 모든 클라이언트에게 메시지를 전송한다
     // io.to(socket.id).emit('logout', "HI")

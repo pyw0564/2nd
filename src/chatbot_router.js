@@ -62,12 +62,24 @@ router.post('/login/homepage', async function(req, res) {
     // let ssotoken = require('./api/example')("test","youngwoo","bankdata","1413","hoffice");
     let auth = decryptor.login(ssotoken)
     // 로그인 성공, 세션 객체 생성
+    if (auth.id == null || auth.id == undefined) {
+      return res.send({
+        response_code: "E01",
+        message: `토큰 중 id 정보가 없습니다`
+      })
+    }
+    if (auth.service == null || auth.service == undefined) {
+      return res.send({
+        response_code: "E02",
+        message: `토큰 중 서비스 정보가 없습니다`
+      })
+    }
     const session = {
       id: auth.userid ? auth.userid : null,
       username: auth.username ? auth.username : null,
       dancode: auth.dancode ? auth.dancode : null,
       danjiname: auth.danjiname ? auth.danjiname : null,
-      usergubun: auth.usergubun ? auth.usergubun : "nothing",
+      usergubun: auth.usergubun ? auth.usergubun.toLowerCase() : "nothing",
       information: {}, // 파싱한 정보 객체
       continue_flag: false, // 이전 정보를 유지하는 플래그
       start_flag: false, // START option 플래그
@@ -80,7 +92,10 @@ router.post('/login/homepage', async function(req, res) {
     req.session.homepage[service] = session
     return res.redirect(`/chat/homepage/${service}`)
   } catch (e) {
-    return res.send(await alertAndRedirect("정보를 확인해 주세요"))
+    return res.send({
+      response_code: "E03",
+      message: `로그인 중 오류가 발생하였습니다`
+    })
   }
 })
 
@@ -118,7 +133,7 @@ router.post('/login/icon', async function(req, res) {
     username: auth.result[0].username ? auth.result[0].username : null,
     dancode: auth.result[0].dancode ? auth.result[0].dancode : null,
     danjiname: auth.result[0].danjiname ? auth.result[0].danjiname : null,
-    usergubun: auth.result[0].usergubun ? auth.result[0].usergubun : "nothing",
+    usergubun: auth.result[0].usergubun ? auth.result[0].usergubun.toLowerCase() : "nothing",
     information: {}, // 파싱한 정보 객체
     continue_flag: false, // 이전 정보를 유지하는 플래그
     start_flag: false, // START option 플래그
@@ -209,6 +224,7 @@ router.post('/parsing', async function(req, res) {
 
 // api 통신
 router.post('/chat/response', async function(req, res) {
+  console.log(req.session.icon.bankdata.api_result)
   const route = req.body.route
   const service = req.body.service
   let api_information = req.body.api_information
@@ -254,15 +270,24 @@ router.post('/chat/response', async function(req, res) {
   // JSON 형식으로 데이터 가공, 동시검색 지원 -> 배열로 반환
   for (let i = 0; i < max_index; i++) {
     let json_object = {}
+    let keyValue = {}
     for (let item in data) {
       if (await Array.isArray(data[item].result)) { // 인덱스 카운트 객체를 사용하여 하나씩 진행
         let index_item = index_object[item]
-        if (data[item].result[index_item.index])
+        if (data[item].result[index_item.index]) {
           json_object[item] = data[item].result[index_item.index].return_value
+          if (item == "yyyymm") // 예외처리
+            keyValue[item] = data[item].result[index_item.index]
+          else if (Regexpr[item][0].return_value == '' || Regexpr[item][0].return_value == null)
+            keyValue[item] = json_object[item]
+          else
+            keyValue[item] = data[item].result[index_item.index].parsing_value
+        }
         if (index_item.index < index_item.length - 1)
           index_item.index += 1
       } else {
         json_object[item] = data[item].result
+        keyValue[item] = data[item].result
       }
     }
 
@@ -285,7 +310,8 @@ router.post('/chat/response', async function(req, res) {
     if (await !Array.isArray(rest_api_result.result)) {
       rest_api_result.result = [rest_api_result.result]
     }
-    rest_api_result.keyValue = json_object
+    // 새창 열어서 데이터 보여줄때 키값저장
+    rest_api_result.keyValue = keyValue
     // 결과값 배열에 저장
     await result.push(rest_api_result)
   }
@@ -316,6 +342,7 @@ router.get('/chat/:route/:service/response/:api_name', async function(req, res) 
   const api_name = req.params.api_name
   let result = req.session[route][service].api_result[await JSON.parse(req.query.data)] // 세션에 있던거 불러옴
   /* result.length 만큼 반복 */
+  console.log(result)
   let str = ""
   let keys
   // 테이블 Key 색출
@@ -325,22 +352,20 @@ router.get('/chat/:route/:service/response/:api_name', async function(req, res) 
 
   for (let i = 0; i < result.length; i++) {
     let responseText = Api[service][api_name].response_text
+    // 제목
     str += "<h3>"
-    for (let item in information) {
-      let prop = information[item]
-      if (prop.result && await Array.isArray(prop.result)) {
-        let index = i < prop.result.length - 1 ? i : prop.result.length - 1
-        let value = prop.result[index].parsing_value
-        // default는 parsing_value 사용 ex) 관리비 입력시 1 (X) 관리비 (O)
-        // parameter의 return_value 없으면 return value 사용 ex) 101동 입력시 101 (O) 101동 (X)
-        if (Regexpr[item][0].return_value == '' || Regexpr[item][0].return_value == null) {
-          value = prop.result[index].return_value
-        }
-        responseText = await responseText.replace(`{${item}}`, value)
+    let keyValue = result[i].keyValue
+    for (let item in keyValue) {
+      let value = keyValue[item]
+      if(item == "yyyymm") {
+        responseText = await responseText.replace(`{yyyy}`, value.yyyy)
+        responseText = await responseText.replace(`{mm}`, value.mm)
       }
+      responseText = await responseText.replace(`{${item}}`, value)
     }
     str += responseText
     str += "</h3>"
+    // 테이블 내용
     str += "<table border='1'>"
     str += "<thead>"
     str += "<tr>"

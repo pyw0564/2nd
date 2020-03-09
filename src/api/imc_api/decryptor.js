@@ -29,7 +29,6 @@ module.exports = function() {
 
   function change_dancode(ssotoken) {
     let de = decrypt(ssotoken).toString('utf8');
-    console.log(de)
     let args = de.split('&');
     return {
       service: args[0],
@@ -41,7 +40,6 @@ module.exports = function() {
   function logout(ssotoken) {
     let de = decrypt(ssotoken).toString('utf8');
     let args = de.split('&');
-    console.log(args)
     return {
       service: args[0],
       id: args[1]
