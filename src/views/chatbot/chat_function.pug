@@ -1,238 +1,461 @@
 script(type="text/javascript").
-  var route = !{JSON.stringify(route)}
-  var service = !{JSON.stringify(service)}
-  // 1. 파싱 보여주는 함수
-  async function parsing_ajax(flag) {
-    // 입력한 텍스트
+  $(document).ready( function() {
+      /* 로그인 처리 */
+    const second = 1000
+    const minute = second * 60
+    var login = !{JSON.stringify(login)}
+    var route = !{JSON.stringify(route)}
+    var service = !{JSON.stringify(service)}
+    var username = !{JSON.stringify(username)}
+    sessionTime = !{JSON.stringify(sessionTime)} * minute
     sessionTime_temp = sessionTime
-    let text = $("#chat_data").text()
-    console.log("parsing_ajax 입력한 텍스트", text)
+    server_message_function(login)
 
-    // 숫자로 API 처리
-    if (await isDigit(text)) {
-      if ($(`#API_${text}`).text()) {
-        $("#chat_data").text($(`#API_${text}`).text())
-        return await parsing_ajax("PARSE")
-      }
-    }
-
-    // 만약 FLAG가 PARSE이면 클라이언트 메시지 처리 및 로그
-    if (flag == "PARSE") {
-      await client_message()
-    }
-
-    // AJAX 처리
-    let xhr = new XMLHttpRequest()
-    xhr.open('POST', `/parsing`, true)
-    xhr.setRequestHeader("Content-Type", "application/json")
-    xhr.send(JSON.stringify({
-      route,
-      service,
-      flag,
-      text
-    }))
-
-    xhr.addEventListener("load", async function() {
-      // 받은 메시지로 다음 함수 진행
-      let responseText = JSON.parse(xhr.responseText)
-      return await server_message_function(responseText)
-    })
-  }
-
-  // 2. ajax server_message 함수
-  async function server_message_function(object) {
-    let flag = object.flag
-    let information = object.information
-    let api_information = object.api_information
-    let message = object.message
-    let str = ""
-    // 정보보기 함수 처리
-    await information_function(object)
-    // API 완료
-    await server_message(message)
-
-    if (flag == "END") // 만약 API 통신이 끝났다면 3단계로
-      return await rest_api_ajax(information, api_information)
-  }
-
-  // 3. rest api 통신 함수
-  async function rest_api_ajax(information, api_information) {
-    var url = `/chat/response`
-    var xhr = new XMLHttpRequest()
-    xhr.open('POST', url, true)
-    xhr.setRequestHeader('Content-Type', 'application/json')
-    xhr.send(JSON.stringify({
-      route,
-      service,
-      information,
-      api_information
-    }))
-    xhr.addEventListener('load', async function(evt) {
-      let res = JSON.parse(evt.currentTarget.response)
-      await server_message(res)
-      return await parsing_ajax("HOME")
-    })
-  }
-
-  // 클라이언트 메시지 보여주는 함수
-  async function client_message() {
-    let text = $("#chat_data").text()
-    let name = $("#userId").text()
-    let msg = ""
-    $("#chat_data").text("")
-    msg = "<div class='msg'>"
-    msg += "<div class='user' style='text-align:right;'>" + name + "</div>"
-    msg += "<div class='content' style='justify-content:flex-end;'>"
-    msg += "<div class='time'>" + await getTime() + "</div>"
-    msg += "<div class='data me'>" + text + "</div>"
-    msg += "</div>"
-    msg += "</div>"
-    $("#chat_content").append(msg)
-
-    str = "<img src='/img/loading.png' width='30' class='loading'>"
-
-    msg = "<div class='msg load'>"
-    msg += "<div class='user'>System</div>"
-    msg += "<div class='content'>"
-    msg += "<div class='data notme'>" + str + "</div>"
-    msg += "<div class='time'>" + await getTime() + "</div>"
-    msg += "</div>"
-    msg += "</div>"
-    $("#chat_content").append(msg)
-
-    await scroll_bottom()
-  }
-
-  // 서버 메시지 보여주는 함수
-  async function server_message(msg) {
-    $(".load").remove()
-    $("#chat_content").append(msg)
-    await scroll_bottom()
-  }
-
-  // 정보보기 담당 함수
-  async function information_function(object) {
-    console.log(object)
-    let flag = object.flag
-    let recommend = object.recommend
-    let information = object.information
-    let str = ""
-    if (flag == "LOGIN" || flag == 'ESC' || flag == 'CANCEL') {
-      str += `<table id='infomation_table'>`
-      str += `<tr>`
-      str += `<td>정보없음`
-      str += `</td>`
-      str += `</tr>`
-      str += "</table>"
-      $("#inforamtion_body").html(str)
-      return
-    }
-    if (flag == 'HOME' || flag == 'UNKNOWN')
-      return
-        
-    //- if (information) str += `<div id='information_message'>${information.API_information.display_name}</div>`
-    str += `<table id='infomation_table'>`
-    for (let item in information) {
-      let record = information[item]
-      if (typeof record === 'object') {
-        if (record.necessary) {
-          str += `<tr>`
-          if (record.result) {
-            str += `<td class='necessary'>${record.display_name}`
-            str += `<td class='necessary'>`
-            if (await Array.isArray(record.result)) {
-              for (let i in record.result)
-                str += record.result[i].parsing_value + " "
-            } else {
-              str += record.result + " "
-            }
-            str += `</td>`
-          } else {
-            str += `<td class='not_necessary'>${record.display_name}</td>`
-            str += `<td class='not_necessary'></td>`
-          }
-          str += `</tr>`
-        }
-      }
-    }
-    str += "</table>"
-    $("#inforamtion_body").html(str)
-  }
-
-  // 시간 받아오기 함수
-  async function getTime() {
-    var currentTime = new Date()
-    return (await currentTime.getHours() < 10 ? '0' + await currentTime.getHours() : currentTime.getHours()) + ":" +
-      (await currentTime.getMinutes() < 10 ? '0' + await currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
-      (await currentTime.getSeconds() < 10 ? '0' + await currentTime.getSeconds() : currentTime.getSeconds())
-  }
-
-  // 문자열이 정수로만 이루어 져있는가?
-  async function isDigit(query) {
-    if (query == null || query == "") return false
-    for (let i in query) {
-      if (query[i] == " ") return false
-      if (0 <= Number(query[i]) && Number(query[i]) <= 9) continue
-      else return false
-    }
-    return true
-  }
-
-  // 스크롤 내리기
-  async function scroll_bottom() {
-    var offset = $("#chat_content .msg").last().offset()
-    $("#chat_content").scrollTop(offset.top * 10000)
-  }
-  
-  // 로그아웃 함수
-  async function logout_function() {
-      let xhr = new XMLHttpRequest()
-      xhr.open('POST', '/logout/session', true)
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify({
-        route, 
-        service
-      }))
-      xhr.addEventListener('load', async function(e) {
-        let res = JSON.parse(xhr.responseText)
-        alert(res.responseText)
-        if (route == 'icon') {
-          location.href = '/'
-        }
-        else if (route == 'homepage') {
-          $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
-          $("#chat_content").append(`
-            <div class='msg' style='padding:5px 0; text-align:center;'>
-              로그아웃되었습니다. 재접속하세요.
-            </div></div>`)
-          $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
-          await scroll_bottom()
-        }
+    var sessionTime
+    var sessionTime_temp 
+    /* 소켓 처리  */
+    var information = !{JSON.stringify(information)}
+    var socket = io()
+    if (route == "homepage") {
+      /* 로그인 소켓 저장 처리 */
+      socket.emit("login", {
+        service: service,
+        information: information
       })
-  }
-  
-  // 단지코드 변경 시 브레이크 라인
-  async function make_breakLine(from, to) {
-    sessionTime_temp = sessionTime
-    $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
-    $("#chat_content").append(`
-      <div class='msg' style='padding:5px 0; text-align:center;'>
-        단지코드가 ${from}에서 ${to}로 변경되었습니다
-      </div></div>`)
-    $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
-    await scroll_bottom()
-  }
-  
-  // ??
-  async function extractDomain(url) {
-    var domain;
-    //find & remove protocol (http, ftp, etc.) and get domain
-    if (url.indexOf("://") > -1) {
-      domain = url.split('/')[2];
-    } else {
-      domain = url.split('/')[0];
+      /* 단코드 변경 */
+      socket.on("/change/dancode",  function(data) {
+        $("#dancode").prop("innerText", "["+data.to+"]")
+          make_breakLine(data.from, data.to)
+      })
+
+      /* 로그아웃 */
+      socket.on("logout",  function(data) {
+        logout_function()
+      })
     }
-    //find & remove port number
-    domain = domain.split(':')[0];
-    return domain;
-  }
+
+    /* 로그아웃 버튼 이벤트 */
+    $("#logout").click( function(e) {
+      logout_function()
+    })
+
+    /* 정보보기 버튼 이벤트 */
+    var information_flag = false
+    $("#information_button").click( function(e) {
+      information_flag = !information_flag
+      if (information_flag) {
+        $("#information_button").css("background-color", "blue")
+        $("#information_button").text("정보끄기")
+        $("#information").css('display', 'block')
+      } else {
+        $("#information_button").css("background-color", "#399aff")
+        $("#information_button").text("정보보기")
+        $("#information").css('display', 'none')
+      }
+    })
+
+    /* 추천어 버튼 이벤트 처리 */
+    $("body").on('click', '.recommend',  function(e) {
+      $("#chat_data").val(e.target.innerText)
+        parsing_ajax("PARSE")
+    })
+
+    /* 마우스 이벤트 처리 */
+    var buffer = [""]
+    var idx = 0
+    $("#chat_submit_btn").on("click",  function() {
+      idx = 0
+      buffer.splice(1, 0, $("#chat_data").val())
+        parsing_ajax("PARSE")
+    })
+
+    /* 키보드 이벤트 처리 */
+    $("#chat_data").keydown( function(e) {
+      //- console.log(e.which)
+      if (e.which == 27) { // ESC KEY
+        idx = 0
+        $("#chat_data").val("")
+        parsing_ajax("ESC")
+      }
+      //- else if (e.which == 13) { // ENTER KEY
+      //-   idx = 0
+      //-   buffer.splice(1, 0, $("#chat_data").val())
+      //-   parsing_ajax("PARSE")
+      //- } 
+      else if (e.which == 38) { // UP KEY
+        if (idx == buffer.length) return
+        let currMsg = buffer[++idx]
+        $("#chat_data").val(currMsg)
+      } else if (e.which == 40) { // DOWN KEY
+        if (idx == 0) return
+        let currMsg = buffer[--idx]
+        idx = (idx + buffer.length) % buffer.length
+        $("#chat_data").val(currMsg)
+      }
+    }).keyup(function(e) {
+     if (e.which == 13) { // ENTER KEY
+        idx = 0
+        buffer.splice(1, 0, $("#chat_data").val())
+        parsing_ajax("PARSE")
+      } 
+    })  
+
+
+    // 세션 인터벌
+    var sessionInteval = setInterval( function() {
+      sessionTime_temp -= second
+      //- console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
+      $("#session_time").prop("innerText", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
+      if (sessionTime_temp <= 0) {
+        clearInterval(sessionInteval)
+          logout_function()
+      }
+    }, second)
+
+    // 새창 이벤트 처리
+    $("a").click( function(e) {
+      e.preventDefault()
+      window.open($(this).attr("href"), 'aa')
+    })
+
+    // ??
+    setInterval( function() {
+      if ($(".loading")) {
+        $(".loading").each( function() {
+          var deg = (($(this).data("rotate") || 0) + 30) % 360
+          var rotate = "rotate(" + deg + "deg)"
+          $(this).data("rotate", deg)
+          $(this).css({
+            '-webkit-transform': rotate,
+            '-moz-transform': rotate,
+            '-o-transform': rotate,
+            '-ms-transform': rotate,
+            'transform': rotate
+          })
+        })
+      }
+    }, 100)
+
+
+    // 단지코드 변경
+    var updateButton = document.getElementById('dancode_view')
+    var favDialog = document.getElementById('favDialog')
+    var dancode = document.getElementById('dancode')
+    var confirmBtn = document.getElementById('confirmBtn')
+    const routeText = !{JSON.stringify(route)}
+    // “Update details” button opens the <dialog> modally
+    if(routeText != "homepage") {
+      updateButton.addEventListener('click', function onOpen() {
+        //- if (typeof favDialog.showModal === "function") {
+        //-   favDialog.showModal()
+        //-   confirmBtn.value = dancode.value
+        //- } else {
+        //-   alert("The <dialog> API is not supported by this browser")
+        //- }
+        $("#favDialogWrap").css("display", "flex")
+      });
+      // "Favorite animal" input sets the value of the submit button
+      dancode.addEventListener('change', function onSelect(e) {
+        confirmBtn.value = dancode.value
+      });
+      // "Confirm" button of form triggers "close" on dialog because of [method="dialog"]
+      $("#changeDancodeClose").click(function(e) {
+        $("#dancode").prop("value", "")
+        $("#favDialogWrap").css("display", "none")
+      })
+      $("#confirmBtn").click(function(e) {
+        e.preventDefault()
+        const prev_dancode = $("#prev_dancode").prop("value")
+        const dancode = $("#dancode").prop("value")
+        //- if (dancode == "cancel") {
+        //-   $("#dancode").prop("value", "")
+        //-   return 
+        //- }
+        if ( isDigit(dancode) == false) {
+          alert("숫자만 입력이 가능합니다!")
+          $("#dancode").prop("value", "")
+          return
+        }
+        if (prev_dancode == dancode) {
+          alert("기존과 같은 단지코드입니다!")
+          $("#dancode").prop("value", "")
+          return
+        }
+        let xhr = new XMLHttpRequest()
+        xhr.open('POST', '/change/icon/dancode', true)
+        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.send(JSON.stringify({
+          from : prev_dancode,
+          to : dancode,
+          service: service
+        }))
+        xhr.addEventListener('load',  function(res) {
+          const responseText = JSON.parse(xhr.responseText)
+          const danjiname = responseText.danjiname
+          const from = responseText.from
+          const to = responseText.to
+          const status = responseText.status
+          const message = responseText.message
+          if (status == 403 || status == 500) {
+            alert(message)
+            $("#dancode").prop("value", from)
+            $("#prev_dancode").prop("value", from)
+          } else {
+            $("#dancode_view").prop("innerText", '['+to+']')
+            $("#dancode").prop("value", to)
+            $("#prev_dancode").prop("value", to)
+            $("#danjiname").prop("innerText", danjiname)
+            make_breakLine(from, to)
+            parsing_ajax("HOME")
+            information_function({ flag:"LOGIN" })
+            $("#dancode").prop("value", "")
+            $("#favDialogWrap").css("display", "none")
+          }
+        })
+      })
+    }
+
+    // 1. 파싱 보여주는 함수
+    function parsing_ajax(flag) {
+      // 입력한 텍스트
+      sessionTime_temp = sessionTime
+      let text = $("#chat_data").val()
+
+      console.log("parsing_ajax 입력한 텍스트 ->", text)
+      //- $("#chat_data").val("")
+
+      // 숫자로 API 처리
+      if (isDigit(text)) {
+        if ($("#API_" + text).text()) {
+          $("#chat_data").val($("#API_" + text)[0].innerText)
+          console.log("flasjdfklsa", $("#API_" + text)[0].innerText)
+          return parsing_ajax("PARSE")
+        }
+      }
+
+      // 만약 FLAG가 PARSE이면 클라이언트 메시지 처리 및 로그
+      if (flag == "PARSE") {
+        client_message()
+      }
+      console.log("지금은?", $("#chat_data").val(), $("#chat_data").val().length)
+      
+      // AJAX 처리
+      let xhr = new XMLHttpRequest()
+      xhr.open('POST', "/parsing", true)
+      xhr.setRequestHeader("Content-Type", "application/json")
+      xhr.send(JSON.stringify({
+        route: route,
+        service: service,
+        flag: flag,
+        text: text
+      }))
+
+      xhr.addEventListener("load",  function() {
+        // 받은 메시지로 다음 함수 진행
+        console.log("지금은?", $("#chat_data").val(), $("#chat_data").val().length)
+        
+        let responseText = JSON.parse(xhr.responseText)
+        return  server_message_function(responseText)
+      })
+    }
+
+    // 2. ajax server_message 함수
+      function server_message_function(object) {
+      
+        let flag = object.flag
+        let information = object.information
+        let api_information = object.api_information
+        let message = object.message
+        let str = ""
+        // 정보보기 함수 처리
+          information_function(object)
+        // API 완료
+          server_message(message)
+
+        if (flag == "END") // 만약 API 통신이 끝났다면 3단계로
+          return  rest_api_ajax(information, api_information)
+    }
+
+    // 3. rest api 통신 함수
+      function rest_api_ajax(information, api_information) {
+        var url = "/chat/response"
+        var xhr = new XMLHttpRequest()
+        xhr.open('POST', url, true)
+        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.send(JSON.stringify({
+          route: route,
+          service: service,
+          information: information,
+          api_information: api_information
+        }))
+        xhr.addEventListener('load',  function(evt) {
+          let res = JSON.parse(evt.currentTarget.response)
+          
+          server_message(res)
+          return  parsing_ajax("HOME")
+        })
+    }
+
+    // 클라이언트 메시지 보여주는 함수
+      function client_message() {
+        let text = $("#chat_data").val()
+        let name = $("#userId").text()
+        let msg = ""
+        $("#chat_data").val("")
+        msg = "<div class='msg'>"
+        msg += "<div class='user' style='text-align:right;'>" + name + "</div>"
+        msg += "<div class='content' style='justify-content:flex-end;'>"
+        msg += "<div class='time'>" +  getTime() + "</div>"
+        msg += "<div class='data me'>" + text + "</div>"
+        msg += "</div>"
+        msg += "</div>"
+        $("#chat_content").append(msg)
+
+        str = "<img src='/img/loading.png' width='30' class='loading'>"
+
+        msg = "<div class='msg load'>"
+        msg += "<div class='user'>System</div>"
+        msg += "<div class='content'>"
+        msg += "<div class='data notme'>" + str + "</div>"
+        msg += "<div class='time'>" +  getTime() + "</div>"
+        msg += "</div>"
+        msg += "</div>"
+        $("#chat_content").append(msg)
+
+          scroll_bottom()
+    }
+
+    // 서버 메시지 보여주는 함수
+      function server_message(msg) {
+        $(".load").remove()
+        $("#chat_content").append(msg)
+          scroll_bottom()
+    }
+
+    // 정보보기 담당 함수
+      function information_function(object) {
+        console.log(object)
+        let flag = object.flag
+        let recommend = object.recommend
+        let information = object.information
+        let str = ""
+        if (flag == "LOGIN" || flag == 'ESC' || flag == 'CANCEL') {
+          str += "<table id='infomation_table'>"
+          str += "<tr>"
+          str += "<td>정보없음"
+          str += "</td>"
+          str += "</tr>"
+          str += "</table>"
+          $("#inforamtion_body").html(str)
+          return
+        }
+        if (flag == 'HOME' || flag == 'UNKNOWN')
+          return
+
+        //- if (information) str += "<div id='information_message'>${information.API_information.display_name}</div>"
+        str += "<table id='infomation_table'>"
+        for (let item in information) {
+          let record = information[item]
+          if (typeof record === 'object') {
+            if (record.necessary) {
+              str += "<tr>"
+              if (record.result) {
+                str += "<td class='necessary'>"
+                str += record.display_name
+                str += "<td class='necessary'>"
+                if ( Array.isArray(record.result)) {
+                  for (let i in record.result)
+                    str += record.result[i].parsing_value + " "
+                } else {
+                  str += record.result + " "
+                }
+                str += "</td>"
+              } else {
+                str += "<td class='not_necessary'>"
+                str += record.display_name
+                str += "</td>"
+                str += "<td class='not_necessary'></td>"
+              }
+              str += "</tr>"
+            }
+          }
+        }
+        str += "</table>"
+        $("#inforamtion_body").html(str)
+    }
+
+    // 시간 받아오기 함수
+      function getTime() {
+        var currentTime = new Date()
+        return ( currentTime.getHours() < 10 ? '0' +  currentTime.getHours() : currentTime.getHours()) + ":" +
+          ( currentTime.getMinutes() < 10 ? '0' +  currentTime.getMinutes() : currentTime.getMinutes()) + ":" +
+          ( currentTime.getSeconds() < 10 ? '0' +  currentTime.getSeconds() : currentTime.getSeconds())
+    }
+
+    // 문자열이 정수로만 이루어 져있는가?
+      function isDigit(query) {
+        if (query == null || query == "") return false
+        for (let i in query) {
+          if (query[i] == " ") return false
+          if (0 <= Number(query[i]) && Number(query[i]) <= 9) continue
+          else return false
+        }
+        return true
+    }
+
+    // 스크롤 내리기
+      function scroll_bottom() {
+        var offset = $("#chat_content .msg").last().offset()
+        if(offset) {
+          $("#chat_content").scrollTop(offset.top * 10000)
+        }
+    }
+
+    // 로그아웃 함수
+      function logout_function() {
+        let xhr = new XMLHttpRequest()
+        xhr.open('POST', '/logout/session', true)
+        xhr.setRequestHeader('Content-Type', 'application/json')
+        xhr.send(JSON.stringify({
+          route: route, 
+          service: service
+        }))
+        xhr.addEventListener('load',  function(e) {
+          let res = JSON.parse(xhr.responseText)
+          alert(res.responseText)
+          if (route == 'icon') {
+            location.href = '/'
+          }
+          else if (route == 'homepage') {
+            $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+            $("#chat_content").append("<div class='msg' style='padding:5px 0; text-align:center;'><div>로그아웃되었습니다. 재접속하세요.</div></div>")
+            $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")          
+              scroll_bottom()
+            location.href="/"
+          }
+        })
+    }
+
+    // 단지코드 변경 시 브레이크 라인
+      function make_breakLine(from, to) {
+        sessionTime_temp = sessionTime
+        $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+        $("#chat_content").append("<div class='msg' style='padding:5px 0; text-align:center;'><div>단지코드가 " + from + "에서 " + to + "로 변경되었습니다</div></div>")
+        $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
+          scroll_bottom()
+    }
+
+    // ??
+      function extractDomain(url) {
+        var domain;
+        //find & remove protocol (http, ftp, etc.) and get domain
+        if (url.indexOf("://") > -1) {
+          domain = url.split('/')[2];
+        } else {
+          domain = url.split('/')[0];
+        }
+        //find & remove port number
+        domain = domain.split(':')[0];
+        return domain;
+    }
+  })

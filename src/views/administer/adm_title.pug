@@ -11,7 +11,12 @@ a#recommend(href="/adm/recommend") Recommend
 a#response(href="/adm/response") Response
 a#session(href="/adm/session") Session
 a#service(href="/adm/service") Service
+a#css(href="/adm/css") CSS
 a#_log(href="/adm/_log") Log
+form(name="myform" method="post" action="http://211.239.22.31:3000/login/homepage" target="_blank")
+    input(type="hidden" name="ssotoken" value="a2ZyS1F3MGszMm9LZEU5UUVwRG9QR0F1enpkd1ExK1Y1bUI3UUxWaDhJVkdOb2UrNzZNbzJnbm9ocFA2QUJNbDBGdDVrcjlzditWbjF0SjZDZENKQXc9PQ==")
+
+a(href="http://211.239.22.31:3000/login/homepage" onClick="document.forms['myform'].submit(); return false;") 챗봇
 
 input#popup(type="button" value="execute" onclick="openReport();")
 input#hdnPrintData(type="hidden")

@@ -1,0 +1,99 @@
+script(type="text/javascript").
+  var object = !{JSON.stringify(object)}
+  var type = !{JSON.stringify(type)}
+  console.log(object, type)
+  
+  $(document).ready(function() {
+    // all click
+    $("#selectAll").click(function () {
+      $(".select").prop("checked", $(this).prop("checked"))
+    })
+    
+    // update
+    $(".update").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+
+      var index = $(".selected").attr("value")
+      let keys = Object.keys(object["window"]);
+      for (let i in keys) {
+        let item = keys[i]
+        $("#input_" + item).val(object["window"][item])
+      }
+      for (let i in keys) {
+        let item = keys[i]
+        $("#prev_" + item).val(object["window"][item])
+      }
+
+      $("#adm_form").attr("action", "/adm/css/update")
+      $("#submit").val("수정")
+    })
+
+    // clone
+    $(".clone").click(function() {
+      $(".selected").removeClass("selected")
+      $("tr#"+$(this).val()).addClass("selected")
+
+      var index = $(".selected").attr("value")
+      let keys = Object.keys(object["window"]);
+      for (let i in keys) {
+        let item = keys[i]
+        $("#input_" + item).val(object["window"][item])
+      }
+      $("#adm_form").attr("action", "/adm/css/update")
+      $("#submit").val("수정")
+    })
+
+    // reset
+    $("#reset").click(function() {
+      $(".selected").removeClass("selected")
+      $("#adm_form").attr("action", "/adm/css/update")
+      $("#submit").val("수정")
+    })
+  })
+
+#adm_sub_page
+  form#adm_form(method="post", action="/adm/css/update/")
+    #variables
+      -for (let i in Object.keys(columns["window"])) {
+        -var item = Object.keys(columns["window"])[i]
+        label
+          =item
+          | :
+          input(id="input_"+item class='adm_input' type="text" name=item value=columns["window"][item])
+        br
+      -}
+      label
+      -for (let i in Object.keys(columns["window"])) {
+        -var item = Object.keys(columns["window"])[i]
+        input(id="prev_"+item type="hidden" name="prev_"+item value="")
+      -}
+        input#submit(type="submit" value="수정")
+        input#reset(type="reset" value="취소")
+
+    -if (type == 'regexp') {
+      include adm_regexp.pug
+    -}
+  table#adm_table(border="1")
+    thead
+      tr
+        th
+          input#selectAll(type="checkbox")
+        -for (let item in Object.keys(columns["window"])) {
+          th
+            =Object.keys(columns["window"])[item]
+        -}
+        th
+          | 버튼
+    tbody
+      -for(let i = 0; i < Object.keys(columns).length ; i++) {
+        tr(id=i value=i)
+          td
+            input.select(type="checkbox" value=columns[Object.keys(columns)[i]])
+          -for (let item in Object.keys(columns[Object.keys(columns)[i]])) {
+            td.informationList(class=item)
+              =columns[Object.keys(columns)[i]][Object.keys(columns[Object.keys(columns)[i]])[item]]
+          -}
+          td.buttonList
+            button.update(value=i) 수정
+      -}

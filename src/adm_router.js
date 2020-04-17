@@ -1,7 +1,7 @@
 const express = require('express')
 var router = express.Router()
-
 var read_database = require('./read_database')
+const fs = require('fs')
 var Api = read_database.Api
 var Parameter = read_database.Parameter
 var Regexpr = read_database.Regexpr
@@ -19,6 +19,35 @@ router.get("/view", function(req, res) {
   return res.render("view", {
     rptfile : req.query.rptfile
   })
+})
+
+router.get('/css', async function(req, res) {
+  var css = JSON.parse(fs.readFileSync("./css/window.json"))
+  try {
+    return res.render("./administer/adm", {
+      type: "css",
+      object: css,
+      columns: css
+    })
+  } catch (e) {
+    return res.send(await alertAndRedirect('잘못된 접근 입니다.', '/adm/api'))
+  }
+})
+router.post('/css/update', async function(req, res) {
+  try {
+    const width = req.body.width
+    const height = req.body.height
+    const window = {
+      "window": {
+        "width": width,
+        "height": height,
+      }
+    }
+    await fs.writeFileSync('./css/window.json', JSON.stringify(window))
+    return res.send(await alertAndRedirect(`css 수정 완료`, `/adm/css`))
+  } catch (e) {
+    return res.send(await alertAndRedirect('잘못된 접근 입니다.', '/adm/api'))
+  }
 })
 
 // 테이블 메인

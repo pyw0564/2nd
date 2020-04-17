@@ -5,17 +5,47 @@ html
       include ../../css/chat.css
     script(type='text/javascript' src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js")
     script(type="text/javascript" src="/socket.io/socket.io.js")
-    script(type='text/javascript').
-    -if (login)
-      include chat_function.pug
+    script(type="text/javascript").
+    -if (login) {
       include chat_event.pug
+      include chat_function.pug
+      console.log(login)
+    -}
   body
-    #chat
-      #chat_header
-        include chat_header.pug
-      #chat_body
-        include chat_body.pug
-        #information
-          #inforamtion_body
-      #chat_submit
-        include chat_submit.pug
+    -if (usergubun == "hoffice" || usergubun == "poffice" || usergubun == "woffice") {
+      #favDialogWrap
+        div#favDialog
+          form
+            p
+              label
+                | 변경할 단지코드:
+                input#dancode(type="text" value="")
+                input#prev_dancode(type="hidden" value=dancode)
+            menu
+              button(id="confirmBtn" value="default")
+                |확인
+              button(id="changeDancodeClose" value="cancel")
+                |취소
+    -}
+    -if (route != 'homepage') {
+      #chat(style="width:"+css["window"].width+";height:"+css["window"].height)
+        #chat_header
+          include chat_header.pug
+        #chat_body
+          include chat_body.pug
+          #information
+            #inforamtion_body
+        #chat_submit
+          include chat_submit.pug
+    -} else {
+      #chat
+        #chat_header
+          include chat_header.pug
+        #chat_body
+          include chat_body.pug
+          #information
+            #inforamtion_body
+        #chat_submit
+          include chat_submit.pug
+    -}
+      

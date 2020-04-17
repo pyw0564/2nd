@@ -1,9 +1,5 @@
 #text
-  -if (login) {
-    #chat_data(contenteditable)
-  -} else {
-    #chat_data
-  -}
+  textarea#chat_data
 #submit
   -if (login) {
     button#chat_submit_btn(value="전송") 전송

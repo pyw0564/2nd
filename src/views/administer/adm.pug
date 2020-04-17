@@ -18,4 +18,8 @@ html
     #adm_page
       #adm_main_page
         include adm_title.pug
-      include adm_content.pug
+      -if(type == 'css') {
+        include adm_css.pug
+      -} else {
+        include adm_content.pug
+      -}

@@ -1,193 +1,201 @@
-script(type="text/javascript").
-  const second = 1000
-  const minute = second * 60
-  var sessionTime
-  var sessionTime_temp 
-  
-  $(document).ready(async function() {
-      /* 로그인 처리 */
-    var login = !{JSON.stringify(login)}
-    var route = !{JSON.stringify(route)}
-    var service = !{JSON.stringify(service)}
-    var username = !{JSON.stringify(username)}
-    sessionTime = !{JSON.stringify(sessionTime)} * minute
-    sessionTime_temp = sessionTime
-    await server_message_function(login)
-
-    /* 소켓 처리  */
-    var information = !{JSON.stringify(information)}
-    var socket = io()
-    if (route == "homepage") {
-      /* 로그인 소켓 저장 처리 */
-      socket.emit("login", {
-        service,
-        information
-      })
-      /* 단코드 변경 */
-      socket.on("/change/dancode", async function(data) {
-        $("#dancode").prop("innerText", "["+data.to+"]")
-        await make_breakLine(data.from, data.to)
-      })
-      
-      /* 로그아웃 */
-      socket.on("logout", async function(data) {
-        await logout_function()
-      })
-    }
-    
-    /* 로그아웃 버튼 이벤트 */
-    $("#logout").click(async function(e) {
-      await logout_function()
-    })
-    
-    /* 정보보기 버튼 이벤트 */
-    var information_flag = false
-    $("#information_button").click(async function(e) {
-      information_flag = !information_flag
-      if (information_flag) {
-        $("#information_button").css("background-color", "blue")
-        $("#information_button").text("정보끄기")
-        $("#information").css('display', 'block')
-      } else {
-        $("#information_button").css("background-color", "#399aff")
-        $("#information_button").text("정보보기")
-        $("#information").css('display', 'none')
-      }
-    })
-
-    /* 추천어 버튼 이벤트 처리 */
-    $("body").on('click', '.recommend', async function(e) {
-      $("#chat_data").text(e.target.innerText)
-      await parsing_ajax("PARSE")
-    })
-
-    /* 마우스 이벤트 처리 */
-    var buffer = [""]
-    var idx = 0
-    $("#chat_submit_btn").on("click", async function() {
-      idx = 0
-      buffer.splice(1, 0, $("#chat_data").text())
-      await parsing_ajax("PARSE")
-    })
-
-    /* 키보드 이벤트 처리 */
-    $("#chat_data").keydown(async function(e) {
-      if (e.which == 27) { // ESC KEY
-        idx = 0
-        $("#chat_data").text("")
-        await parsing_ajax("ESC")
-      } else if (e.which == 13) { // ENTER KEY
-        idx = 0
-        buffer.splice(1, 0, $("#chat_data").text())
-        await parsing_ajax("PARSE")
-      } else if (e.which == 38) { // UP KEY
-        if (idx == buffer.length) return
-        let currMsg = buffer[++idx]
-        $("#chat_data").text(currMsg)
-      } else if (e.which == 40) { // DOWN KEY
-        if (idx == 0) return
-        let currMsg = buffer[--idx]
-        idx = (idx + buffer.length) % buffer.length
-        $("#chat_data").text(currMsg)
-      }
-    })
-      
-    // 세션 인터벌
-    var sessionInteval = setInterval(async function() {
-      sessionTime_temp -= second
-      //- console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
-      $("#session_time").prop("innerText", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
-      if (sessionTime_temp <= 0) {
-        clearInterval(sessionInteval)
-        await logout_function()
-      }
-    }, second)
-
-    // 새창 이벤트 처리
-    $("a").click(async function(e) {
-      e.preventDefault()
-      window.open($(this).attr("href"), 'aa')
-    })
-
-    // ??
-    setInterval(async function() {
-      if ($(".loading")) {
-        $(".loading").each(async function() {
-          var deg = (($(this).data("rotate") || 0) + 30) % 360
-          var rotate = "rotate(" + deg + "deg)"
-          $(this).data("rotate", deg)
-          $(this).css({
-            '-webkit-transform': rotate,
-            '-moz-transform': rotate,
-            '-o-transform': rotate,
-            '-ms-transform': rotate,
-            'transform': rotate
-          })
-        })
-      }
-    }, 100)
-    
-    
-    // 단지코드 변경
-    var updateButton = document.getElementById('dancode_view')
-    var favDialog = document.getElementById('favDialog')
-    var dancode = document.getElementById('dancode')
-    var confirmBtn = document.getElementById('confirmBtn')
-
-    // “Update details” button opens the <dialog> modally
-    updateButton.addEventListener('click', function onOpen() {
-      if (typeof favDialog.showModal === "function") {
-        favDialog.showModal()
-        confirmBtn.value = dancode.value
-      } else {
-        alert("The <dialog> API is not supported by this browser")
-      }
-    });
-    // "Favorite animal" input sets the value of the submit button
-    dancode.addEventListener('change', function onSelect(e) {
-      confirmBtn.value = dancode.value
-    });
-    // "Confirm" button of form triggers "close" on dialog because of [method="dialog"]
-    favDialog.addEventListener('close', async function onClose() {
-      const prev_dancode = $("#prev_dancode").prop("value")
-      const dancode = favDialog.returnValue
-      if (dancode == "cancel") {
-        $("#dancode").prop("value", prev_dancode)
-        return 
-      }
-      if (await isDigit(dancode) == false) {
-        alert("숫자만 입력이 가능합니다!")
-        $("#dancode").prop("value", prev_dancode)
-        return
-      }
-      if (prev_dancode == dancode) {
-        alert("기존과 같은 단지코드입니다!")
-        $("#dancode").prop("value", prev_dancode)
-        return
-      }
-      let xhr = new XMLHttpRequest()
-      xhr.open('POST', '/change/icon/dancode', true)
-      xhr.setRequestHeader('Content-Type', 'application/json')
-      xhr.send(JSON.stringify({
-        from : prev_dancode,
-        to : dancode,
-        service
-      }))
-      xhr.addEventListener('load', async function(res) {
-        const { danjiname, from, to, status, message} = JSON.parse(xhr.responseText)
-        if (status == 403 || status == 500) {
-          alert(message)
-          $("#dancode").prop("value", from)
-          $("#prev_dancode").prop("value", from)
-        } else {
-          $("#dancode_view").prop("innerText", '['+to+']')
-          $("#dancode").prop("value", to)
-          $("#prev_dancode").prop("value", to)
-          $("#danjiname").prop("innerText", danjiname)
-          await make_breakLine(from, to)
-          await parsing_ajax("HOME")
-          await information_function({ flag:"LOGIN" })
-        }
-      })
-    });
-  })
+//- script(type="text/javascript").
+//-   const second = 1000
+//-   const minute = second * 60
+//-   var sessionTime
+//-   var sessionTime_temp 
+//- 
+//-   $(document).ready( function() {
+//-       /* 로그인 처리 */
+//-     var login = !{JSON.stringify(login)}
+//-     var route = !{JSON.stringify(route)}
+//-     var service = !{JSON.stringify(service)}
+//-     var username = !{JSON.stringify(username)}
+//-     sessionTime = !{JSON.stringify(sessionTime)} * minute
+//-     sessionTime_temp = sessionTime
+//-      server_message_function(login)
+//- 
+//-     /* 소켓 처리  */
+//-     var information = !{JSON.stringify(information)}
+//-     var socket = io()
+//-     if (route == "homepage") {
+//-       /* 로그인 소켓 저장 처리 */
+//-       socket.emit("login", {
+//-         service: service,
+//-         information: information
+//-       })
+//-       /* 단코드 변경 */
+//-       socket.on("/change/dancode",  function(data) {
+//-         $("#dancode").prop("innerText", "["+data.to+"]")
+//-          make_breakLine(data.from, data.to)
+//-       })
+//- 
+//-       /* 로그아웃 */
+//-       socket.on("logout",  function(data) {
+//-          logout_function()
+//-       })
+//-     }
+//- 
+//-     /* 로그아웃 버튼 이벤트 */
+//-     $("#logout").click( function(e) {
+//-        logout_function()
+//-     })
+//- 
+//-     /* 정보보기 버튼 이벤트 */
+//-     var information_flag = false
+//-     $("#information_button").click( function(e) {
+//-       information_flag = !information_flag
+//-       if (information_flag) {
+//-         $("#information_button").css("background-color", "blue")
+//-         $("#information_button").text("정보끄기")
+//-         $("#information").css('display', 'block')
+//-       } else {
+//-         $("#information_button").css("background-color", "#399aff")
+//-         $("#information_button").text("정보보기")
+//-         $("#information").css('display', 'none')
+//-       }
+//-     })
+//- 
+//-     /* 추천어 버튼 이벤트 처리 */
+//-     $("body").on('click', '.recommend',  function(e) {
+//-       $("#chat_data").text(e.target.innerText)
+//-        parsing_ajax("PARSE")
+//-     })
+//- 
+//-     /* 마우스 이벤트 처리 */
+//-     var buffer = [""]
+//-     var idx = 0
+//-     $("#chat_submit_btn").on("click",  function() {
+//-       idx = 0
+//-       buffer.splice(1, 0, $("#chat_data").text())
+//-        parsing_ajax("PARSE")
+//-     })
+//- 
+//-     /* 키보드 이벤트 처리 */
+//-     $("#chat_data").keydown( function(e) {
+//-       if (e.which == 27) { // ESC KEY
+//-         idx = 0
+//-         $("#chat_data").text("")
+//-          parsing_ajax("ESC")
+//-       } else if (e.which == 13) { // ENTER KEY
+//-         idx = 0
+//-         buffer.splice(1, 0, $("#chat_data").text())
+//-          parsing_ajax("PARSE")
+//-       } else if (e.which == 38) { // UP KEY
+//-         if (idx == buffer.length) return
+//-         let currMsg = buffer[++idx]
+//-         $("#chat_data").text(currMsg)
+//-       } else if (e.which == 40) { // DOWN KEY
+//-         if (idx == 0) return
+//-         let currMsg = buffer[--idx]
+//-         idx = (idx + buffer.length) % buffer.length
+//-         $("#chat_data").text(currMsg)
+//-       }
+//-     })
+//- 
+//-     // 세션 인터벌
+//-     var sessionInteval = setInterval( function() {
+//-       sessionTime_temp -= second
+//-       //- console.log("세션 남은 시간 ->", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
+//-       $("#session_time").prop("innerText", parseInt(sessionTime_temp / minute) + "분" + (sessionTime_temp / 1000) % 60 + "초")
+//-       if (sessionTime_temp <= 0) {
+//-         clearInterval(sessionInteval)
+//-          logout_function()
+//-       }
+//-     }, second)
+//- 
+//-     // 새창 이벤트 처리
+//-     $("a").click( function(e) {
+//-       e.preventDefault()
+//-       window.open($(this).attr("href"), 'aa')
+//-     })
+//- 
+//-     // ??
+//-     setInterval( function() {
+//-       if ($(".loading")) {
+//-         $(".loading").each( function() {
+//-           var deg = (($(this).data("rotate") || 0) + 30) % 360
+//-           var rotate = "rotate(" + deg + "deg)"
+//-           $(this).data("rotate", deg)
+//-           $(this).css({
+//-             '-webkit-transform': rotate,
+//-             '-moz-transform': rotate,
+//-             '-o-transform': rotate,
+//-             '-ms-transform': rotate,
+//-             'transform': rotate
+//-           })
+//-         })
+//-       }
+//-     }, 100)
+//- 
+//- 
+//-     // 단지코드 변경
+//-     var updateButton = document.getElementById('dancode_view')
+//-     var favDialog = document.getElementById('favDialog')
+//-     var dancode = document.getElementById('dancode')
+//-     var confirmBtn = document.getElementById('confirmBtn')
+//-     const routeText = !{JSON.stringify(route)}
+//-     // “Update details” button opens the <dialog> modally
+//-     if(routeText != "homepage") {
+//-       updateButton.addEventListener('click', function onOpen() {
+//-         if (typeof favDialog.showModal === "function") {
+//-           favDialog.showModal()
+//-           confirmBtn.value = dancode.value
+//-         } else {
+//-           alert("The <dialog> API is not supported by this browser")
+//-         }
+//-       });
+//-       // "Favorite animal" input sets the value of the submit button
+//-       dancode.addEventListener('change', function onSelect(e) {
+//-         confirmBtn.value = dancode.value
+//-       });
+//-       // "Confirm" button of form triggers "close" on dialog because of [method="dialog"]
+//-       favDialog.addEventListener('close',  function onClose() {
+//-         const prev_dancode = $("#prev_dancode").prop("value")
+//-         const dancode = favDialog.returnValue
+//-         if (dancode == "cancel") {
+//-           $("#dancode").prop("value", "")
+//-           return 
+//-         }
+//-         if ( isDigit(dancode) == false) {
+//-           alert("숫자만 입력이 가능합니다!")
+//-           $("#dancode").prop("value", "")
+//-           return
+//-         }
+//-         if (prev_dancode == dancode) {
+//-           alert("기존과 같은 단지코드입니다!")
+//-           $("#dancode").prop("value", "")
+//-           return
+//-         }
+//-         let xhr = new XMLHttpRequest()
+//-         xhr.open('POST', '/change/icon/dancode', true)
+//-         xhr.setRequestHeader('Content-Type', 'application/json')
+//-         xhr.send(JSON.stringify({
+//-           from : prev_dancode,
+//-           to : dancode,
+//-           service: service
+//-         }))
+//-         xhr.addEventListener('load',  function(res) {
+//-           const responseText = JSON.parse(xhr.responseText)
+//-           const danjiname = responseText.danjiname
+//-           const from = responseText.from
+//-           const to = responseText.to
+//-           const status = responseText.status
+//-           const message = responseText.message
+//-           if (status == 403 || status == 500) {
+//-             alert(message)
+//-             $("#dancode").prop("value", from)
+//-             $("#prev_dancode").prop("value", from)
+//-           } else {
+//-             $("#dancode_view").prop("innerText", '['+to+']')
+//-             $("#dancode").prop("value", to)
+//-             $("#prev_dancode").prop("value", to)
+//-             $("#danjiname").prop("innerText", danjiname)
+//-              make_breakLine(from, to)
+//-              parsing_ajax("HOME")
+//-              information_function({ flag:"LOGIN" })
+//-           }
+//-         })
+//-       });
+//-     }
+//- 
+//-   })

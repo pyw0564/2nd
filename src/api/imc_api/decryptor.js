@@ -31,9 +31,10 @@ module.exports = function() {
     let de = decrypt(ssotoken).toString('utf8');
     let args = de.split('&');
     return {
-      service: args[0],
-      id: args[1],
-      dancode: args[2]
+      time: args[0],
+      service: args[1],
+      id: args[2],
+      dancode: args[3]
     }
   }
 
@@ -41,6 +42,7 @@ module.exports = function() {
     let de = decrypt(ssotoken).toString('utf8');
     let args = de.split('&');
     return {
+      // time: args[0],
       service: args[0],
       id: args[1]
     }

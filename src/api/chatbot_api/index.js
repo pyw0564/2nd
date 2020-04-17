@@ -93,7 +93,7 @@ router.post('/logout/session', function(req, res) {
     })
   } catch (e) {
     return res.json({
-      responseText: "로그아웃 중 오류발생!"
+      responseText: "로그아웃 중 오류가 발생했습니다."
     })
   }
 })

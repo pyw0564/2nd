@@ -92,13 +92,14 @@ a:visited {
 }
 
 #adm_page #adm_sub_page table td.informationList {
-  text-overflow: ellipsis;
+  /* text-overflow: ellipsis;
   white-space: nowrap;
-  overflow: hidden;
+  overflow: hidden; */
+  word-break: break-all;
 }
 
 #adm_page #adm_sub_page table td.buttonList {
-  display: block;
+  /* display: block; */
   white-space: nowrap;
   text-overflow: ellipsis;
 }

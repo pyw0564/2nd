@@ -4,6 +4,7 @@ const imc = require('./api/imc_api')
 const decryptor = imc.decryptor
 const bodyParser = require('body-parser')
 const moment = require('moment')
+const fs = require('fs')
 
 var read_database = require('./read_database')
 var Api = read_database.Api
@@ -34,11 +35,14 @@ router.use(bodyParser.json())
 router.get('/', function(req, res) {
   if (req.session.icon == null)
     req.session.icon = {}
+  var css = JSON.parse(fs.readFileSync("./css/window.json"))
+
   console.log("로그인 정보", req.session)
   return res.render("./chatbot/chat", {
     Service,
     login: false,
-    test: false
+    test: false,
+    css: css
   })
 })
 
@@ -61,18 +65,13 @@ router.post('/login/homepage', async function(req, res) {
     console.log(ssotoken)
     // let ssotoken = require('./api/example')("test","youngwoo","bankdata","1413","hoffice");
     let auth = decryptor.login(ssotoken)
+    console.log(auth)
     // 로그인 성공, 세션 객체 생성
-    if (auth.id == null || auth.id == undefined) {
-      return res.send({
-        response_code: "E01",
-        message: `토큰 중 id 정보가 없습니다`
-      })
+    if (auth.userid == null || auth.userid == undefined) {
+      return res.send(await alertAndRedirect("토큰 중 아이디 정보가 없습니다.", "/"))
     }
     if (auth.service == null || auth.service == undefined) {
-      return res.send({
-        response_code: "E02",
-        message: `토큰 중 서비스 정보가 없습니다`
-      })
+      return res.send(await alertAndRedirect("토큰 중 서비스 정보가 없습니다.", "/"))
     }
     const session = {
       id: auth.userid ? auth.userid : null,
@@ -92,10 +91,7 @@ router.post('/login/homepage', async function(req, res) {
     req.session.homepage[service] = session
     return res.redirect(`/chat/homepage/${service}`)
   } catch (e) {
-    return res.send({
-      response_code: "E03",
-      message: `로그인 중 오류가 발생하였습니다`
-    })
+    return res.send(await alertAndRedirect("로그인 중 오류가 발생했습니다.", "/"))
   }
 })
 
@@ -149,10 +145,12 @@ router.post('/login/icon', async function(req, res) {
 // 챗봇 화면
 router.get('/chat/:route/:service', async function(req, res) {
   try {
+    var css = JSON.parse(fs.readFileSync("./css/window.json"))
+
     const route = req.params.route
     const service = req.params.service
     if ((route != "icon" && route != "homepage") || req.session[route] == null || req.session[route][service] == null)
-      return await res.send(await alertAndRedirect("잘못된 경로 입니다"))
+      return await res.send(await alertAndRedirect("잘못된 경로 입니다", '/'))
 
     console.log("현재 세션", req.session)
     // 새로 고침 시 기존데이터 삭제 (api_result, api_count)
@@ -174,9 +172,9 @@ router.get('/chat/:route/:service', async function(req, res) {
     if (Session[route] && Session[route][service]) {
       sessionTime = Session[route][service]
     } else {
-      return res.send(await alertAndRedirect("세션 시간이 설정되어있지 않습니다"))
+      return res.send(await alertAndRedirect("세션 시간이 설정되어있지 않습니다", '/'))
     }
-
+    console.log(css)
     // 로그인 활성화
     if (currSession.dancode) {
       const login = await flag_function("LOGIN", currSession, service)
@@ -190,13 +188,14 @@ router.get('/chat/:route/:service', async function(req, res) {
         dancode: currSession.dancode,
         username: currSession.username,
         danjiname: currSession.danjiname,
-        usergubun: currSession.usergubun
+        usergubun: currSession.usergubun,
+        css: css
       })
     } else {
       return res.send(await alertAndRedirect("로그인이 필요합니다.", "/"))
     }
   } catch (e) {
-    return res.send(await alertAndRedirect("알 수 없는 오류가 발생했습니다"))
+    return res.send(await alertAndRedirect("알 수 없는 오류가 발생했습니다", '/'))
   }
 })
 

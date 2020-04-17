@@ -1,24 +1,10 @@
 #dan_info
   -if (route == 'homepage') { // 동기화
-    span(id="dancode")
+    span#dancode_view
       |[
       =dancode
       |]
   -} else if (route == "icon") { // 아이콘
-    -if (usergubun == "hoffice" || usergubun == "poffice" || usergubun == "woffice") {
-      dialog(id="favDialog")
-        form(method="dialog")
-          p
-            label
-              | 변경할 단지코드:
-              input#dancode(type="text" value=dancode)
-              input#prev_dancode(type="hidden" value=dancode)
-          menu
-            button(id="confirmBtn" value="default")
-              |확인
-            button(value="cancel")
-              |취소
-    -}
     span#dancode_view
       |[
       =dancode
