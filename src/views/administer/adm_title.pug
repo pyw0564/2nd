@@ -3,6 +3,17 @@ script(type='text/javascript').
     var type = !{JSON.stringify(type)}
     $("#" + type).addClass("active")
   })
+  function doSubmit() {
+      var myForm = document.myform
+      var url = 'http://211.239.22.31:3000/login/homepage'
+      window.open("", "myform",
+        "toolbar=no, width=500, height=900, directories=no, status=no, resizable=no")
+        myForm.action = url
+        myForm.method = "post"
+        myForm.target="myform"
+        myForm.ssotoken = "a2ZyS1F3MGszMm9LZEU5UUVwRG9QR0F1enpkd1ExK1Y1bUI3UUxWaDhJVkdOb2UrNzZNbzJnbm9ocFA2QUJNbDBGdDVrcjlzditWbjF0SjZDZENKQXc9PQ=="
+        myForm.submit()
+  }
 a#api(href="/adm/api") API Table
 a#api_authorization(href="/adm/api_authorization") API Auth
 a#parameter(href="/adm/parameter") Parameter list
@@ -16,7 +27,7 @@ a#_log(href="/adm/_log") Log
 form(name="myform" method="post" action="http://211.239.22.31:3000/login/homepage" target="_blank")
     input(type="hidden" name="ssotoken" value="a2ZyS1F3MGszMm9LZEU5UUVwRG9QR0F1enpkd1ExK1Y1bUI3UUxWaDhJVkdOb2UrNzZNbzJnbm9ocFA2QUJNbDBGdDVrcjlzditWbjF0SjZDZENKQXc9PQ==")
 
-a(href="http://211.239.22.31:3000/login/homepage" onClick="document.forms['myform'].submit(); return false;") 챗봇
+a(href="http://211.239.22.31:3000/login/homepage" onClick="doSubmit(); return false;") 챗봇
 
 input#popup(type="button" value="execute" onclick="openReport();")
 input#hdnPrintData(type="hidden")

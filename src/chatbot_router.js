@@ -45,7 +45,12 @@ router.get('/', function(req, res) {
     css: css
   })
 })
-
+router.get('/loginfailed', function(req, res) {
+  res.render('./chatbot/loginfailed')
+})
+router.get('/logedout', function(req, res) {
+  res.render('./chatbot/logedout')
+})
 // 메인테스트
 router.get('/test', function(req, res) {
   if (req.session.homepage == null)
@@ -68,10 +73,10 @@ router.post('/login/homepage', async function(req, res) {
     console.log(auth)
     // 로그인 성공, 세션 객체 생성
     if (auth.userid == null || auth.userid == undefined) {
-      return res.send(await alertAndRedirect("토큰 중 아이디 정보가 없습니다.", "/"))
+      return res.send(await alertAndRedirect("토큰 중 아이디 정보가 없습니다.", "/loginfailed"))
     }
     if (auth.service == null || auth.service == undefined) {
-      return res.send(await alertAndRedirect("토큰 중 서비스 정보가 없습니다.", "/"))
+      return res.send(await alertAndRedirect("토큰 중 서비스 정보가 없습니다.", "/loginfailed"))
     }
     const session = {
       id: auth.userid ? auth.userid : null,
@@ -91,7 +96,7 @@ router.post('/login/homepage', async function(req, res) {
     req.session.homepage[service] = session
     return res.redirect(`/chat/homepage/${service}`)
   } catch (e) {
-    return res.send(await alertAndRedirect("로그인 중 오류가 발생했습니다.", "/"))
+    return res.send(await alertAndRedirect("로그인 중 오류가 발생했습니다.", "/loginfailed"))
   }
 })
 
@@ -223,7 +228,6 @@ router.post('/parsing', async function(req, res) {
 
 // api 통신
 router.post('/chat/response', async function(req, res) {
-  console.log(req.session.icon.bankdata.api_result)
   const route = req.body.route
   const service = req.body.service
   let api_information = req.body.api_information

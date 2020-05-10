@@ -86,6 +86,8 @@ script(type="text/javascript").
         if (idx == buffer.length) return
         let currMsg = buffer[++idx]
         $("#chat_data").val(currMsg)
+
+        //- setCaretToPos(document.getElementById("chat_data"), 4);
       } else if (e.which == 40) { // DOWN KEY
         if (idx == 0) return
         let currMsg = buffer[--idx]
@@ -95,12 +97,39 @@ script(type="text/javascript").
     }).keyup(function(e) {
      if (e.which == 13) { // ENTER KEY
         idx = 0
+        const text = $("#chat_data").val()
+        let newText = ""
+        for(let i in text) {
+          if (text[i] != '\n') newText += text[i]
+        }
+        $("#chat_data").val(newText)
+        console.log(newText.length)
+          // 익스플로러 엔터 버그 처리
+        if(newText.length == 0) return
         buffer.splice(1, 0, $("#chat_data").val())
         parsing_ajax("PARSE")
       } 
     })  
-
-
+    //- 커서 조절
+    //- function setSelectionRange(input, selectionStart, selectionEnd) {
+    //-   if (input.setSelectionRange) {
+    //-     input.focus();
+    //-     input.setSelectionRange(selectionStart, selectionEnd);
+    //-     console.log("goal", selectionStart)
+    //-       document.getElementById("chat_data").setSelectionRange(selectionStart, selectionEnd);
+    //-   }
+    //-   else if (input.createTextRange) {
+    //-     var range = input.createTextRange();
+    //-     range.collapse(true);
+    //-     range.moveEnd('character', selectionEnd);
+    //-     range.moveStart('character', selectionStart);
+    //-     range.select();
+    //-   }
+    //- }
+    //- 
+    //- function setCaretToPos (input, pos) {
+    //-   setSelectionRange(input, pos, pos);
+    //- }
     // 세션 인터벌
     var sessionInteval = setInterval( function() {
       sessionTime_temp -= second
@@ -221,14 +250,13 @@ script(type="text/javascript").
       sessionTime_temp = sessionTime
       let text = $("#chat_data").val()
 
-      console.log("parsing_ajax 입력한 텍스트 ->", text)
+      //- console.log("parsing_ajax 입력한 텍스트 ->", text)
       //- $("#chat_data").val("")
 
       // 숫자로 API 처리
       if (isDigit(text)) {
         if ($("#API_" + text).text()) {
           $("#chat_data").val($("#API_" + text)[0].innerText)
-          console.log("flasjdfklsa", $("#API_" + text)[0].innerText)
           return parsing_ajax("PARSE")
         }
       }
@@ -237,7 +265,6 @@ script(type="text/javascript").
       if (flag == "PARSE") {
         client_message()
       }
-      console.log("지금은?", $("#chat_data").val(), $("#chat_data").val().length)
       
       // AJAX 처리
       let xhr = new XMLHttpRequest()
@@ -252,8 +279,6 @@ script(type="text/javascript").
 
       xhr.addEventListener("load",  function() {
         // 받은 메시지로 다음 함수 진행
-        console.log("지금은?", $("#chat_data").val(), $("#chat_data").val().length)
-        
         let responseText = JSON.parse(xhr.responseText)
         return  server_message_function(responseText)
       })
@@ -364,8 +389,13 @@ script(type="text/javascript").
                 str += record.display_name
                 str += "<td class='necessary'>"
                 if ( Array.isArray(record.result)) {
-                  for (let i in record.result)
-                    str += record.result[i].parsing_value + " "
+                  for (let i in record.result) {  
+                    if(item == "yyyymm") {
+                      str += record.result[i].return_value + " "
+                    } else {
+                      str += record.result[i].parsing_value + " "
+                    }
+                  }
                 } else {
                   str += record.result + " "
                 }
@@ -424,7 +454,7 @@ script(type="text/javascript").
           let res = JSON.parse(xhr.responseText)
           alert(res.responseText)
           if (route == 'icon') {
-            location.href = '/'
+            location.href = '/logedout'
           }
           else if (route == 'homepage') {
             $("#chat_content").append("<div class='msg' style='padding:5px 0;'><div class='breakLine'></div></div>")
