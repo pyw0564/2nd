@@ -22,7 +22,7 @@
     "moment-timezone": "^0.5.26",
     "mssql": "^5.1.0",
     "pug": "^2.0.4",
-    "redis": "^2.8.0",
+    "redis": "^3.1.1",
     "scanf": "^1.0.2",
     "socket.io": "^2.3.0"
   }
